@@ -4,110 +4,253 @@
     <title>AntiX - Red Social Libre</title>
     <meta charset="utf-8">
     <style>
-        body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; background: #000; color: #fff; }
-        textarea, input, button { width: 100%; margin: 5px 0; padding: 10px; border-radius: 8px; border: none; }
-        button { background: #1d9bf0; color: white; cursor: pointer; }
-        .post { background: #16181c; padding: 10px; margin: 10px 0; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+ 
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Space Mono', monospace;
+            max-width: 620px;
+            margin: auto;
+            padding: 24px 20px;
+            background: #0a0a0a;
+            color: #e8e8e8;
+        }
+        h1 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 14px;
+        }
+        input, textarea, button {
+            width: 100%;
+            margin: 6px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+        }
+        input, textarea {
+            background: #141414;
+            color: #e8e8e8;
+            resize: vertical;
+        }
+        input::placeholder, textarea::placeholder { color: #555; }
+        button {
+            background: #1d9bf0;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { background: #1a8cd8; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #333; color: #666; cursor: default; }
+        hr { border: none; border-top: 1px solid #222; margin: 18px 0; }
+        .post {
+            background: #111;
+            border: 1px solid #222;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 10px;
+            word-break: break-word;
+        }
+        .post .meta {
+            font-size: 0.72rem;
+            color: #555;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .post p { margin: 0; line-height: 1.5; font-size: 0.88rem; }
+        #status {
+            font-size: 0.78rem;
+            color: #888;
+            margin: 6px 0 0;
+            min-height: 18px;
+        }
+        #status.error { color: #f04040; }
+        #status.ok { color: #4caf50; }
+        .spinner {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border: 2px solid #555;
+            border-top-color: #1d9bf0;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <h1 style="display: flex; align-items: center; justify-content: space-between;">
-        🔥AntiX🔥
-        <img src="HIy9szhW8AAGLJp.jpg" width="120" height="60" style="border-radius: 10px;">
-    </h1>    
-    <input type="text" id="clave" placeholder="Clave privada (déjalo vacío para crear una nueva)" style="background:#222; color:#fff;">
-    <button id="conectar">Conectar / Generar cuenta</button>
+    <h1>🔥 AntiX 🔥</h1>
+ 
+    <input type="text" id="clave" placeholder="Clave privada hex (vacío = nueva cuenta)">
+    <button id="btnConectar">Conectar / Generar cuenta</button>
+    <div id="status"></div>
+ 
     <hr>
+ 
     <textarea id="contenido" rows="3" placeholder="¿Qué estás pensando?"></textarea>
-    <button id="publicar">Publicar</button>
+    <button id="btnPublicar" disabled>Publicar</button>
+ 
     <div id="feed"></div>
-
-    <script src="https://unpkg.com/nostr-tools@2.10.0/lib/nostr.bundle.js"></script>
+ 
+    <!-- nostr-tools v1 (API estable: generatePrivateKey, signEvent, etc.) -->
+    <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.js"></script>
     <script>
+        // ── Estado global ────────────────────────────────────────────
         let privKey = '';
-        let pubKey = '';
-    
-        document.getElementById('conectar').onclick = async () => {
-            try {
-                const inputPriv = document.getElementById('clave').value;
-                
-                if (inputPriv) {
-                    // Usar clave existente
-                    privKey = inputPriv;
-                    pubKey = await window.nostrTools.getPublicKey(privKey);
-                    alert('Conectado con clave existente. Tu pubkey: ' + pubKey.slice(0,10) + '...');
-                } else {
-                    // Generar nueva cuenta
-                    privKey = window.nostrTools.generatePrivateKey();
-                    pubKey = await window.nostrTools.getPublicKey(privKey);
-                    alert('✅ CUENTA CREADA\n\nGUARDA ESTA CLAVE PRIVADA:\n' + privKey + '\n\nSin ella no podrás recuperar tu cuenta.');
-                    document.getElementById('clave').value = privKey;
-                }
-                
-                // Mostrar que está conectado
-                document.getElementById('publicar').style.display = 'block';
-                cargarFeed();
-            } catch(error) {
-                alert('Error: ' + error.message);
-            }
+        let pubKey  = '';
+ 
+        const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol'];
+ 
+        const $ = id => document.getElementById(id);
+        const setStatus = (msg, type = '') => {
+            $('status').innerHTML = msg;
+            $('status').className = type;
         };
-    
-        document.getElementById('publicar').style.display = 'none'; // Ocultar botón hasta conectar
-        document.getElementById('publicar').onclick = async () => {
-            if (!privKey) { alert('Primero conecta o genera cuenta'); return; }
-            const contenido = document.getElementById('contenido').value;
-            if (!contenido) return;
-    
-            const evento = {
-                kind: 1,
-                pubkey: pubKey,
-                created_at: Math.floor(Date.now() / 1000),
-                tags: [],
-                content: contenido
-            };
-            evento.id = await window.nostrTools.getEventHash(evento);
-            evento.sig = await window.nostrTools.signEvent(evento, privKey);
-    
-            const relays = ['wss://relay.damus.io', 'wss://nos.lol'];
-            for (let relay of relays) {
-                try {
-                    const ws = new WebSocket(relay);
-                    ws.onopen = () => {
-                        ws.send(JSON.stringify(['EVENT', evento]));
-                        setTimeout(() => ws.close(), 1000);
-                    };
-                } catch(e) {}
-            }
-            document.getElementById('contenido').value = '';
-            setTimeout(cargarFeed, 2000);
-        };
-    
-        async function cargarFeed() {
-            const filtro = { kinds: [1], limit: 30 };
-            const relays = ['wss://relay.damus.io', 'wss://nos.lol'];
-            let posts = [];
-            
-            for (let relay of relays) {
-                try {
-                    const ws = new WebSocket(relay);
-                    ws.onopen = () => ws.send(JSON.stringify(['REQ', 'feed', filtro]));
-                    ws.onmessage = (e) => {
-                        const msg = JSON.parse(e.data);
-                        if (msg[0] === 'EVENT' && msg[2]?.kind === 1) {
-                            posts.push(msg[2]);
-                        }
-                    };
-                    await new Promise(r => setTimeout(r, 3000));
-                    ws.close();
-                } catch(e) {}
-            }
-            
-            posts.sort((a,b) => b.created_at - a.created_at);
-            const feedDiv = document.getElementById('feed');
-            feedDiv.innerHTML = posts.map(p => `<div class="post"><strong>${p.pubkey.slice(0,8)}</strong><p>${p.content}</p></div>`).join('');
+ 
+        // ── Helpers WebSocket ────────────────────────────────────────
+        function openWS(url) {
+            return new Promise((resolve, reject) => {
+                const ws = new WebSocket(url);
+                ws.onopen  = () => resolve(ws);
+                ws.onerror = () => reject(new Error('No se pudo conectar a ' + url));
+                ws.onclose = () => {};
+                setTimeout(() => reject(new Error('Timeout ' + url)), 5000);
+            });
         }
-    
-        // Cargar feed al inicio
+ 
+        // ── Conectar / Generar ───────────────────────────────────────
+        $('btnConectar').onclick = async () => {
+            $('btnConectar').disabled = true;
+            setStatus('<span class="spinner"></span> Conectando...');
+ 
+            try {
+                const nt = window.NostrTools;
+                if (!nt) throw new Error('nostr-tools no cargó. Revisa tu conexión.');
+ 
+                const input = $('clave').value.trim();
+ 
+                if (input) {
+                    privKey = input;
+                    pubKey  = nt.getPublicKey(privKey);
+                    setStatus('✅ Conectado — pubkey: ' + pubKey.slice(0, 12) + '…', 'ok');
+                } else {
+                    privKey = nt.generatePrivateKey();
+                    pubKey  = nt.getPublicKey(privKey);
+                    $('clave').value = privKey;
+                    setStatus('✅ Cuenta nueva creada — ¡guarda tu clave privada!', 'ok');
+                }
+ 
+                $('btnPublicar').disabled = false;
+                cargarFeed();
+            } catch (err) {
+                setStatus('❌ ' + err.message, 'error');
+            } finally {
+                $('btnConectar').disabled = false;
+            }
+        };
+ 
+        // ── Publicar ─────────────────────────────────────────────────
+        $('btnPublicar').onclick = async () => {
+            if (!privKey) return;
+            const contenido = $('contenido').value.trim();
+            if (!contenido) return;
+ 
+            $('btnPublicar').disabled = true;
+            setStatus('<span class="spinner"></span> Publicando…');
+ 
+            try {
+                const nt = window.NostrTools;
+                const evento = nt.finishEvent({
+                    kind: 1,
+                    created_at: Math.floor(Date.now() / 1000),
+                    tags: [],
+                    content: contenido
+                }, privKey);
+ 
+                let enviado = 0;
+                for (const url of RELAYS) {
+                    try {
+                        const ws = await openWS(url);
+                        ws.send(JSON.stringify(['EVENT', evento]));
+                        await new Promise(r => setTimeout(r, 800));
+                        ws.close();
+                        enviado++;
+                    } catch (e) { /* relay no disponible */ }
+                }
+ 
+                $('contenido').value = '';
+                setStatus(`✅ Publicado en ${enviado}/${RELAYS.length} relays`, 'ok');
+                setTimeout(cargarFeed, 1500);
+            } catch (err) {
+                setStatus('❌ Error al publicar: ' + err.message, 'error');
+            } finally {
+                $('btnPublicar').disabled = false;
+            }
+        };
+ 
+        // ── Cargar feed ──────────────────────────────────────────────
+        async function cargarFeed() {
+            const feedDiv = $('feed');
+            feedDiv.innerHTML = '<div style="color:#555;font-size:.8rem;margin:12px 0"><span class="spinner"></span> Cargando feed…</div>';
+ 
+            const filtro  = { kinds: [1], limit: 30 };
+            const postsMap = new Map(); // dedup por id
+ 
+            const promises = RELAYS.map(url => new Promise(resolve => {
+                try {
+                    const ws = new WebSocket(url);
+                    const subId = 'feed_' + Math.random().toString(36).slice(2);
+ 
+                    ws.onopen = () => ws.send(JSON.stringify(['REQ', subId, filtro]));
+                    ws.onmessage = e => {
+                        try {
+                            const msg = JSON.parse(e.data);
+                            if (msg[0] === 'EVENT' && msg[2]?.kind === 1) {
+                                postsMap.set(msg[2].id, msg[2]);
+                            }
+                            if (msg[0] === 'EOSE') { ws.close(); resolve(); }
+                        } catch (_) {}
+                    };
+                    ws.onerror  = () => resolve();
+                    ws.onclose  = () => resolve();
+                    setTimeout(() => { try { ws.close(); } catch(_){} resolve(); }, 6000);
+                } catch (_) { resolve(); }
+            }));
+ 
+            await Promise.all(promises);
+ 
+            const posts = [...postsMap.values()].sort((a, b) => b.created_at - a.created_at);
+ 
+            if (!posts.length) {
+                feedDiv.innerHTML = '<div style="color:#555;font-size:.8rem;margin:12px 0">Sin posts o relays no disponibles.</div>';
+                return;
+            }
+ 
+            feedDiv.innerHTML = posts.map(p => {
+                const fecha = new Date(p.created_at * 1000).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
+                const texto = p.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return `<div class="post">
+                    <div class="meta">
+                        <span>${p.pubkey.slice(0, 10)}…</span>
+                        <span>${fecha}</span>
+                    </div>
+                    <p>${texto}</p>
+                </div>`;
+            }).join('');
+        }
+ 
+        // Cargar feed al arrancar
         cargarFeed();
     </script>
 </body>
