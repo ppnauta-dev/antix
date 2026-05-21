@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AntiX - Con Imágenes</title>
+    <title>AntiX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -34,6 +34,7 @@
             margin: 0 auto;
         }
 
+        /* Topbar */
         .topbar {
             grid-column: 1/-1;
             background: var(--surface);
@@ -48,8 +49,11 @@
         .pubkey-badge {
             font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
             background: var(--bg); border: 1px solid var(--border);
-            padding: 4px 10px; border-radius: 20px; cursor: pointer;
+            padding: 4px 10px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
         }
+        .pubkey-badge:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Sidebar izquierda */
         .sidebar-left {
             border-right: 1px solid var(--border);
             padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
@@ -59,13 +63,23 @@
             font-family: var(--sans); font-size: 0.88rem; font-weight: 500;
             padding: 9px 12px; border-radius: 8px; cursor: pointer;
             text-align: left; display: flex; align-items: center; gap: 10px;
-            width: 100%;
+            transition: all 0.15s; width: 100%;
         }
         .nav-btn:hover { background: var(--border); color: var(--text); }
         .nav-btn.active { background: rgba(0,212,255,0.1); color: var(--accent); }
-        .sidebar-divider { margin: 10px 0; padding: 10px 12px 4px; border-top: 1px solid var(--border); font-size: 0.62rem; color: var(--muted); }
-        .side-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); padding: 4px 12px; word-break: break-all; }
+        .nav-btn .icon { width: 18px; text-align: center; }
+        .sidebar-divider {
+            margin: 10px 0; padding: 10px 12px 4px;
+            border-top: 1px solid var(--border);
+            font-family: var(--mono); font-size: 0.62rem;
+            color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .side-key {
+            font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
+            padding: 4px 12px; word-break: break-all; line-height: 1.5;
+        }
 
+        /* Feed */
         .feed-col {
             border-right: 1px solid var(--border);
             display: flex; flex-direction: column;
@@ -80,10 +94,12 @@
         .feed-tab {
             background: none; border: 1px solid transparent; color: var(--muted);
             font-family: var(--mono); font-size: 0.68rem; padding: 5px 12px;
-            border-radius: 20px; cursor: pointer;
+            border-radius: 20px; cursor: pointer; transition: all 0.15s;
         }
         .feed-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+        .feed-tab:hover:not(.active) { border-color: var(--border); color: var(--text); }
 
+        /* Composer */
         .composer {
             padding: 14px 18px; border-bottom: 1px solid var(--border);
             display: none; gap: 12px;
@@ -100,50 +116,81 @@
             width: 100%; min-height: 56px;
         }
         textarea::placeholder { color: var(--muted); }
-        .composer-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .media-buttons { display: flex; gap: 6px; }
-        .media-btn {
-            background: var(--border); border: none; color: var(--muted);
-            font-size: 1.1rem; padding: 6px 12px; border-radius: 20px;
-            cursor: pointer; transition: all 0.15s;
+
+        /* Media preview strip */
+        .media-preview-strip {
+            display: flex; gap: 8px; flex-wrap: wrap;
         }
-        .media-btn:hover { background: var(--accent); color: #000; }
+        .media-thumb {
+            position: relative; width: 80px; height: 80px;
+            border-radius: 8px; overflow: hidden;
+            border: 1px solid var(--border); flex-shrink: 0;
+        }
+        .media-thumb img, .media-thumb video {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        .media-thumb .remove-media {
+            position: absolute; top: 3px; right: 3px;
+            background: rgba(0,0,0,0.75); border: none; border-radius: 50%;
+            color: #fff; font-size: 0.65rem; width: 18px; height: 18px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            line-height: 1;
+        }
+        .media-thumb .remove-media:hover { background: var(--danger); }
+        .media-thumb .upload-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 3px;
+        }
+        .media-thumb .upload-overlay .spinner { border-top-color: var(--accent); }
+        .media-thumb .upload-overlay span {
+            font-family: var(--mono); font-size: 0.55rem; color: #fff;
+        }
+        .media-thumb.done .upload-overlay { display: none; }
+        .media-thumb.error { border-color: var(--danger); }
+        .media-thumb.error .upload-overlay { background: rgba(255,69,96,0.4); }
+
+        /* Toolbar del composer */
+        .composer-toolbar {
+            display: flex; align-items: center; gap: 6px; padding-top: 4px;
+            border-top: 1px solid var(--border);
+        }
+        .toolbar-btn {
+            background: none; border: 1px solid var(--border); border-radius: 8px;
+            color: var(--muted); cursor: pointer; padding: 5px 10px;
+            font-size: 0.8rem; display: flex; align-items: center; gap: 5px;
+            transition: all 0.15s; font-family: var(--sans);
+        }
+        .toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .toolbar-btn:disabled { opacity: 0.4; cursor: default; border-color: var(--border); color: var(--muted); }
+        .toolbar-btn input[type=file] { display: none; }
+        .upload-progress {
+            font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
+            flex: 1; text-align: right;
+        }
+        .upload-progress.uploading { color: var(--accent); }
+        .upload-progress.error { color: var(--danger); }
+
+        .composer-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
         .char-count { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
+        .char-count.warn { color: #ff9800; }
+        .char-count.over { color: var(--danger); }
+
+        /* Botones */
         .btn {
             font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
             padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer;
+            transition: all 0.15s;
         }
         .btn-primary { background: var(--accent); color: #000; }
-        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; }
+        .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
+        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; transform: none; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
         .btn-sm { font-size: 0.72rem; padding: 5px 12px; }
 
-        .preview-media {
-            margin-top: 8px;
-            background: var(--bg);
-            border-radius: 12px;
-            padding: 8px;
-            position: relative;
-        }
-        .preview-media img, .preview-media video {
-            max-width: 100%;
-            max-height: 150px;
-            border-radius: 8px;
-        }
-        .remove-media {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(0,0,0,0.7);
-            border: none;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
+        /* Status */
         .status-bar {
             padding: 7px 18px; font-family: var(--mono); font-size: 0.68rem;
             color: var(--muted); border-bottom: 1px solid var(--border);
@@ -154,16 +201,18 @@
         .spinner {
             display: inline-block; width: 9px; height: 9px;
             border: 2px solid var(--border); border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.7s linear infinite;
+            border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Posts */
         .post {
             padding: 14px 18px; border-bottom: 1px solid var(--border);
-            display: flex; gap: 11px;
+            display: flex; gap: 11px; transition: background 0.1s;
             animation: fadeIn 0.25s ease;
         }
         .post:hover { background: rgba(255,255,255,0.015); }
+        .post.is-repost { border-left: 2px solid var(--repost); padding-left: 16px; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; } }
 
         .post-avatar {
@@ -173,6 +222,10 @@
             cursor: pointer;
         }
         .post-body { flex: 1; min-width: 0; }
+        .repost-label {
+            font-family: var(--mono); font-size: 0.62rem; color: var(--repost);
+            margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+        }
         .post-meta {
             display: flex; align-items: baseline; gap: 7px;
             margin-bottom: 4px; flex-wrap: wrap;
@@ -182,25 +235,75 @@
         .post-pubkey { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
         .post-time { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); margin-left: auto; }
         .post-content { font-size: 0.88rem; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
-        .post-media {
-            margin-top: 10px;
+
+        /* Media en post */
+        .post-media { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .post-media img {
+            max-width: 100%; max-height: 400px; object-fit: contain;
+            border-radius: 10px; border: 1px solid var(--border);
+            display: block; cursor: pointer;
+            transition: opacity 0.15s;
         }
-        .post-media img, .post-media video {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 12px;
+        .post-media img:hover { opacity: 0.9; }
+        .post-media video {
+            max-width: 100%; max-height: 360px;
+            border-radius: 10px; border: 1px solid var(--border);
+            display: block; background: #000;
         }
+        /* Grid de múltiples imágenes */
+        .media-grid {
+            display: grid; gap: 4px;
+            border-radius: 10px; overflow: hidden;
+        }
+        .media-grid.count-2 { grid-template-columns: 1fr 1fr; }
+        .media-grid.count-3 { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+        .media-grid.count-3 .media-grid-item:first-child { grid-column: 1/-1; }
+        .media-grid.count-4 { grid-template-columns: 1fr 1fr; }
+        .media-grid-item { overflow: hidden; max-height: 220px; }
+        .media-grid-item img, .media-grid-item video {
+            width: 100%; height: 100%; object-fit: cover;
+            border-radius: 0; border: none; max-height: none;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.92); z-index: 300;
+            align-items: center; justify-content: center;
+        }
+        .lightbox.open { display: flex; }
+        .lightbox img {
+            max-width: 92vw; max-height: 92vh;
+            object-fit: contain; border-radius: 6px;
+        }
+        .lightbox-close {
+            position: absolute; top: 18px; right: 22px;
+            background: none; border: none; color: #fff;
+            font-size: 1.5rem; cursor: pointer; opacity: 0.7;
+        }
+        .lightbox-close:hover { opacity: 1; }
+
+        /* Acciones */
         .post-actions { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
         .action-btn {
             background: none; border: none; cursor: pointer;
             display: flex; align-items: center; gap: 5px;
             font-family: var(--sans); font-size: 0.72rem; color: var(--muted);
-            padding: 5px 10px; border-radius: 20px;
+            padding: 5px 10px; border-radius: 20px; transition: all 0.15s;
         }
         .action-btn:hover { background: rgba(255,255,255,0.05); }
+        .action-btn.like-btn:hover  { color: var(--like); }
         .action-btn.like-btn.liked  { color: var(--like); }
+        .action-btn.like-btn.liked .action-icon { transform: scale(1.2); }
+        .action-btn.repost-btn:hover  { color: var(--repost); }
         .action-btn.repost-btn.reposted { color: var(--repost); }
+        .action-btn.follow-btn:hover  { color: var(--accent); }
+        .action-btn.follow-btn.following { color: var(--green); }
+        .action-btn.follow-btn.following:hover { color: var(--danger); }
+        .action-icon { font-size: 0.9rem; transition: transform 0.15s; }
+        .action-count { font-family: var(--mono); font-size: 0.65rem; min-width: 12px; }
 
+        /* Modal likes */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.7); z-index: 200;
@@ -212,21 +315,85 @@
             border-radius: 14px; width: 340px; max-height: 480px;
             display: flex; flex-direction: column; overflow: hidden;
         }
-        .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+        .modal-header {
+            padding: 16px 18px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            font-family: var(--mono); font-size: 0.75rem; color: var(--text);
+        }
+        .modal-close {
+            background: none; border: none; color: var(--muted);
+            font-size: 1.1rem; cursor: pointer; line-height: 1;
+        }
+        .modal-close:hover { color: var(--text); }
         .modal-body { overflow-y: auto; padding: 8px 0; }
-        .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; }
+        .modal-user {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 18px; transition: background 0.1s;
+        }
+        .modal-user:hover { background: rgba(255,255,255,0.03); }
+        .modal-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; flex-shrink: 0;
+        }
+        .modal-name { font-size: 0.82rem; font-weight: 600; }
+        .modal-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
 
-        .sidebar-right { padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); }
-        .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
-        .widget-title { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); margin-bottom: 10px; }
+        /* Sidebar derecha */
+        .sidebar-right {
+            padding: 14px; overflow-y: auto;
+            max-height: calc(100vh - 54px);
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .widget {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px;
+        }
+        .widget-title {
+            font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
+        }
         .auth-input {
             background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
             color: var(--text); font-family: var(--mono); font-size: 0.7rem;
-            padding: 9px 11px; width: 100%; margin-bottom: 7px;
+            padding: 9px 11px; width: 100%; outline: none; transition: border-color 0.2s;
+            margin-bottom: 7px;
         }
-        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; }
+        .auth-input:focus { border-color: var(--accent); }
+        .auth-input::placeholder { color: var(--muted); }
 
+        /* Info widget sobre hosting */
+        .info-note {
+            font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
+            line-height: 1.6; margin-top: 8px; padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+        .info-note a { color: var(--accent); text-decoration: none; }
+        .info-note a:hover { text-decoration: underline; }
+
+        .follow-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 0; border-bottom: 1px solid var(--border);
+        }
+        .follow-item:last-child { border-bottom: none; }
+        .follow-avatar {
+            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--mono); font-size: 0.55rem; font-weight: 600; color: #000;
+        }
+        .follow-info { flex: 1; min-width: 0; }
+        .follow-name { font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .follow-key { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
+        .unfollow-btn {
+            background: none; border: 1px solid var(--border); border-radius: 10px;
+            color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer;
+            transition: all 0.15s; font-family: var(--sans);
+        }
+        .unfollow-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; font-family: var(--mono); line-height: 1.7; }
+
+        /* Avatar gradients */
         .av0 { background: linear-gradient(135deg,#00d4ff,#0066ff); }
         .av1 { background: linear-gradient(135deg,#ff3cac,#ff6b35); }
         .av2 { background: linear-gradient(135deg,#00e676,#00bcd4); }
@@ -237,12 +404,14 @@
         @media (max-width: 860px) {
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
+            .feed-col { max-height: none; border-right: none; }
         }
     </style>
 </head>
 <body>
 <div class="app">
 
+    <!-- Topbar -->
     <header class="topbar">
         <div class="logo">🔥 Anti<span>X</span></div>
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
@@ -251,39 +420,53 @@
         </div>
     </header>
 
+    <!-- Sidebar izquierda -->
     <aside class="sidebar-left">
-        <button class="nav-btn active" id="navGlobal" onclick="switchTab('global')"><span class="icon">🌐</span> Global</button>
-        <button class="nav-btn" id="navSiguiendo" onclick="switchTab('siguiendo')"><span class="icon">👥</span> Siguiendo</button>
+        <button class="nav-btn active" id="navGlobal" onclick="switchTab('global')">
+            <span class="icon">🌐</span> Global
+        </button>
+        <button class="nav-btn" id="navSiguiendo" onclick="switchTab('siguiendo')">
+            <span class="icon">👥</span> Siguiendo
+        </button>
         <div class="sidebar-divider">Tu cuenta</div>
         <div class="side-key" id="sideKey">Sin conectar</div>
     </aside>
 
+    <!-- Feed -->
     <main class="feed-col">
         <div class="feed-header">
             <div class="feed-tabs">
-                <button class="feed-tab active" id="tabGlobal" onclick="switchTab('global')">Global</button>
-                <button class="feed-tab" id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
+                <button class="feed-tab active" id="tabGlobal"     onclick="switchTab('global')">Global</button>
+                <button class="feed-tab"         id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
             </div>
             <span id="postCount" style="font-family:var(--mono);font-size:0.62rem;color:var(--muted)"></span>
         </div>
 
+        <!-- Composer -->
         <div class="composer" id="composer">
             <div class="composer-avatar" id="myAvatar"></div>
             <div class="composer-body">
                 <textarea id="contenido" rows="3" placeholder="¿Qué estás pensando?…" maxlength="280"></textarea>
-                <div class="composer-footer">
-                    <div class="media-buttons">
-                        <button class="media-btn" id="btnImagen" title="Subir imagen">📷 Imagen</button>
-                        <button class="media-btn" id="btnVideo" title="Subir video">🎬 Video</button>
-                    </div>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <span class="char-count" id="charCount">280</span>
-                        <button class="btn btn-primary btn-sm" id="btnPublicar" disabled>Publicar</button>
-                    </div>
+
+                <!-- Strip de previews de medios pendientes -->
+                <div class="media-preview-strip" id="mediaPreviewStrip"></div>
+
+                <!-- Toolbar: subir imagen / video -->
+                <div class="composer-toolbar">
+                    <button class="toolbar-btn" id="btnAddImage" title="Añadir imagen (jpg, png, gif, webp)">
+                        🖼️ Imagen
+                        <input type="file" id="fileImage" accept="image/*" multiple>
+                    </button>
+                    <button class="toolbar-btn" id="btnAddVideo" title="Añadir video (mp4, webm, mov)">
+                        🎬 Video
+                        <input type="file" id="fileVideo" accept="video/*" multiple>
+                    </button>
+                    <span class="upload-progress" id="uploadProgress"></span>
                 </div>
-                <div id="previewContainer" style="display:none;" class="preview-media">
-                    <button class="remove-media" id="removeMedia">✕</button>
-                    <div id="previewContent"></div>
+
+                <div class="composer-footer">
+                    <span class="char-count" id="charCount">280</span>
+                    <button class="btn btn-primary btn-sm" id="btnPublicar" disabled>Publicar</button>
                 </div>
             </div>
         </div>
@@ -292,25 +475,55 @@
         <div id="feed"></div>
     </main>
 
+    <!-- Sidebar derecha -->
     <aside class="sidebar-right">
         <div class="widget">
             <div class="widget-title">🔑 Cuenta</div>
-            <input class="auth-input" type="password" id="claveInput" placeholder="Clave privada (vacío = nueva)">
+            <input class="auth-input" type="password" id="claveInput" placeholder="Clave privada hex (vacío = nueva)">
             <button class="btn btn-primary" style="width:100%" id="btnConectar">Conectar</button>
+        </div>
+
+        <div class="widget">
+            <div class="widget-title">📤 Subida de medios</div>
+            <div class="info-note">
+                Las imágenes y videos se suben a
+                <a href="https://nostr.build" target="_blank">nostr.build</a>,
+                un hosting gratuito para la red Nostr.<br><br>
+                Las URLs se adjuntan automáticamente al post.<br><br>
+                Límites: imágenes hasta <strong>100 MB</strong>,
+                videos hasta <strong>500 MB</strong>.
+            </div>
+        </div>
+
+        <div class="widget" id="widgetFollows" style="display:none">
+            <div class="widget-title">👥 Siguiendo (<span id="followCount">0</span>)</div>
+            <div id="followsList"></div>
         </div>
     </aside>
 </div>
 
+<!-- Modal: quién dio like -->
 <div class="modal-overlay" id="likesModal" onclick="closeLikesModal(event)">
     <div class="modal">
-        <div class="modal-header"><span id="modalTitle">❤️ Likes</span><button class="modal-close" onclick="closeLikesModal()">✕</button></div>
+        <div class="modal-header">
+            <span id="modalTitle">❤️ Likes</span>
+            <button class="modal-close" onclick="closeLikesModal()">✕</button>
+        </div>
         <div class="modal-body" id="modalBody"></div>
     </div>
 </div>
 
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="">
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.js"></script>
 <script>
-// ========== ESTADO ==========
+// ═══════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════
 let privKey    = '';
 let pubKey     = '';
 let follows    = new Set();
@@ -322,25 +535,19 @@ let reposts    = new Map();
 let myReposts  = new Set();
 let currentTab = 'global';
 
-let pendingMedia = null;   // { url, type }
-let pendingMime   = '';
+// Media adjunta al post actual (lista de { localUrl, remoteUrl, type, thumbEl, uploading, error })
+let pendingMedia = [];
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 
-// Servidores Blossom públicos
-const BLOSSOM_SERVERS = [
-    'https://blossom.slothy.win',
-    'https://cdn.hzrd149.com',
-    'https://nostrcheck.me'
-];
-
-// ========== UTILS ==========
+// ═══════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════
 const $ = id => document.getElementById(id);
 
 function setStatus(msg, type='') {
-    const el = $('statusBar');
-    el.innerHTML = msg;
-    el.className = 'status-bar ' + type;
+    $('statusBar').innerHTML = msg;
+    $('statusBar').className = 'status-bar ' + type;
 }
 
 function avClass(pk) { return 'av' + (parseInt(pk.slice(0,4),16) % 6); }
@@ -355,101 +562,22 @@ function displayName(pk) {
 }
 function timeAgo(ts) {
     const d = Math.floor(Date.now()/1000) - ts;
-    if (d < 60) return d+'s';
-    if (d < 3600) return Math.floor(d/60)+'m';
+    if (d < 60)    return d+'s';
+    if (d < 3600)  return Math.floor(d/60)+'m';
     if (d < 86400) return Math.floor(d/3600)+'h';
     return Math.floor(d/86400)+'d';
 }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ========== SUBIR IMAGEN/VIDEO A BLOSSOM ==========
-async function uploadToBlossom(file) {
-    setStatus('<span class="spinner"></span> Subiendo archivo...');
-    
-    // Verificar tamaño (10MB máximo)
-    if (file.size > 10 * 1024 * 1024) {
-        throw new Error('El archivo es muy grande (máx 10MB)');
-    }
-
-    // Verificar tipo
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-        throw new Error('Solo se permiten imágenes o videos');
-    }
-
-    pendingMime = file.type;
-
-    // Intentar subir a cada servidor
-    for (const server of BLOSSOM_SERVERS) {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const res = await fetch(server + '/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                const url = data.url || (server + '/' + data.sha256);
-                setStatus('✅ Archivo subido', 'ok');
-                return url;
-            }
-        } catch(e) {
-            console.log(`Falló ${server}:`, e);
-            continue;
-        }
-    }
-    throw new Error('No se pudo subir a ningún servidor');
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ========== SUBIR ARCHIVO ==========
-async function handleMediaUpload(type) {
-    if (!privKey) {
-        alert('Primero conecta tu cuenta');
-        return;
-    }
+// Detecta URLs de imagen/video en texto
+const IMAGE_RE = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
+const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = type === 'image' ? 'image/*' : 'video/*';
-    
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        try {
-            const url = await uploadToBlossom(file);
-            pendingMedia = { url, type: file.type };
-            
-            // Mostrar preview
-            const previewDiv = $('previewContent');
-            if (file.type.startsWith('image/')) {
-                previewDiv.innerHTML = `<img src="${url}" alt="Preview">`;
-            } else {
-                previewDiv.innerHTML = `<video src="${url}" controls></video>`;
-            }
-            $('previewContainer').style.display = 'block';
-            
-        } catch(err) {
-            alert('Error: ' + err.message);
-            setStatus('❌ ' + err.message, 'err');
-        }
-    };
-    input.click();
-}
-
-$('btnImagen').onclick = () => handleMediaUpload('image');
-$('btnVideo').onclick = () => handleMediaUpload('video');
-
-$('removeMedia').onclick = () => {
-    pendingMedia = null;
-    pendingMime = '';
-    $('previewContainer').style.display = 'none';
-    $('previewContent').innerHTML = '';
-};
-
-// ========== RELAY HELPERS ==========
+// ═══════════════════════════════════
+//  RELAY HELPERS
+// ═══════════════════════════════════
 function openRelay(url, timeout=5000) {
     return new Promise((resolve, reject) => {
         try {
@@ -496,7 +624,182 @@ async function publishEvent(event) {
     return ok;
 }
 
-// ========== PERFILES ==========
+// ═══════════════════════════════════
+//  UPLOAD A NOSTR.BUILD (NIP-96)
+// ═══════════════════════════════════
+async function uploadToNostrBuild(file) {
+    const formData = new FormData();
+    formData.append('fileToUpload', file);
+
+    const res = await fetch('https://nostr.build/api/v2/upload/files', {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+
+    // nostr.build NIP-96 devuelve { status, nip94_event }
+    // La URL está en los tags del evento NIP-94
+    if (json?.nip94_event?.tags) {
+        const urlTag = json.nip94_event.tags.find(t => t[0] === 'url');
+        if (urlTag?.[1]) return urlTag[1];
+    }
+    // Fallback: campo url directo si lo hay
+    if (json?.url) return json.url;
+    // Fallback legacy
+    if (json?.data?.[0]?.url) return json.data[0].url;
+
+    throw new Error('No se pudo obtener URL del servidor');
+}
+
+// ═══════════════════════════════════
+//  GESTIÓN DE MEDIA PENDIENTE
+// ═══════════════════════════════════
+function updatePublishBtn() {
+    const text = $('contenido').value.trim();
+    const allUploaded = pendingMedia.length === 0 || pendingMedia.every(m => m.remoteUrl && !m.error);
+    const anyUploading = pendingMedia.some(m => m.uploading);
+    $('btnPublicar').disabled = (!text && pendingMedia.length === 0) || anyUploading || !allUploaded;
+}
+
+function setUploadProgress(msg, type='') {
+    const el = $('uploadProgress');
+    el.textContent = msg;
+    el.className = 'upload-progress ' + type;
+}
+
+function renderMediaPreviews() {
+    const strip = $('mediaPreviewStrip');
+    strip.innerHTML = '';
+    pendingMedia.forEach((m, i) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'media-thumb' + (m.remoteUrl ? ' done' : '') + (m.error ? ' error' : '');
+
+        if (m.type === 'video') {
+            const vid = document.createElement('video');
+            vid.src = m.localUrl;
+            vid.muted = true;
+            thumb.appendChild(vid);
+        } else {
+            const img = document.createElement('img');
+            img.src = m.localUrl;
+            thumb.appendChild(img);
+        }
+
+        // Overlay de carga
+        if (!m.remoteUrl && !m.error) {
+            const ov = document.createElement('div');
+            ov.className = 'upload-overlay';
+            ov.innerHTML = `<span class="spinner"></span><span>subiendo…</span>`;
+            thumb.appendChild(ov);
+        }
+        if (m.error) {
+            const ov = document.createElement('div');
+            ov.className = 'upload-overlay';
+            ov.innerHTML = `<span style="color:var(--danger);font-size:1rem;">⚠️</span><span style="color:var(--danger)">error</span>`;
+            thumb.appendChild(ov);
+        }
+
+        // Botón eliminar
+        const rm = document.createElement('button');
+        rm.className = 'remove-media';
+        rm.innerHTML = '✕';
+        rm.title = 'Quitar';
+        rm.onclick = () => removeMedia(i);
+        thumb.appendChild(rm);
+
+        strip.appendChild(thumb);
+    });
+    updatePublishBtn();
+}
+
+function removeMedia(index) {
+    URL.revokeObjectURL(pendingMedia[index]?.localUrl);
+    pendingMedia.splice(index, 1);
+    renderMediaPreviews();
+    if (!pendingMedia.length) setUploadProgress('');
+}
+
+async function handleFiles(files) {
+    const MAX_IMAGE = 100 * 1024 * 1024; // 100 MB
+    const MAX_VIDEO = 500 * 1024 * 1024; // 500 MB
+
+    for (const file of files) {
+        const isVideo = file.type.startsWith('video/');
+        const limit = isVideo ? MAX_VIDEO : MAX_IMAGE;
+
+        if (file.size > limit) {
+            alert(`"${file.name}" supera el límite (${isVideo?'500':'100'} MB).`);
+            continue;
+        }
+
+        const localUrl = URL.createObjectURL(file);
+        const entry = { localUrl, remoteUrl: null, type: isVideo ? 'video' : 'image', uploading: true, error: false };
+        const index = pendingMedia.length;
+        pendingMedia.push(entry);
+        renderMediaPreviews();
+
+        const total = pendingMedia.filter(m => m.uploading).length;
+        setUploadProgress(`Subiendo ${total} archivo${total>1?'s':''}…`, 'uploading');
+
+        try {
+            const url = await uploadToNostrBuild(file);
+            entry.remoteUrl = url;
+            entry.uploading = false;
+        } catch (err) {
+            entry.error = true;
+            entry.uploading = false;
+            console.error('Upload error:', err);
+            setUploadProgress(`Error al subir "${file.name}"`, 'error');
+        }
+
+        renderMediaPreviews();
+        const stillUploading = pendingMedia.some(m => m.uploading);
+        if (!stillUploading) {
+            const ok = pendingMedia.filter(m => m.remoteUrl).length;
+            const fail = pendingMedia.filter(m => m.error).length;
+            if (fail === 0) {
+                setUploadProgress(`✓ ${ok} archivo${ok>1?'s':''} listo${ok>1?'s':''}`, '');
+            } else {
+                setUploadProgress(`${ok} ok · ${fail} con error`, 'error');
+            }
+        }
+    }
+}
+
+// Conectar inputs de archivo
+$('btnAddImage').onclick = () => $('fileImage').click();
+$('btnAddVideo').onclick = () => $('fileVideo').click();
+
+$('fileImage').onchange = e => { handleFiles([...e.target.files]); e.target.value=''; };
+$('fileVideo').onchange = e => { handleFiles([...e.target.files]); e.target.value=''; };
+
+// Drag & drop sobre el composer
+const composerEl = $('composer');
+composerEl.addEventListener('dragover', e => { e.preventDefault(); composerEl.style.outline = '2px dashed var(--accent)'; });
+composerEl.addEventListener('dragleave', ()  => { composerEl.style.outline = ''; });
+composerEl.addEventListener('drop', e => {
+    e.preventDefault();
+    composerEl.style.outline = '';
+    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+    if (files.length) handleFiles(files);
+});
+
+// Pegar imágenes desde portapapeles
+document.addEventListener('paste', e => {
+    if (!privKey) return;
+    const items = [...(e.clipboardData?.items || [])];
+    const imageFiles = items.filter(i => i.kind==='file' && (i.type.startsWith('image/') || i.type.startsWith('video/')));
+    if (imageFiles.length) {
+        e.preventDefault();
+        handleFiles(imageFiles.map(i => i.getAsFile()).filter(Boolean));
+    }
+});
+
+// ═══════════════════════════════════
+//  PERFILES
+// ═══════════════════════════════════
 async function loadProfiles(pubkeys) {
     const missing = [...new Set(pubkeys)].filter(pk => !profiles.has(pk));
     if (!missing.length) return;
@@ -510,7 +813,9 @@ async function loadProfiles(pubkeys) {
     ));
 }
 
-// ========== FOLLOWS ==========
+// ═══════════════════════════════════
+//  FOLLOWS
+// ═══════════════════════════════════
 async function loadFollows() {
     if (!pubKey) return;
     await Promise.all(RELAYS.map(url =>
@@ -519,6 +824,7 @@ async function loadFollows() {
                 ev.tags.filter(t=>t[0]==='p').forEach(t=>follows.add(t[1]));
         }, 4000)
     ));
+    renderFollowsList();
 }
 
 async function publishFollows() {
@@ -533,16 +839,38 @@ async function followUser(pk) {
     if (!privKey || follows.has(pk) || pk===pubKey) return;
     follows.add(pk);
     await publishFollows();
+    renderFollowsList();
     renderFeed();
 }
+
 async function unfollowUser(pk) {
     if (!privKey) return;
     follows.delete(pk);
     await publishFollows();
+    renderFollowsList();
     renderFeed();
 }
 
-// ========== LIKES ==========
+function renderFollowsList() {
+    $('followCount').textContent = follows.size;
+    $('widgetFollows').style.display = follows.size ? 'block' : 'none';
+    $('followsList').innerHTML = [...follows].map(pk => {
+        const p  = profiles.get(pk);
+        const nm = p?.name ? esc(p.name) : pk.slice(0,10)+'…';
+        return `<div class="follow-item">
+            <div class="follow-avatar ${avClass(pk)}">${avInitials(pk)}</div>
+            <div class="follow-info">
+                <div class="follow-name">${nm}</div>
+                <div class="follow-key">${pk.slice(0,10)}…</div>
+            </div>
+            <button class="unfollow-btn" onclick="unfollowUser('${pk}')">Dejar</button>
+        </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════
+//  LIKES (kind:7)
+// ═══════════════════════════════════
 async function loadLikes(postIds) {
     if (!postIds.length) return;
     const filter = { kinds:[7], '#e': postIds, limit: 500 };
@@ -561,21 +889,21 @@ async function loadLikes(postIds) {
 
 async function likePost(postId) {
     if (!privKey || myLikes.has(postId)) return;
+    const nt = window.NostrTools;
     const post = feedPosts.get(postId);
     const tags = [['e', postId]];
     if (post) tags.push(['p', post.pubkey]);
-    const ev = window.NostrTools.finishEvent({
-        kind:7, created_at: Math.floor(Date.now()/1000),
-        tags, content: '+'
-    }, privKey);
+    const ev = nt.finishEvent({ kind:7, created_at: Math.floor(Date.now()/1000), tags, content: '+' }, privKey);
     myLikes.add(postId);
     if (!likes.has(postId)) likes.set(postId, new Set());
     likes.get(postId).add(pubKey);
-    await publishEvent(ev);
     updatePostActions(postId);
+    await publishEvent(ev);
 }
 
-// ========== REPOSTS ==========
+// ═══════════════════════════════════
+//  REPOSTS (kind:6)
+// ═══════════════════════════════════
 async function loadReposts(postIds) {
     if (!postIds.length) return;
     const filter = { kinds:[6], '#e': postIds, limit: 300 };
@@ -594,101 +922,178 @@ async function loadReposts(postIds) {
 
 async function repostPost(postId) {
     if (!privKey || myReposts.has(postId)) return;
+    const nt = window.NostrTools;
     const post = feedPosts.get(postId);
     const tags = [['e', postId]];
     if (post) tags.push(['p', post.pubkey]);
-    const ev = window.NostrTools.finishEvent({
+    const ev = nt.finishEvent({
         kind:6, created_at: Math.floor(Date.now()/1000),
         tags, content: post ? JSON.stringify(post) : ''
     }, privKey);
     myReposts.add(postId);
     if (!reposts.has(postId)) reposts.set(postId, new Set());
     reposts.get(postId).add(pubKey);
-    await publishEvent(ev);
     updatePostActions(postId);
+    await publishEvent(ev);
 }
 
 function updatePostActions(postId) {
     const el = document.querySelector(`[data-post-id="${postId}"] .post-actions`);
-    if (el) el.innerHTML = buildActions(feedPosts.get(postId));
+    if (!el) return;
+    const post = feedPosts.get(postId);
+    if (!post) return;
+    el.innerHTML = buildActions(post);
 }
 
-// ========== MODAL ==========
+// ═══════════════════════════════════
+//  MODAL: QUIÉN LIKEÓ
+// ═══════════════════════════════════
 async function showLikes(postId) {
     const modal = $('likesModal');
     const body  = $('modalBody');
     const title = $('modalTitle');
     const likers = [...(likes.get(postId) || [])];
     title.textContent = `❤️ ${likers.length} Like${likers.length!==1?'s':''}`;
-    body.innerHTML = `<div style="padding:14px;"><span class="spinner"></span> Cargando…</div>`;
+    body.innerHTML = `<div style="padding:14px;font-family:var(--mono);font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Cargando perfiles…</div>`;
     modal.classList.add('open');
     await loadProfiles(likers);
-    if (!likers.length) {
-        body.innerHTML = `<div class="empty-state">Sin likes aún</div>`;
-        return;
-    }
-    body.innerHTML = likers.map(pk => `<div class="modal-user"><div class="modal-avatar ${avClass(pk)}">${avInitials(pk)}</div><div><div class="modal-name">${displayName(pk)}</div><div class="modal-key">${pk.slice(0,14)}…</div></div></div>`).join('');
-}
-function closeLikesModal(e) { if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open'); }
-
-// ========== RENDER ==========
-function getMediaHtml(tags) {
-    if (!tags) return '';
-    for (const tag of tags) {
-        if (tag[0] === 'imeta' && tag[1] === 'url') {
-            const url = tag[2];
-            if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-                return `<div class="post-media"><img src="${url}" loading="lazy"></div>`;
-            } else if (url.match(/\.(mp4|webm|mov)$/i)) {
-                return `<div class="post-media"><video src="${url}" controls></video></div>`;
-            }
-        }
-    }
-    // También buscar URL directa en el contenido (fallback)
-    if (tags && tags[0]?.startsWith('http') && (tags[0].match(/\.(jpg|png|gif|mp4)/i))) {
-        const url = tags[0];
-        if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-            return `<div class="post-media"><img src="${url}" loading="lazy"></div>`;
-        } else if (url.match(/\.(mp4|webm|mov)$/i)) {
-            return `<div class="post-media"><video src="${url}" controls></video></div>`;
-        }
-    }
-    return '';
+    if (!likers.length) { body.innerHTML = `<div class="empty-state">Sin likes aún</div>`; return; }
+    body.innerHTML = likers.map(pk => {
+        const nm = profiles.get(pk)?.name ? esc(profiles.get(pk).name) : pk.slice(0,12)+'…';
+        return `<div class="modal-user">
+            <div class="modal-avatar ${avClass(pk)}">${avInitials(pk)}</div>
+            <div><div class="modal-name">${nm}</div><div class="modal-key">${pk.slice(0,14)}…</div></div>
+        </div>`;
+    }).join('');
 }
 
+function closeLikesModal(e) {
+    if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open');
+}
+
+// ═══════════════════════════════════
+//  LIGHTBOX
+// ═══════════════════════════════════
+function openLightbox(src) {
+    $('lightboxImg').src = src;
+    $('lightbox').classList.add('open');
+}
+function closeLightbox() {
+    $('lightbox').classList.remove('open');
+    $('lightboxImg').src = '';
+}
+document.addEventListener('keydown', e => { if (e.key==='Escape') { closeLightbox(); closeLikesModal(); } });
+
+// ═══════════════════════════════════
+//  RENDERIZADO DE MEDIOS EN POSTS
+// ═══════════════════════════════════
+function extractMediaUrls(text) {
+    const images = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
+    const videos = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
+    // Eliminar duplicados entre imágenes y videos
+    const videoSet = new Set(videos);
+    return {
+        images: images.filter(u => !videoSet.has(u)),
+        videos
+    };
+}
+
+function stripMediaUrls(text) {
+    return text.replace(IMAGE_RE, '').replace(VIDEO_RE, '').trim();
+}
+
+function buildMediaHtml(images, videos) {
+    if (!images.length && !videos.length) return '';
+
+    let html = '<div class="post-media">';
+
+    // Videos primero (uno por uno)
+    videos.forEach(url => {
+        html += `<video src="${esc(url)}" controls preload="metadata" playsinline></video>`;
+    });
+
+    // Imágenes en grid si hay más de una
+    if (images.length === 1) {
+        html += `<img src="${esc(images[0])}" alt="" loading="lazy" onclick="openLightbox('${esc(images[0])}')">`;
+    } else if (images.length > 1) {
+        const count = Math.min(images.length, 4);
+        html += `<div class="media-grid count-${count}">`;
+        images.slice(0, 4).forEach(url => {
+            html += `<div class="media-grid-item">
+                <img src="${esc(url)}" alt="" loading="lazy" onclick="openLightbox('${esc(url)}')">
+            </div>`;
+        });
+        if (images.length > 4) {
+            html += `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);padding:4px 0">+${images.length-4} más</div>`;
+        }
+        html += '</div>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+// ═══════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════
 function buildActions(post) {
     const id = post.id;
-    const isMe = post.pubkey === pubKey;
+    const isMe        = post.pubkey === pubKey;
     const isFollowing = follows.has(post.pubkey);
-    const liked = myLikes.has(id);
-    const reposted = myReposts.has(id);
-    const likeCount = likes.get(id)?.size || 0;
+    const liked       = myLikes.has(id);
+    const reposted    = myReposts.has(id);
+    const likeCount   = likes.get(id)?.size || 0;
     const repostCount = reposts.get(id)?.size || 0;
 
-    const likeBtn = `<button class="action-btn like-btn ${liked?'liked':''}" onclick="likePost('${id}')">${liked?'❤️':'🤍'}${likeCount?likeCount:''}</button>`;
-    const likersBtn = likeCount ? `<button class="action-btn" onclick="showLikes('${id}')" style="color:var(--like);">Ver likes</button>` : '';
-    const repostBtn = `<button class="action-btn repost-btn ${reposted?'reposted':''}" onclick="repostPost('${id}')">🔁${repostCount?repostCount:''}</button>`;
+    const likeBtn = `
+        <button class="action-btn like-btn ${liked?'liked':''}" onclick="likePost('${id}')">
+            <span class="action-icon">${liked?'❤️':'🤍'}</span>
+            <span class="action-count" style="color:${likeCount?'var(--like)':''}">${likeCount||''}</span>
+        </button>`;
+
+    const likersBtn = likeCount ? `
+        <button class="action-btn" onclick="showLikes('${id}')" style="color:var(--like);font-size:0.65rem;padding:5px 6px;">Ver likes</button>` : '';
+
+    const repostBtn = `
+        <button class="action-btn repost-btn ${reposted?'reposted':''}" onclick="repostPost('${id}')">
+            <span class="action-icon">🔁</span>
+            <span class="action-count" style="color:${repostCount?'var(--repost)':''}">${repostCount||''}</span>
+        </button>`;
+
     let followBtn = '';
     if (privKey && !isMe) {
-        followBtn = isFollowing 
+        followBtn = isFollowing
             ? `<button class="action-btn follow-btn following" onclick="unfollowUser('${post.pubkey}')">✓ Siguiendo</button>`
             : `<button class="action-btn follow-btn" onclick="followUser('${post.pubkey}')">+ Seguir</button>`;
     }
+
     return likeBtn + likersBtn + repostBtn + followBtn;
 }
 
-function renderPost(post) {
-    const id = post.id;
-    const mediaHtml = getMediaHtml(post.tags);
-    return `<div class="post" data-post-id="${id}">
-        <div class="post-avatar ${avClass(post.pubkey)}">${avInitials(post.pubkey)}</div>
+function renderPost(post, isRepostOf) {
+    const id      = post.id;
+    const ac      = avClass(post.pubkey);
+    const initials= avInitials(post.pubkey);
+    const name    = esc(displayName(post.pubkey));
+    const ago     = timeAgo(post.created_at);
+
+    const { images, videos } = extractMediaUrls(post.content);
+    const textContent = esc(stripMediaUrls(post.content));
+    const mediaHtml   = buildMediaHtml(images, videos);
+
+    const repostLabel = isRepostOf
+        ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
+
+    return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
+        <div class="post-avatar ${ac}" title="${post.pubkey}">${initials}</div>
         <div class="post-body">
+            ${repostLabel}
             <div class="post-meta">
-                <span class="post-name">${esc(displayName(post.pubkey))}</span>
+                <span class="post-name">${name}</span>
                 <span class="post-pubkey">${post.pubkey.slice(0,8)}…</span>
-                <span class="post-time">${timeAgo(post.created_at)}</span>
+                <span class="post-time">${ago}</span>
             </div>
-            <div class="post-content">${esc(post.content)}</div>
+            <div class="post-content">${textContent}</div>
             ${mediaHtml}
             <div class="post-actions">${buildActions(post)}</div>
         </div>
@@ -703,66 +1108,66 @@ function renderFeed() {
     posts.sort((a,b) => b.created_at - a.created_at);
     $('postCount').textContent = posts.length + ' posts';
     if (!posts.length) {
-        $('feed').innerHTML = `<div class="empty-state">${currentTab==='siguiendo' ? 'Sin posts de tus seguidos' : 'Sin posts'}</div>`;
+        $('feed').innerHTML = `<div class="empty-state">${
+            currentTab==='siguiendo' ? 'Sin posts de tus seguidos aún.<br>Cambia al feed Global.' : 'Sin posts.'
+        }</div>`;
         return;
     }
     $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
 }
 
-// ========== CARGA FEED ==========
+// ═══════════════════════════════════
+//  CARGA DE FEED
+// ═══════════════════════════════════
 async function loadFeed() {
     setStatus('<span class="spinner"></span> Cargando feed…');
     feedPosts.clear();
+
     const filter = currentTab==='global'
         ? { kinds:[1], limit:40 }
         : { kinds:[1], authors:[...(pubKey?[pubKey]:[]), ...follows], limit:60 };
-    await Promise.all(RELAYS.map(url => queryRelay(url, [filter], ev => { if (ev.kind===1) feedPosts.set(ev.id, ev); }, 7000)));
+
+    if (currentTab==='siguiendo' && !follows.size && !pubKey) {
+        setStatus('Sigue a alguien primero', '');
+        $('feed').innerHTML = `<div class="empty-state">Aún no sigues a nadie.<br>Cambia al feed Global para empezar.</div>`;
+        return;
+    }
+
+    await Promise.all(RELAYS.map(url =>
+        queryRelay(url, [filter], ev => {
+            if (ev.kind===1) feedPosts.set(ev.id, ev);
+        }, 7000)
+    ));
+
     const postIds = [...feedPosts.keys()];
     const authors = [...new Set([...feedPosts.values()].map(p=>p.pubkey))];
-    await Promise.all([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
+
+    await Promise.all([
+        loadProfiles(authors),
+        loadLikes(postIds),
+        loadReposts(postIds)
+    ]);
+
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
 }
 
-// ========== PUBLICAR ==========
-$('btnPublicar').onclick = async () => {
-    if (!privKey) return;
-    const text = $('contenido').value.trim();
-    if (!text && !pendingMedia) return;
-    $('btnPublicar').disabled = true;
-    setStatus('<span class="spinner"></span> Publicando…');
-    try {
-        const tags = [];
-        if (pendingMedia) {
-            tags.push(['imeta', 'url', pendingMedia.url]);
-            tags.push(['m', pendingMime]);
-        }
-        const ev = window.NostrTools.finishEvent({
-            kind:1, created_at: Math.floor(Date.now()/1000),
-            tags: tags, content: text || ''
-        }, privKey);
-        await publishEvent(ev);
-        $('contenido').value = '';
-        $('charCount').textContent = '280';
-        pendingMedia = null;
-        $('previewContainer').style.display = 'none';
-        $('previewContent').innerHTML = '';
-        await loadFeed();
-        setStatus('✅ Publicado', 'ok');
-    } catch(err) {
-        setStatus('❌ '+err.message, 'err');
-    } finally {
-        $('btnPublicar').disabled = false;
-    }
-};
+// ═══════════════════════════════════
+//  TABS
+// ═══════════════════════════════════
+function switchTab(tab) {
+    currentTab = tab;
+    ['global','siguiendo'].forEach(t => {
+        const cap = t[0].toUpperCase() + t.slice(1);
+        $('tab'+cap)?.classList.toggle('active', t===tab);
+        $('nav'+cap)?.classList.toggle('active', t===tab);
+    });
+    loadFeed();
+}
 
-$('contenido').oninput = function() {
-    const left = 280 - this.value.length;
-    $('charCount').textContent = left;
-    $('btnPublicar').disabled = !this.value.trim() && !pendingMedia;
-};
-
-// ========== AUTH ==========
+// ═══════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════
 $('btnConectar').onclick = async () => {
     const nt = window.NostrTools;
     if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
@@ -772,42 +1177,90 @@ $('btnConectar').onclick = async () => {
         const input = $('claveInput').value.trim();
         if (input) {
             privKey = input;
-            pubKey = nt.getPublicKey(privKey);
+            pubKey  = nt.getPublicKey(privKey);
+            setStatus('✅ Conectado','ok');
         } else {
             privKey = nt.generatePrivateKey();
-            pubKey = nt.getPublicKey(privKey);
+            pubKey  = nt.getPublicKey(privKey);
             $('claveInput').value = privKey;
-            alert('✅ CUENTA CREADA\n\nGuarda esta clave:\n' + privKey);
+            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
+            setStatus('✅ Cuenta nueva','ok');
         }
-        $('topPubkey').textContent = pubKey.slice(0,10)+'…';
+        const short = pubKey.slice(0,10)+'…';
+        $('topPubkey').textContent = short;
         $('topPubkey').style.display = 'block';
-        $('sideKey').textContent = pubKey;
+        $('topPubkey').onclick = () => {
+            navigator.clipboard.writeText(pubKey).then(() => {
+                $('topPubkey').textContent = '¡Copiado!';
+                setTimeout(() => $('topPubkey').textContent = short, 1500);
+            });
+        };
+        $('sideKey').textContent    = pubKey;
         $('composer').style.display = 'flex';
-        $('myAvatar').className = 'composer-avatar ' + avClass(pubKey);
-        $('myAvatar').textContent = pubKey.slice(0,2).toUpperCase();
+        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
+        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
+
         await loadFollows();
         await loadFeed();
-        setStatus('✅ Conectado','ok');
     } catch(err) {
-        setStatus('❌ '+err.message,'err');
+        setStatus('❌ ' + err.message,'err');
     } finally {
         $('btnConectar').disabled = false;
     }
 };
 
+// ═══════════════════════════════════
+//  PUBLICAR
+// ═══════════════════════════════════
+$('contenido').oninput = function() {
+    const left = 280 - this.value.length;
+    const cc = $('charCount');
+    cc.textContent = left;
+    cc.className = left < 20 ? 'char-count over' : left < 50 ? 'char-count warn' : 'char-count';
+    updatePublishBtn();
+};
+
+$('btnPublicar').onclick = async () => {
+    if (!privKey) return;
+    let text = $('contenido').value.trim();
+
+    // Agregar URLs de medios al contenido (convención Nostr: URLs al final, una por línea)
+    const mediaUrls = pendingMedia.filter(m => m.remoteUrl).map(m => m.remoteUrl);
+    if (mediaUrls.length) {
+        text = (text ? text + '\n\n' : '') + mediaUrls.join('\n');
+    }
+
+    if (!text) return;
+
+    $('btnPublicar').disabled = true;
+    setStatus('<span class="spinner"></span> Publicando…');
+    try {
+        const ev = window.NostrTools.finishEvent({
+            kind:1, created_at: Math.floor(Date.now()/1000),
+            tags:[], content: text
+        }, privKey);
+        const ok = await publishEvent(ev);
+        $('contenido').value = '';
+        $('charCount').textContent = '280';
+        // Limpiar medios
+        pendingMedia.forEach(m => URL.revokeObjectURL(m.localUrl));
+        pendingMedia = [];
+        renderMediaPreviews();
+        setUploadProgress('');
+
+        feedPosts.set(ev.id, ev);
+        renderFeed();
+        setStatus(`✅ Publicado en ${ok}/${RELAYS.length} relays`, 'ok');
+    } catch(err) {
+        setStatus('❌ '+err.message,'err');
+    } finally {
+        $('btnPublicar').disabled = false;
+    }
+};
+
 $('btnRefresh').onclick = loadFeed;
 
-function switchTab(tab) {
-    currentTab = tab;
-    ['global','siguiendo'].forEach(t => {
-        const cap = t[0].toUpperCase() + t.slice(1);
-        $(`tab${cap}`)?.classList.toggle('active', t===tab);
-        $(`nav${cap}`)?.classList.toggle('active', t===tab);
-    });
-    loadFeed();
-}
-
-// Inicializar
+// Arranque
 loadFeed();
 </script>
 </body>
