@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AntiX · Búsqueda Social</title>
+    <title>AntiX · Búsqueda Global</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -45,11 +45,12 @@
         }
         .logo { font-family: var(--mono); font-weight: 600; font-size: 1.05rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
         .logo span { color: var(--accent2); }
-        
-        /* NUEVA BARRA DE BÚSQUEDA (estilo X) */
+        .logo img { height: 34px; width: 34px; border-radius: 50%; object-fit: cover; }
+
+        /* BARRA DE BÚSQUEDA NUEVA */
         .search-area { 
             flex: 1; 
-            max-width: 320px; 
+            max-width: 360px; 
             position: relative;
             margin-left: 16px;
         }
@@ -58,7 +59,7 @@
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 40px;
-            padding: 8px 12px 8px 36px;
+            padding: 8px 12px 8px 38px;
             font-family: var(--sans);
             font-size: 0.85rem;
             color: var(--text);
@@ -71,7 +72,7 @@
         }
         .search-icon {
             position: absolute;
-            left: 12px;
+            left: 14px;
             top: 9px;
             color: var(--muted);
             font-size: 0.9rem;
@@ -94,7 +95,7 @@
             color: var(--text);
             background: var(--border);
         }
-        
+
         .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
         .pubkey-badge {
             font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
@@ -148,6 +149,27 @@
         }
         .feed-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
         .feed-tab:hover:not(.active) { border-color: var(--border); color: var(--text); }
+
+        .search-badge {
+            background: rgba(0,212,255,0.15);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-badge button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
 
         /* Composer */
         .composer {
@@ -361,7 +383,7 @@
         .av4 { background: linear-gradient(135deg,#e040fb,#7c4dff); }
         .av5 { background: linear-gradient(135deg,#ff4560,#ff9800); }
 
-        /* Botón móvil */
+        /* Botón móvil oculto por defecto */
         #btnMenuMovil { display: none; }
 
         @media (max-width: 860px) {
@@ -376,20 +398,20 @@
 <body>
 <div class="app">
 
-    <!-- Topbar con BÚSQUEDA -->
+    <!-- Topbar -->
     <header class="topbar">
         <div class="logo">
             🔥 Anti<span>X</span>
             <img src="HIy9szhW8AAGLJp.jpg" style="height:34px;width:34px;border-radius:50%;object-fit:cover;">
         </div>
-        
-        <!-- BARRA DE BÚSQUEDA NUEVA (estilo X / Twitter) -->
+
+        <!-- BARRA DE BÚSQUEDA GLOBAL -->
         <div class="search-area">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="Buscar en posts...">
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar en todo Nostr...">
             <button class="search-clear" id="searchClearBtn" style="display:none;">✕</button>
         </div>
-        
+
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
         <div class="topbar-right">
             <button class="btn btn-outline btn-sm" id="btnRefresh">↺ Refrescar</button>
@@ -526,11 +548,11 @@ let reposts    = new Map();
 let myReposts  = new Set();
 let currentTab = 'global';
 let pendingMedia = [];
-
-// 🔍 NUEVO: estado de búsqueda
+let isSearchMode = false;
 let currentSearchQuery = '';
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
+const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
 
 // ============================================================
 //  UTILS
@@ -568,35 +590,98 @@ const VIDEO_RE   = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
 
 // ============================================================
-//  FUNCIONES DE BÚSQUEDA (FILTRADO COMO X)
+//  BÚSQUEDA GLOBAL NIP-50 (como X)
 // ============================================================
-function filterPostsByQuery(postsArray, query) {
-    if (!query.trim()) return postsArray;
-    const lowerQ = query.toLowerCase();
-    return postsArray.filter(post => {
-        const content = (post.content || '').toLowerCase();
-        const authorName = (profiles.get(post.pubkey)?.name || '').toLowerCase();
-        const pubShort = post.pubkey.toLowerCase();
-        return content.includes(lowerQ) || authorName.includes(lowerQ) || pubShort.includes(lowerQ);
-    });
-}
-
-function updateSearchUI() {
-    const searchInput = $('searchInput');
-    const clearBtn = $('searchClearBtn');
-    if (searchInput.value.length > 0) {
-        clearBtn.style.display = 'block';
-    } else {
-        clearBtn.style.display = 'none';
+async function searchGlobalNostr(query) {
+    if (!query.trim()) {
+        exitSearchMode();
+        return;
     }
-    currentSearchQuery = searchInput.value;
-    renderFeed();   // Re-renderiza aplicando el filtro
+    
+    isSearchMode = true;
+    currentSearchQuery = query;
+    setStatus(`🔍 Buscando "${query}" en toda la red Nostr...`, '');
+    $('feed').innerHTML = `<div class="empty-state"><span class="spinner"></span><br>Buscando en relays que soportan NIP-50...<br>Esto puede tomar unos segundos</div>`;
+    
+    feedPosts.clear();
+    
+    const searchFilter = {
+        kinds: [1],
+        search: query,
+        limit: 100
+    };
+    
+    let totalFound = 0;
+    
+    await Promise.all(SEARCH_RELAYS.map(async url => {
+        try {
+            const ws = await openRelay(url, 5000);
+            const subId = 'search_' + Date.now() + '_' + Math.random();
+            
+            ws.send(JSON.stringify(['REQ', subId, searchFilter]));
+            
+            await new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    ws.close();
+                    resolve();
+                }, 8000);
+                
+                ws.onmessage = (e) => {
+                    try {
+                        const msg = JSON.parse(e.data);
+                        if (msg[0] === 'EVENT' && msg[2]) {
+                            const ev = msg[2];
+                            if (!feedPosts.has(ev.id)) {
+                                feedPosts.set(ev.id, ev);
+                                totalFound++;
+                                setStatus(`🔍 Encontrados ${totalFound} resultados para "${query}"...`, '');
+                            }
+                        }
+                        if (msg[0] === 'EOSE') {
+                            clearTimeout(timeout);
+                            ws.close();
+                            resolve();
+                        }
+                    } catch(err) {}
+                };
+                
+                ws.onerror = () => {
+                    clearTimeout(timeout);
+                    ws.close();
+                    resolve();
+                };
+            });
+        } catch(e) {
+            console.log(`Relay ${url} no soporta búsqueda o falló:`, e);
+        }
+    }));
+    
+    if (feedPosts.size === 0) {
+        setStatus(`🔍 No se encontraron resultados para "${query}"`, 'err');
+        $('feed').innerHTML = `<div class="empty-state">😔 No hay posts que coincidan con "${esc(query)}"<br><br>Intenta con otras palabras clave</div>`;
+        return;
+    }
+    
+    setStatus(`✅ ${feedPosts.size} resultados encontrados`, 'ok');
+    
+    const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
+    const postIds = [...feedPosts.keys()];
+    
+    await Promise.all([
+        loadProfiles(authors),
+        loadLikes(postIds),
+        loadReposts(postIds)
+    ]);
+    
+    renderFeed();
 }
 
-function clearSearch() {
-    $('searchInput').value = '';
+function exitSearchMode() {
+    isSearchMode = false;
     currentSearchQuery = '';
-    updateSearchUI();
+    $('searchInput').value = '';
+    $('searchClearBtn').style.display = 'none';
+    loadFeed();
 }
 
 // ============================================================
@@ -649,7 +734,7 @@ async function publishEvent(event) {
 }
 
 // ============================================================
-//  PROCESAMIENTO LOCAL DE MEDIA (COMPLETO)
+//  PROCESAMIENTO LOCAL DE MEDIA
 // ============================================================
 const MAX_IMG_BYTES = 800 * 1024;
 const MAX_DIM       = 1200;
@@ -944,7 +1029,7 @@ async function followUser(pk) {
     follows.add(pk);
     await publishFollows();
     renderFollowsList();
-    renderFeed();
+    if (!isSearchMode) loadFeed();
 }
 
 async function unfollowUser(pk) {
@@ -952,7 +1037,7 @@ async function unfollowUser(pk) {
     follows.delete(pk);
     await publishFollows();
     renderFollowsList();
-    renderFeed();
+    if (!isSearchMode) loadFeed();
 }
 
 function renderFollowsList() {
@@ -1087,7 +1172,7 @@ function closeLightbox() {
     $('lightboxImg').src = '';
 }
 document.addEventListener('keydown', e => {
-    if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); }
+    if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); if (isSearchMode) exitSearchMode(); }
 });
 
 // ============================================================
@@ -1151,7 +1236,7 @@ function buildMediaHtml(images, videos, youtubes = []) {
 }
 
 // ============================================================
-//  RENDER PRINCIPAL (CON FILTRO DE BÚSQUEDA)
+//  RENDER PRINCIPAL
 // ============================================================
 function buildActions(post) {
     const id = post.id;
@@ -1219,18 +1304,20 @@ function renderPost(post, isRepostOf) {
 
 function renderFeed() {
     let posts = [...feedPosts.values()];
-    if (currentTab === 'siguiendo') {
+    if (!isSearchMode && currentTab === 'siguiendo') {
         posts = posts.filter(p => follows.has(p.pubkey) || p.pubkey === pubKey);
     }
-    // 🔍 APLICAR FILTRO DE BÚSQUEDA (como X)
-    if (currentSearchQuery.trim()) {
-        posts = filterPostsByQuery(posts, currentSearchQuery);
-    }
     posts.sort((a,b) => b.created_at - a.created_at);
-    $('postCount').textContent = posts.length + ' posts';
+    
+    if (isSearchMode) {
+        $('postCount').innerHTML = `<span class="search-badge">🔍 ${posts.length} resultados para "${esc(currentSearchQuery)}" <button onclick="exitSearchMode()">✕</button></span>`;
+    } else {
+        $('postCount').innerHTML = posts.length + ' posts';
+    }
+    
     if (!posts.length) {
-        let msg = (currentSearchQuery.trim()) 
-            ? `No hay resultados para “${esc(currentSearchQuery)}”` 
+        let msg = isSearchMode 
+            ? `No hay resultados para "${esc(currentSearchQuery)}"` 
             : (currentTab==='siguiendo' ? 'Sin posts de tus seguidos aún.<br>Cambia al feed Global.' : 'Sin posts.');
         $('feed').innerHTML = `<div class="empty-state">${msg}</div>`;
         return;
@@ -1239,9 +1326,10 @@ function renderFeed() {
 }
 
 // ============================================================
-//  CARGA DE FEED
+//  CARGA DE FEED NORMAL
 // ============================================================
 async function loadFeed() {
+    if (isSearchMode) return;
     setStatus('<span class="spinner"></span> Cargando feed…');
     feedPosts.clear();
 
@@ -1278,12 +1366,8 @@ async function loadFeed() {
 //  TABS
 // ============================================================
 function switchTab(tab) {
+    if (isSearchMode) exitSearchMode();
     currentTab = tab;
-    // Limpiar búsqueda al cambiar de pestaña (opcional, mejora UX)
-    currentSearchQuery = '';
-    $('searchInput').value = '';
-    $('searchClearBtn').style.display = 'none';
-    
     ['global','siguiendo'].forEach(t => {
         const cap = t[0].toUpperCase() + t.slice(1);
         $('tab'+cap)?.classList.toggle('active', t===tab);
@@ -1382,8 +1466,10 @@ $('btnPublicar').onclick = async () => {
         pendingMedia = [];
         renderMediaPreviews();
         setUploadProgress('');
-        feedPosts.set(ev.id, ev);
-        renderFeed();
+        if (!isSearchMode) {
+            feedPosts.set(ev.id, ev);
+            renderFeed();
+        }
         setStatus(`✅ Publicado en ${ok}/${RELAYS.length} relays`, 'ok');
     } catch(err) {
         setStatus('❌ '+err.message,'err');
@@ -1392,7 +1478,7 @@ $('btnPublicar').onclick = async () => {
     }
 };
 
-$('btnRefresh').onclick = loadFeed;
+$('btnRefresh').onclick = () => isSearchMode ? exitSearchMode() : loadFeed();
 
 // ============================================================
 //  MÓVIL
@@ -1405,12 +1491,26 @@ function cerrarMenuMovil(e) {
 }
 
 // ============================================================
-//  EVENTOS DE BÚSQUEDA
+//  EVENTOS DE BÚSQUEDA (debounce como X)
 // ============================================================
-const searchInput = $('searchInput');
-const searchClearBtn = $('searchClearBtn');
-searchInput.addEventListener('input', updateSearchUI);
-searchClearBtn.addEventListener('click', clearSearch);
+let searchTimeout;
+$('searchInput').addEventListener('input', () => {
+    const query = $('searchInput').value.trim();
+    if (query.length > 0) {
+        $('searchClearBtn').style.display = 'block';
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => searchGlobalNostr(query), 800);
+    } else {
+        $('searchClearBtn').style.display = 'none';
+        if (isSearchMode) exitSearchMode();
+    }
+});
+
+$('searchClearBtn').addEventListener('click', () => {
+    $('searchInput').value = '';
+    $('searchClearBtn').style.display = 'none';
+    exitSearchMode();
+});
 
 // ============================================================
 //  ARRANQUE
@@ -1419,4 +1519,3 @@ loadFeed();
 </script>
 </body>
 </html>
-```
