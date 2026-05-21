@@ -484,17 +484,14 @@
         </div>
 
         <div class="widget">
+            <div class="widget">
             <div class="widget-title">📤 Subida de medios</div>
             <div class="info-note">
-                Los archivos se suben intentando en orden:<br>
-                1. <a href="https://nostrcheck.me" target="_blank">nostrcheck.me</a><br>
-                2. <a href="https://void.cat" target="_blank">void.cat</a><br>
-                3. <a href="https://nostr.build" target="_blank">nostr.build</a><br><br>
-                Si un servicio falla por CORS, se prueba el siguiente automáticamente.<br><br>
-                Límites: imágenes hasta <strong>100 MB</strong>,
-                videos hasta <strong>500 MB</strong>.
+                <strong>Imagenes:</strong> se comprimen y embeben directamente en el post (sin servidor externo).<br><br>
+                <strong>Videos:</strong> sube a <a href="https://nostr.build" target="_blank">nostr.build</a> o <a href="https://catbox.moe" target="_blank">catbox.moe</a> y pega la URL en el texto del post.<br><br>
+                Limite imagenes: ~10 MB por archivo.
             </div>
-        </div>
+        </div></div>
 
         <div class="widget" id="widgetFollows" style="display:none">
             <div class="widget-title">👥 Siguiendo (<span id="followCount">0</span>)</div>
@@ -626,77 +623,100 @@ async function publishEvent(event) {
 }
 
 // ═══════════════════════════════════
-//  UPLOAD A NOSTR.BUILD (NIP-96)
+//  PROCESAMIENTO LOCAL DE MEDIA
+//  Estrategia: convertir a base64 Data URL localmente.
+//  Para imágenes: redimensionar/comprimir si pesa > 800 KB.
+//  Para videos:   usar el blob URL directamente (Data URL de video es demasiado grande para Nostr).
+//  El contenido queda embebido en el post como data URL (imágenes)
+//  o se advierte al usuario que los videos deben subirse a un host externo.
 // ═══════════════════════════════════
-// ── Intento 1: nostrcheck.me (NIP-96, CORS abierto) ──────────────────────────
-async function tryNostrCheck(file) {
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('https://nostrcheck.me/api/v2/media', {
-        method: 'POST',
-        body: fd
+
+const MAX_IMG_BYTES = 800 * 1024;   // 800 KB → comprimir antes de embeber
+const MAX_DIM       = 1200;          // px máximo en cualquier lado
+
+function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload  = () => resolve(r.result);
+        r.onerror = () => reject(new Error('No se pudo leer el archivo'));
+        r.readAsDataURL(file);
     });
-    if (!res.ok) throw new Error(`nostrcheck HTTP ${res.status}`);
-    const json = await res.json();
-    // NIP-96: { status, nip94_event: { tags: [['url', '...'], ...] } }
-    const urlTag = json?.nip94_event?.tags?.find(t => t[0] === 'url');
-    if (urlTag?.[1]) return urlTag[1];
-    if (json?.url) return json.url;
-    throw new Error('nostrcheck: no URL en respuesta');
 }
 
-// ── Intento 2: void.cat (acepta multipart, CORS abierto) ─────────────────────
-async function tryVoidCat(file) {
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('https://void.cat/upload', {
-        method: 'POST',
-        body: fd
+function compressImage(file, maxDim, maxBytes) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objUrl = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(objUrl);
+            let { width: w, height: h } = img;
+            // Escalar si excede maxDim
+            if (w > maxDim || h > maxDim) {
+                if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                else        { w = Math.round(w * maxDim / h); h = maxDim; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+
+            // Comprimir con calidad descendente hasta entrar en maxBytes
+            let quality = 0.85;
+            const tryEncode = () => {
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                const bytes = Math.round((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3/4);
+                if (bytes <= maxBytes || quality <= 0.3) {
+                    resolve(dataUrl);
+                } else {
+                    quality = Math.max(0.3, quality - 0.12);
+                    tryEncode();
+                }
+            };
+            tryEncode();
+        };
+        img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('No se pudo cargar la imagen')); };
+        img.src = objUrl;
     });
-    if (!res.ok) throw new Error(`void.cat HTTP ${res.status}`);
-    const json = await res.json();
-    // void.cat devuelve { file: { id, ... } } → URL construida
-    if (json?.file?.id) return `https://void.cat/d/${json.file.id}`;
-    if (json?.url) return json.url;
-    throw new Error('void.cat: no URL en respuesta');
 }
 
-// ── Intento 3: nostr.build legacy API ────────────────────────────────────────
-async function tryNostrBuild(file) {
-    const fd = new FormData();
-    fd.append('fileToUpload', file);
-    const res = await fetch('https://nostr.build/api/v2/upload/files', {
-        method: 'POST',
-        body: fd
-    });
-    if (!res.ok) throw new Error(`nostr.build HTTP ${res.status}`);
-    const json = await res.json();
-    const urlTag = json?.nip94_event?.tags?.find(t => t[0] === 'url');
-    if (urlTag?.[1]) return urlTag[1];
-    if (json?.data?.[0]?.url) return json.data[0].url;
-    if (json?.url) return json.url;
-    throw new Error('nostr.build: no URL en respuesta');
-}
-
-// ── Orchestrador con fallbacks ────────────────────────────────────────────────
 async function uploadMedia(file) {
-    const attempts = [
-        { name: 'nostrcheck.me', fn: tryNostrCheck },
-        { name: 'void.cat',      fn: tryVoidCat    },
-        { name: 'nostr.build',   fn: tryNostrBuild },
-    ];
-    const errors = [];
-    for (const { name, fn } of attempts) {
+    const isVideo = file.type.startsWith('video/');
+
+    if (isVideo) {
+        // Videos: el Data URL sería gigante. Usamos el blob URL local para la preview,
+        // pero no podemos embeber un video de MB en el post.
+        // Solución: intentar subir a nostr.build sin restricción de CORS *desde* el browser real,
+        // y si falla, avisar al usuario que abra nostr.build y pegue la URL manualmente.
         try {
-            const url = await fn(file);
-            console.log(`✓ Subido a ${name}:`, url);
-            return url;
-        } catch (err) {
-            console.warn(`✗ ${name}:`, err.message);
-            errors.push(`${name}: ${err.message}`);
+            const fd = new FormData();
+            fd.append('fileToUpload', file);
+            const res = await fetch('https://nostr.build/api/v2/upload/files', { method:'POST', body:fd });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const urlTag = json?.nip94_event?.tags?.find(t => t[0]==='url');
+            if (urlTag?.[1]) return { dataUrl: urlTag[1], isExternal: true };
+            if (json?.data?.[0]?.url) return { dataUrl: json.data[0].url, isExternal: true };
+            throw new Error('Sin URL en respuesta');
+        } catch(e) {
+            // Si falla CORS, devolvemos el blob URL con una advertencia especial
+            // El usuario verá la preview pero el post no se podrá publicar con ese video
+            throw new Error('VIDEO_CORS: Para videos, sube el archivo a nostr.build, imgur.com o similar y pega la URL directamente en el texto del post.');
         }
     }
-    throw new Error('Todos los servicios fallaron:\n' + errors.join('\n'));
+
+    // ── Imágenes: comprimir y embeber como Data URL ───────────────────────────
+    let dataUrl;
+    if (file.size > MAX_IMG_BYTES || file.type === 'image/bmp') {
+        dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
+    } else {
+        dataUrl = await fileToDataURL(file);
+        // Si aun así es grande, comprimir
+        const bytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3/4);
+        if (bytes > MAX_IMG_BYTES) {
+            dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
+        }
+    }
+    return { dataUrl, isExternal: false };
 }
 
 // ═══════════════════════════════════
@@ -768,50 +788,56 @@ function removeMedia(index) {
 }
 
 async function handleFiles(files) {
-    const MAX_IMAGE = 100 * 1024 * 1024; // 100 MB
-    const MAX_VIDEO = 500 * 1024 * 1024; // 500 MB
-
     for (const file of files) {
         const isVideo = file.type.startsWith('video/');
-        const limit = isVideo ? MAX_VIDEO : MAX_IMAGE;
 
-        if (file.size > limit) {
-            alert(`"${file.name}" supera el límite (${isVideo?'500':'100'} MB).`);
+        if (!isVideo && file.size > 10 * 1024 * 1024) {
+            alert('"' + file.name + '" es demasiado grande. Max ~10 MB para imagenes embebidas.');
+            continue;
+        }
+        if (isVideo && file.size > 200 * 1024 * 1024) {
+            alert('"' + file.name + '" supera 200 MB.');
             continue;
         }
 
         const localUrl = URL.createObjectURL(file);
         const entry = { localUrl, remoteUrl: null, type: isVideo ? 'video' : 'image', uploading: true, error: false };
-        const index = pendingMedia.length;
         pendingMedia.push(entry);
         renderMediaPreviews();
-
-        const total = pendingMedia.filter(m => m.uploading).length;
-        setUploadProgress(`Subiendo ${total} archivo${total>1?'s':''}…`, 'uploading');
+        setUploadProgress(isVideo ? 'Intentando subir video...' : 'Procesando imagen...', 'uploading');
 
         try {
-            const url = await uploadMedia(file);
-            entry.remoteUrl = url;
+            const result = await uploadMedia(file);
+            entry.remoteUrl = result.dataUrl;
             entry.uploading = false;
         } catch (err) {
             entry.error = true;
             entry.uploading = false;
-            console.error('Upload error:', err);
-            setUploadProgress(`Error al subir "${file.name}"`, 'error');
+            console.error('Media error:', err.message);
+            if (err.message.startsWith('VIDEO_CORS:')) {
+                setUploadProgress('Video: usa nostr.build y pega la URL en el texto', 'error');
+                alert('Videos: sube el video a nostr.build.com o catbox.moe y pega la URL directamente en el texto del post.');
+            } else {
+                setUploadProgress('Error: ' + err.message, 'error');
+            }
         }
 
         renderMediaPreviews();
         const stillUploading = pendingMedia.some(m => m.uploading);
         if (!stillUploading) {
-            const ok = pendingMedia.filter(m => m.remoteUrl).length;
+            const ok   = pendingMedia.filter(m => m.remoteUrl).length;
             const fail = pendingMedia.filter(m => m.error).length;
-            if (fail === 0) {
-                setUploadProgress(`✓ ${ok} archivo${ok>1?'s':''} listo${ok>1?'s':''}`, '');
-            } else {
-                setUploadProgress(`${ok} ok · ${fail} con error`, 'error');
+            if (fail === 0 && ok > 0) {
+                setUploadProgress('OK: ' + ok + ' imagen' + (ok > 1 ? 'es listas' : ' lista'), '');
+            } else if (fail > 0 && ok > 0) {
+                setUploadProgress(ok + ' ok, ' + fail + ' con error', 'error');
+            } else if (fail > 0) {
+                setUploadProgress('', '');
             }
         }
     }
+}
+
 }
 
 // Conectar inputs de archivo
