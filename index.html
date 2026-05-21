@@ -555,13 +555,7 @@ function cerrarMenuMovil(e) {
     if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open');
 }
 
-$('btnConectarMovil').onclick = async () => {
-    // Copiar la clave del input móvil al principal y disparar conexión
-    const val = $('claveInputMovil').value.trim();
-    $('claveInput').value = val;
-    cerrarMenuMovil();
-    $('btnConectar').click();
-};
+
 function avClass(pk) { return 'av' + (parseInt(pk.slice(0,4),16) % 6); }
 function avInitials(pk) {
     const p = profiles.get(pk);
@@ -1350,7 +1344,13 @@ $('btnConectar').onclick = async () => {
         $('btnConectar').disabled = false;
     }
 };
-
+$('btnConectarMovil').onclick = async () => {
+    // Copiar la clave del input móvil al principal y disparar conexión
+    const val = $('claveInputMovil').value.trim();
+    $('claveInput').value = val;
+    cerrarMenuMovil();
+    $('btnConectar').click();
+};
 // ═══════════════════════════════════
 //  PUBLICAR
 // ═══════════════════════════════════
