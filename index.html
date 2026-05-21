@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AntiX</title>
+    <title>AntiX - Con Imágenes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -34,7 +34,6 @@
             margin: 0 auto;
         }
 
-        /* Topbar */
         .topbar {
             grid-column: 1/-1;
             background: var(--surface);
@@ -49,11 +48,8 @@
         .pubkey-badge {
             font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
             background: var(--bg); border: 1px solid var(--border);
-            padding: 4px 10px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+            padding: 4px 10px; border-radius: 20px; cursor: pointer;
         }
-        .pubkey-badge:hover { border-color: var(--accent); color: var(--accent); }
-
-        /* Sidebar izquierda */
         .sidebar-left {
             border-right: 1px solid var(--border);
             padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
@@ -63,23 +59,13 @@
             font-family: var(--sans); font-size: 0.88rem; font-weight: 500;
             padding: 9px 12px; border-radius: 8px; cursor: pointer;
             text-align: left; display: flex; align-items: center; gap: 10px;
-            transition: all 0.15s; width: 100%;
+            width: 100%;
         }
         .nav-btn:hover { background: var(--border); color: var(--text); }
         .nav-btn.active { background: rgba(0,212,255,0.1); color: var(--accent); }
-        .nav-btn .icon { width: 18px; text-align: center; }
-        .sidebar-divider {
-            margin: 10px 0; padding: 10px 12px 4px;
-            border-top: 1px solid var(--border);
-            font-family: var(--mono); font-size: 0.62rem;
-            color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
-        }
-        .side-key {
-            font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
-            padding: 4px 12px; word-break: break-all; line-height: 1.5;
-        }
+        .sidebar-divider { margin: 10px 0; padding: 10px 12px 4px; border-top: 1px solid var(--border); font-size: 0.62rem; color: var(--muted); }
+        .side-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); padding: 4px 12px; word-break: break-all; }
 
-        /* Feed */
         .feed-col {
             border-right: 1px solid var(--border);
             display: flex; flex-direction: column;
@@ -94,12 +80,10 @@
         .feed-tab {
             background: none; border: 1px solid transparent; color: var(--muted);
             font-family: var(--mono); font-size: 0.68rem; padding: 5px 12px;
-            border-radius: 20px; cursor: pointer; transition: all 0.15s;
+            border-radius: 20px; cursor: pointer;
         }
         .feed-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
-        .feed-tab:hover:not(.active) { border-color: var(--border); color: var(--text); }
 
-        /* Composer */
         .composer {
             padding: 14px 18px; border-bottom: 1px solid var(--border);
             display: none; gap: 12px;
@@ -116,25 +100,50 @@
             width: 100%; min-height: 56px;
         }
         textarea::placeholder { color: var(--muted); }
-        .composer-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+        .composer-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .media-buttons { display: flex; gap: 6px; }
+        .media-btn {
+            background: var(--border); border: none; color: var(--muted);
+            font-size: 1.1rem; padding: 6px 12px; border-radius: 20px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .media-btn:hover { background: var(--accent); color: #000; }
         .char-count { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
-        .char-count.warn { color: #ff9800; }
-        .char-count.over { color: var(--danger); }
-
-        /* Botones */
         .btn {
             font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
             padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer;
-            transition: all 0.15s;
         }
         .btn-primary { background: var(--accent); color: #000; }
-        .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
-        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; transform: none; }
+        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-        .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
         .btn-sm { font-size: 0.72rem; padding: 5px 12px; }
 
-        /* Status */
+        .preview-media {
+            margin-top: 8px;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 8px;
+            position: relative;
+        }
+        .preview-media img, .preview-media video {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 8px;
+        }
+        .remove-media {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
         .status-bar {
             padding: 7px 18px; font-family: var(--mono); font-size: 0.68rem;
             color: var(--muted); border-bottom: 1px solid var(--border);
@@ -145,18 +154,16 @@
         .spinner {
             display: inline-block; width: 9px; height: 9px;
             border: 2px solid var(--border); border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Posts */
         .post {
             padding: 14px 18px; border-bottom: 1px solid var(--border);
-            display: flex; gap: 11px; transition: background 0.1s;
+            display: flex; gap: 11px;
             animation: fadeIn 0.25s ease;
         }
         .post:hover { background: rgba(255,255,255,0.015); }
-        .post.is-repost { border-left: 2px solid var(--repost); padding-left: 16px; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; } }
 
         .post-avatar {
@@ -166,10 +173,6 @@
             cursor: pointer;
         }
         .post-body { flex: 1; min-width: 0; }
-        .repost-label {
-            font-family: var(--mono); font-size: 0.62rem; color: var(--repost);
-            margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
-        }
         .post-meta {
             display: flex; align-items: baseline; gap: 7px;
             margin-bottom: 4px; flex-wrap: wrap;
@@ -179,28 +182,25 @@
         .post-pubkey { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
         .post-time { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); margin-left: auto; }
         .post-content { font-size: 0.88rem; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
-
-        /* Acciones */
+        .post-media {
+            margin-top: 10px;
+        }
+        .post-media img, .post-media video {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+        }
         .post-actions { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
         .action-btn {
             background: none; border: none; cursor: pointer;
             display: flex; align-items: center; gap: 5px;
             font-family: var(--sans); font-size: 0.72rem; color: var(--muted);
-            padding: 5px 10px; border-radius: 20px; transition: all 0.15s;
+            padding: 5px 10px; border-radius: 20px;
         }
         .action-btn:hover { background: rgba(255,255,255,0.05); }
-        .action-btn.like-btn:hover  { color: var(--like); }
         .action-btn.like-btn.liked  { color: var(--like); }
-        .action-btn.like-btn.liked .action-icon { transform: scale(1.2); }
-        .action-btn.repost-btn:hover  { color: var(--repost); }
         .action-btn.repost-btn.reposted { color: var(--repost); }
-        .action-btn.follow-btn:hover  { color: var(--accent); }
-        .action-btn.follow-btn.following { color: var(--green); }
-        .action-btn.follow-btn.following:hover { color: var(--danger); }
-        .action-icon { font-size: 0.9rem; transition: transform 0.15s; }
-        .action-count { font-family: var(--mono); font-size: 0.65rem; min-width: 12px; }
 
-        /* Modal likes */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.7); z-index: 200;
@@ -212,76 +212,21 @@
             border-radius: 14px; width: 340px; max-height: 480px;
             display: flex; flex-direction: column; overflow: hidden;
         }
-        .modal-header {
-            padding: 16px 18px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            font-family: var(--mono); font-size: 0.75rem; color: var(--text);
-        }
-        .modal-close {
-            background: none; border: none; color: var(--muted);
-            font-size: 1.1rem; cursor: pointer; line-height: 1;
-        }
-        .modal-close:hover { color: var(--text); }
+        .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
         .modal-body { overflow-y: auto; padding: 8px 0; }
-        .modal-user {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 18px; transition: background 0.1s;
-        }
-        .modal-user:hover { background: rgba(255,255,255,0.03); }
-        .modal-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; flex-shrink: 0;
-        }
-        .modal-name { font-size: 0.82rem; font-weight: 600; }
-        .modal-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
+        .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; }
 
-        /* Sidebar derecha */
-        .sidebar-right {
-            padding: 14px; overflow-y: auto;
-            max-height: calc(100vh - 54px);
-            display: flex; flex-direction: column; gap: 14px;
-        }
-        .widget {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px;
-        }
-        .widget-title {
-            font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
-            text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
-        }
+        .sidebar-right { padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); }
+        .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+        .widget-title { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); margin-bottom: 10px; }
         .auth-input {
             background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
             color: var(--text); font-family: var(--mono); font-size: 0.7rem;
-            padding: 9px 11px; width: 100%; outline: none; transition: border-color 0.2s;
-            margin-bottom: 7px;
+            padding: 9px 11px; width: 100%; margin-bottom: 7px;
         }
-        .auth-input:focus { border-color: var(--accent); }
-        .auth-input::placeholder { color: var(--muted); }
+        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; }
 
-        .follow-item {
-            display: flex; align-items: center; gap: 8px;
-            padding: 7px 0; border-bottom: 1px solid var(--border);
-        }
-        .follow-item:last-child { border-bottom: none; }
-        .follow-avatar {
-            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.55rem; font-weight: 600; color: #000;
-        }
-        .follow-info { flex: 1; min-width: 0; }
-        .follow-name { font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .follow-key { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
-        .unfollow-btn {
-            background: none; border: 1px solid var(--border); border-radius: 10px;
-            color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer;
-            transition: all 0.15s; font-family: var(--sans);
-        }
-        .unfollow-btn:hover { border-color: var(--danger); color: var(--danger); }
-
-        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; font-family: var(--mono); line-height: 1.7; }
-
-        /* Avatar gradients */
         .av0 { background: linear-gradient(135deg,#00d4ff,#0066ff); }
         .av1 { background: linear-gradient(135deg,#ff3cac,#ff6b35); }
         .av2 { background: linear-gradient(135deg,#00e676,#00bcd4); }
@@ -292,14 +237,12 @@
         @media (max-width: 860px) {
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
-            .feed-col { max-height: none; border-right: none; }
         }
     </style>
 </head>
 <body>
 <div class="app">
 
-    <!-- Topbar -->
     <header class="topbar">
         <div class="logo">🔥 Anti<span>X</span></div>
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
@@ -308,36 +251,39 @@
         </div>
     </header>
 
-    <!-- Sidebar izquierda -->
     <aside class="sidebar-left">
-        <button class="nav-btn active" id="navGlobal" onclick="switchTab('global')">
-            <span class="icon">🌐</span> Global
-        </button>
-        <button class="nav-btn" id="navSiguiendo" onclick="switchTab('siguiendo')">
-            <span class="icon">👥</span> Siguiendo
-        </button>
+        <button class="nav-btn active" id="navGlobal" onclick="switchTab('global')"><span class="icon">🌐</span> Global</button>
+        <button class="nav-btn" id="navSiguiendo" onclick="switchTab('siguiendo')"><span class="icon">👥</span> Siguiendo</button>
         <div class="sidebar-divider">Tu cuenta</div>
         <div class="side-key" id="sideKey">Sin conectar</div>
     </aside>
 
-    <!-- Feed -->
     <main class="feed-col">
         <div class="feed-header">
             <div class="feed-tabs">
-                <button class="feed-tab active" id="tabGlobal"     onclick="switchTab('global')">Global</button>
-                <button class="feed-tab"         id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
+                <button class="feed-tab active" id="tabGlobal" onclick="switchTab('global')">Global</button>
+                <button class="feed-tab" id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
             </div>
             <span id="postCount" style="font-family:var(--mono);font-size:0.62rem;color:var(--muted)"></span>
         </div>
 
-        <!-- Composer -->
         <div class="composer" id="composer">
             <div class="composer-avatar" id="myAvatar"></div>
             <div class="composer-body">
                 <textarea id="contenido" rows="3" placeholder="¿Qué estás pensando?…" maxlength="280"></textarea>
                 <div class="composer-footer">
-                    <span class="char-count" id="charCount">280</span>
-                    <button class="btn btn-primary btn-sm" id="btnPublicar" disabled>Publicar</button>
+                    <div class="media-buttons">
+                        <button class="media-btn" id="btnImagen" title="Subir imagen">📷 Imagen</button>
+                        <button class="media-btn" id="btnVideo" title="Subir video">🎬 Video</button>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="char-count" id="charCount">280</span>
+                        <button class="btn btn-primary btn-sm" id="btnPublicar" disabled>Publicar</button>
+                    </div>
+                </div>
+                <div id="previewContainer" style="display:none;" class="preview-media">
+                    <button class="remove-media" id="removeMedia">✕</button>
+                    <div id="previewContent"></div>
                 </div>
             </div>
         </div>
@@ -346,88 +292,164 @@
         <div id="feed"></div>
     </main>
 
-    <!-- Sidebar derecha -->
     <aside class="sidebar-right">
         <div class="widget">
             <div class="widget-title">🔑 Cuenta</div>
-            <input class="auth-input" type="password" id="claveInput" placeholder="Clave privada hex (vacío = nueva)">
+            <input class="auth-input" type="password" id="claveInput" placeholder="Clave privada (vacío = nueva)">
             <button class="btn btn-primary" style="width:100%" id="btnConectar">Conectar</button>
-        </div>
-
-        <div class="widget" id="widgetFollows" style="display:none">
-            <div class="widget-title">👥 Siguiendo (<span id="followCount">0</span>)</div>
-            <div id="followsList"></div>
         </div>
     </aside>
 </div>
 
-<!-- Modal: quién dio like -->
 <div class="modal-overlay" id="likesModal" onclick="closeLikesModal(event)">
     <div class="modal">
-        <div class="modal-header">
-            <span id="modalTitle">❤️ Likes</span>
-            <button class="modal-close" onclick="closeLikesModal()">✕</button>
-        </div>
+        <div class="modal-header"><span id="modalTitle">❤️ Likes</span><button class="modal-close" onclick="closeLikesModal()">✕</button></div>
         <div class="modal-body" id="modalBody"></div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.js"></script>
 <script>
-// ═══════════════════════════════════
-//  ESTADO
-// ═══════════════════════════════════
+// ========== ESTADO ==========
 let privKey    = '';
 let pubKey     = '';
 let follows    = new Set();
-let profiles   = new Map();   // pubkey → {name}
-let feedPosts  = new Map();   // id → evento kind:1
-let likes      = new Map();   // postId → Set(pubkeys que likearon)
-let myLikes    = new Set();   // postIds que yo likeé
-let reposts    = new Map();   // postId → Set(pubkeys que repostearon)
-let myReposts  = new Set();   // postIds que yo reposteé
+let profiles   = new Map();
+let feedPosts  = new Map();
+let likes      = new Map();
+let myLikes    = new Set();
+let reposts    = new Map();
+let myReposts  = new Set();
 let currentTab = 'global';
+
+let pendingMedia = null;   // { url, type }
+let pendingMime   = '';
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 
-// ═══════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════
+// Servidores Blossom públicos
+const BLOSSOM_SERVERS = [
+    'https://blossom.slothy.win',
+    'https://cdn.hzrd149.com',
+    'https://nostrcheck.me'
+];
+
+// ========== UTILS ==========
 const $ = id => document.getElementById(id);
 
 function setStatus(msg, type='') {
-    $('statusBar').innerHTML = msg;
-    $('statusBar').className = 'status-bar ' + type;
+    const el = $('statusBar');
+    el.innerHTML = msg;
+    el.className = 'status-bar ' + type;
 }
 
 function avClass(pk) { return 'av' + (parseInt(pk.slice(0,4),16) % 6); }
-
 function avInitials(pk) {
     const p = profiles.get(pk);
     if (p?.name) return p.name.slice(0,2).toUpperCase();
     return pk.slice(0,2).toUpperCase();
 }
-
 function displayName(pk) {
     const p = profiles.get(pk);
     return p?.name ? p.name : pk.slice(0,8)+'…';
 }
-
 function timeAgo(ts) {
     const d = Math.floor(Date.now()/1000) - ts;
-    if (d < 60)    return d+'s';
-    if (d < 3600)  return Math.floor(d/60)+'m';
+    if (d < 60) return d+'s';
+    if (d < 3600) return Math.floor(d/60)+'m';
     if (d < 86400) return Math.floor(d/3600)+'h';
     return Math.floor(d/86400)+'d';
 }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ========== SUBIR IMAGEN/VIDEO A BLOSSOM ==========
+async function uploadToBlossom(file) {
+    setStatus('<span class="spinner"></span> Subiendo archivo...');
+    
+    // Verificar tamaño (10MB máximo)
+    if (file.size > 10 * 1024 * 1024) {
+        throw new Error('El archivo es muy grande (máx 10MB)');
+    }
+
+    // Verificar tipo
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        throw new Error('Solo se permiten imágenes o videos');
+    }
+
+    pendingMime = file.type;
+
+    // Intentar subir a cada servidor
+    for (const server of BLOSSOM_SERVERS) {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch(server + '/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const url = data.url || (server + '/' + data.sha256);
+                setStatus('✅ Archivo subido', 'ok');
+                return url;
+            }
+        } catch(e) {
+            console.log(`Falló ${server}:`, e);
+            continue;
+        }
+    }
+    throw new Error('No se pudo subir a ningún servidor');
 }
 
-// ═══════════════════════════════════
-//  RELAY HELPERS
-// ═══════════════════════════════════
+// ========== SUBIR ARCHIVO ==========
+async function handleMediaUpload(type) {
+    if (!privKey) {
+        alert('Primero conecta tu cuenta');
+        return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = type === 'image' ? 'image/*' : 'video/*';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const url = await uploadToBlossom(file);
+            pendingMedia = { url, type: file.type };
+            
+            // Mostrar preview
+            const previewDiv = $('previewContent');
+            if (file.type.startsWith('image/')) {
+                previewDiv.innerHTML = `<img src="${url}" alt="Preview">`;
+            } else {
+                previewDiv.innerHTML = `<video src="${url}" controls></video>`;
+            }
+            $('previewContainer').style.display = 'block';
+            
+        } catch(err) {
+            alert('Error: ' + err.message);
+            setStatus('❌ ' + err.message, 'err');
+        }
+    };
+    input.click();
+}
+
+$('btnImagen').onclick = () => handleMediaUpload('image');
+$('btnVideo').onclick = () => handleMediaUpload('video');
+
+$('removeMedia').onclick = () => {
+    pendingMedia = null;
+    pendingMime = '';
+    $('previewContainer').style.display = 'none';
+    $('previewContent').innerHTML = '';
+};
+
+// ========== RELAY HELPERS ==========
 function openRelay(url, timeout=5000) {
     return new Promise((resolve, reject) => {
         try {
@@ -474,9 +496,7 @@ async function publishEvent(event) {
     return ok;
 }
 
-// ═══════════════════════════════════
-//  PERFILES
-// ═══════════════════════════════════
+// ========== PERFILES ==========
 async function loadProfiles(pubkeys) {
     const missing = [...new Set(pubkeys)].filter(pk => !profiles.has(pk));
     if (!missing.length) return;
@@ -490,9 +510,7 @@ async function loadProfiles(pubkeys) {
     ));
 }
 
-// ═══════════════════════════════════
-//  FOLLOWS
-// ═══════════════════════════════════
+// ========== FOLLOWS ==========
 async function loadFollows() {
     if (!pubKey) return;
     await Promise.all(RELAYS.map(url =>
@@ -501,7 +519,6 @@ async function loadFollows() {
                 ev.tags.filter(t=>t[0]==='p').forEach(t=>follows.add(t[1]));
         }, 4000)
     ));
-    renderFollowsList();
 }
 
 async function publishFollows() {
@@ -516,38 +533,16 @@ async function followUser(pk) {
     if (!privKey || follows.has(pk) || pk===pubKey) return;
     follows.add(pk);
     await publishFollows();
-    renderFollowsList();
     renderFeed();
 }
-
 async function unfollowUser(pk) {
     if (!privKey) return;
     follows.delete(pk);
     await publishFollows();
-    renderFollowsList();
     renderFeed();
 }
 
-function renderFollowsList() {
-    $('followCount').textContent = follows.size;
-    $('widgetFollows').style.display = follows.size ? 'block' : 'none';
-    $('followsList').innerHTML = [...follows].map(pk => {
-        const p  = profiles.get(pk);
-        const nm = p?.name ? esc(p.name) : pk.slice(0,10)+'…';
-        return `<div class="follow-item">
-            <div class="follow-avatar ${avClass(pk)}">${avInitials(pk)}</div>
-            <div class="follow-info">
-                <div class="follow-name">${nm}</div>
-                <div class="follow-key">${pk.slice(0,10)}…</div>
-            </div>
-            <button class="unfollow-btn" onclick="unfollowUser('${pk}')">Dejar</button>
-        </div>`;
-    }).join('');
-}
-
-// ═══════════════════════════════════
-//  LIKES (kind:7)
-// ═══════════════════════════════════
+// ========== LIKES ==========
 async function loadLikes(postIds) {
     if (!postIds.length) return;
     const filter = { kinds:[7], '#e': postIds, limit: 500 };
@@ -565,30 +560,22 @@ async function loadLikes(postIds) {
 }
 
 async function likePost(postId) {
-    if (!privKey) return;
-    if (myLikes.has(postId)) return; // ya likeé
-
-    const nt = window.NostrTools;
+    if (!privKey || myLikes.has(postId)) return;
     const post = feedPosts.get(postId);
     const tags = [['e', postId]];
     if (post) tags.push(['p', post.pubkey]);
-
-    const ev = nt.finishEvent({
+    const ev = window.NostrTools.finishEvent({
         kind:7, created_at: Math.floor(Date.now()/1000),
         tags, content: '+'
     }, privKey);
-
     myLikes.add(postId);
     if (!likes.has(postId)) likes.set(postId, new Set());
     likes.get(postId).add(pubKey);
-
-    updatePostActions(postId);
     await publishEvent(ev);
+    updatePostActions(postId);
 }
 
-// ═══════════════════════════════════
-//  REPOSTS (kind:6)
-// ═══════════════════════════════════
+// ========== REPOSTS ==========
 async function loadReposts(postIds) {
     if (!postIds.length) return;
     const filter = { kinds:[6], '#e': postIds, limit: 300 };
@@ -606,137 +593,103 @@ async function loadReposts(postIds) {
 }
 
 async function repostPost(postId) {
-    if (!privKey) return;
-    if (myReposts.has(postId)) return;
-
-    const nt = window.NostrTools;
+    if (!privKey || myReposts.has(postId)) return;
     const post = feedPosts.get(postId);
     const tags = [['e', postId]];
     if (post) tags.push(['p', post.pubkey]);
-
-    const ev = nt.finishEvent({
+    const ev = window.NostrTools.finishEvent({
         kind:6, created_at: Math.floor(Date.now()/1000),
         tags, content: post ? JSON.stringify(post) : ''
     }, privKey);
-
     myReposts.add(postId);
     if (!reposts.has(postId)) reposts.set(postId, new Set());
     reposts.get(postId).add(pubKey);
-
-    updatePostActions(postId);
     await publishEvent(ev);
+    updatePostActions(postId);
 }
 
-// Actualiza solo los botones de un post sin re-renderizar todo
 function updatePostActions(postId) {
     const el = document.querySelector(`[data-post-id="${postId}"] .post-actions`);
-    if (!el) return;
-    const post = feedPosts.get(postId);
-    if (!post) return;
-    el.innerHTML = buildActions(post);
+    if (el) el.innerHTML = buildActions(feedPosts.get(postId));
 }
 
-// ═══════════════════════════════════
-//  MODAL: QUIÉN LIKEÓ
-// ═══════════════════════════════════
+// ========== MODAL ==========
 async function showLikes(postId) {
     const modal = $('likesModal');
     const body  = $('modalBody');
     const title = $('modalTitle');
     const likers = [...(likes.get(postId) || [])];
     title.textContent = `❤️ ${likers.length} Like${likers.length!==1?'s':''}`;
-    body.innerHTML = `<div style="padding:14px;font-family:var(--mono);font-size:0.7rem;color:var(--muted)"><span class="spinner"></span> Cargando perfiles…</div>`;
+    body.innerHTML = `<div style="padding:14px;"><span class="spinner"></span> Cargando…</div>`;
     modal.classList.add('open');
-
     await loadProfiles(likers);
-
     if (!likers.length) {
         body.innerHTML = `<div class="empty-state">Sin likes aún</div>`;
         return;
     }
-
-    body.innerHTML = likers.map(pk => {
-        const nm = profiles.get(pk)?.name ? esc(profiles.get(pk).name) : pk.slice(0,12)+'…';
-        return `<div class="modal-user">
-            <div class="modal-avatar ${avClass(pk)}">${avInitials(pk)}</div>
-            <div>
-                <div class="modal-name">${nm}</div>
-                <div class="modal-key">${pk.slice(0,14)}…</div>
-            </div>
-        </div>`;
-    }).join('');
+    body.innerHTML = likers.map(pk => `<div class="modal-user"><div class="modal-avatar ${avClass(pk)}">${avInitials(pk)}</div><div><div class="modal-name">${displayName(pk)}</div><div class="modal-key">${pk.slice(0,14)}…</div></div></div>`).join('');
 }
+function closeLikesModal(e) { if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open'); }
 
-function closeLikesModal(e) {
-    if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open');
-}
-
-// ═══════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════
-function buildActions(post) {
-    const id = post.id;
-    const isMe       = post.pubkey === pubKey;
-    const isFollowing = follows.has(post.pubkey);
-    const liked      = myLikes.has(id);
-    const reposted   = myReposts.has(id);
-    const likeCount  = likes.get(id)?.size || 0;
-    const repostCount= reposts.get(id)?.size || 0;
-
-    const likeBtn = `
-        <button class="action-btn like-btn ${liked?'liked':''}" onclick="likePost('${id}')" title="${liked?'Ya likeaste':'Dar like'}">
-            <span class="action-icon">${liked?'❤️':'🤍'}</span>
-            <span class="action-count" style="color:${likeCount?'var(--like)':''}">
-                ${likeCount||''}
-            </span>
-        </button>`;
-
-    const likersBtn = likeCount ? `
-        <button class="action-btn" onclick="showLikes('${id}')" title="Ver quién likeó" style="color:var(--like);font-size:0.65rem;padding:5px 6px;">
-            Ver likes
-        </button>` : '';
-
-    const repostBtn = `
-        <button class="action-btn repost-btn ${reposted?'reposted':''}" onclick="repostPost('${id}')" title="${reposted?'Ya reposteaste':'Repostear'}">
-            <span class="action-icon">🔁</span>
-            <span class="action-count" style="color:${repostCount?'var(--repost)':''}">
-                ${repostCount||''}
-            </span>
-        </button>`;
-
-    let followBtn = '';
-    if (privKey && !isMe) {
-        if (isFollowing) {
-            followBtn = `<button class="action-btn follow-btn following" onclick="unfollowUser('${post.pubkey}')">✓ Siguiendo</button>`;
-        } else {
-            followBtn = `<button class="action-btn follow-btn" onclick="followUser('${post.pubkey}')">+ Seguir</button>`;
+// ========== RENDER ==========
+function getMediaHtml(tags) {
+    if (!tags) return '';
+    for (const tag of tags) {
+        if (tag[0] === 'imeta' && tag[1] === 'url') {
+            const url = tag[2];
+            if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                return `<div class="post-media"><img src="${url}" loading="lazy"></div>`;
+            } else if (url.match(/\.(mp4|webm|mov)$/i)) {
+                return `<div class="post-media"><video src="${url}" controls></video></div>`;
+            }
         }
     }
+    // También buscar URL directa en el contenido (fallback)
+    if (tags && tags[0]?.startsWith('http') && (tags[0].match(/\.(jpg|png|gif|mp4)/i))) {
+        const url = tags[0];
+        if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+            return `<div class="post-media"><img src="${url}" loading="lazy"></div>`;
+        } else if (url.match(/\.(mp4|webm|mov)$/i)) {
+            return `<div class="post-media"><video src="${url}" controls></video></div>`;
+        }
+    }
+    return '';
+}
 
+function buildActions(post) {
+    const id = post.id;
+    const isMe = post.pubkey === pubKey;
+    const isFollowing = follows.has(post.pubkey);
+    const liked = myLikes.has(id);
+    const reposted = myReposts.has(id);
+    const likeCount = likes.get(id)?.size || 0;
+    const repostCount = reposts.get(id)?.size || 0;
+
+    const likeBtn = `<button class="action-btn like-btn ${liked?'liked':''}" onclick="likePost('${id}')">${liked?'❤️':'🤍'}${likeCount?likeCount:''}</button>`;
+    const likersBtn = likeCount ? `<button class="action-btn" onclick="showLikes('${id}')" style="color:var(--like);">Ver likes</button>` : '';
+    const repostBtn = `<button class="action-btn repost-btn ${reposted?'reposted':''}" onclick="repostPost('${id}')">🔁${repostCount?repostCount:''}</button>`;
+    let followBtn = '';
+    if (privKey && !isMe) {
+        followBtn = isFollowing 
+            ? `<button class="action-btn follow-btn following" onclick="unfollowUser('${post.pubkey}')">✓ Siguiendo</button>`
+            : `<button class="action-btn follow-btn" onclick="followUser('${post.pubkey}')">+ Seguir</button>`;
+    }
     return likeBtn + likersBtn + repostBtn + followBtn;
 }
 
-function renderPost(post, isRepostOf) {
-    const id      = post.id;
-    const ac      = avClass(post.pubkey);
-    const initials= avInitials(post.pubkey);
-    const name    = esc(displayName(post.pubkey));
-    const content = esc(post.content);
-    const ago     = timeAgo(post.created_at);
-
-    const repostLabel = isRepostOf
-        ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
-
-    return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
-        <div class="post-avatar ${ac}" title="${post.pubkey}">${initials}</div>
+function renderPost(post) {
+    const id = post.id;
+    const mediaHtml = getMediaHtml(post.tags);
+    return `<div class="post" data-post-id="${id}">
+        <div class="post-avatar ${avClass(post.pubkey)}">${avInitials(post.pubkey)}</div>
         <div class="post-body">
-            ${repostLabel}
             <div class="post-meta">
-                <span class="post-name">${name}</span>
+                <span class="post-name">${esc(displayName(post.pubkey))}</span>
                 <span class="post-pubkey">${post.pubkey.slice(0,8)}…</span>
-                <span class="post-time">${ago}</span>
+                <span class="post-time">${timeAgo(post.created_at)}</span>
             </div>
-            <div class="post-content">${content}</div>
+            <div class="post-content">${esc(post.content)}</div>
+            ${mediaHtml}
             <div class="post-actions">${buildActions(post)}</div>
         </div>
     </div>`;
@@ -744,78 +697,72 @@ function renderPost(post, isRepostOf) {
 
 function renderFeed() {
     let posts = [...feedPosts.values()];
-
     if (currentTab === 'siguiendo') {
         posts = posts.filter(p => follows.has(p.pubkey) || p.pubkey === pubKey);
     }
-
     posts.sort((a,b) => b.created_at - a.created_at);
-
     $('postCount').textContent = posts.length + ' posts';
-
     if (!posts.length) {
-        $('feed').innerHTML = `<div class="empty-state">${
-            currentTab==='siguiendo' ? 'Sin posts de tus seguidos aún.<br>Cambia al feed Global.' : 'Sin posts.'
-        }</div>`;
+        $('feed').innerHTML = `<div class="empty-state">${currentTab==='siguiendo' ? 'Sin posts de tus seguidos' : 'Sin posts'}</div>`;
         return;
     }
-
     $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
 }
 
-// ═══════════════════════════════════
-//  CARGA DE FEED
-// ═══════════════════════════════════
+// ========== CARGA FEED ==========
 async function loadFeed() {
     setStatus('<span class="spinner"></span> Cargando feed…');
     feedPosts.clear();
-
     const filter = currentTab==='global'
         ? { kinds:[1], limit:40 }
         : { kinds:[1], authors:[...(pubKey?[pubKey]:[]), ...follows], limit:60 };
-
-    if (currentTab==='siguiendo' && !follows.size && !pubKey) {
-        setStatus('Sigue a alguien primero', '');
-        $('feed').innerHTML = `<div class="empty-state">Aún no sigues a nadie.<br>Cambia al feed Global para empezar.</div>`;
-        return;
-    }
-
-    await Promise.all(RELAYS.map(url =>
-        queryRelay(url, [filter], ev => {
-            if (ev.kind===1) feedPosts.set(ev.id, ev);
-        }, 7000)
-    ));
-
+    await Promise.all(RELAYS.map(url => queryRelay(url, [filter], ev => { if (ev.kind===1) feedPosts.set(ev.id, ev); }, 7000)));
     const postIds = [...feedPosts.keys()];
     const authors = [...new Set([...feedPosts.values()].map(p=>p.pubkey))];
-
-    // Cargar perfiles, likes y reposts en paralelo
-    await Promise.all([
-        loadProfiles(authors),
-        loadLikes(postIds),
-        loadReposts(postIds)
-    ]);
-
+    await Promise.all([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
 }
 
-// ═══════════════════════════════════
-//  TABS
-// ═══════════════════════════════════
-function switchTab(tab) {
-    currentTab = tab;
-    ['global','siguiendo'].forEach(t => {
-        const cap = t[0].toUpperCase() + t.slice(1);
-        $('tab'+cap)?.classList.toggle('active', t===tab);
-        $('nav'+cap)?.classList.toggle('active', t===tab);
-    });
-    loadFeed();
-}
+// ========== PUBLICAR ==========
+$('btnPublicar').onclick = async () => {
+    if (!privKey) return;
+    const text = $('contenido').value.trim();
+    if (!text && !pendingMedia) return;
+    $('btnPublicar').disabled = true;
+    setStatus('<span class="spinner"></span> Publicando…');
+    try {
+        const tags = [];
+        if (pendingMedia) {
+            tags.push(['imeta', 'url', pendingMedia.url]);
+            tags.push(['m', pendingMime]);
+        }
+        const ev = window.NostrTools.finishEvent({
+            kind:1, created_at: Math.floor(Date.now()/1000),
+            tags: tags, content: text || ''
+        }, privKey);
+        await publishEvent(ev);
+        $('contenido').value = '';
+        $('charCount').textContent = '280';
+        pendingMedia = null;
+        $('previewContainer').style.display = 'none';
+        $('previewContent').innerHTML = '';
+        await loadFeed();
+        setStatus('✅ Publicado', 'ok');
+    } catch(err) {
+        setStatus('❌ '+err.message, 'err');
+    } finally {
+        $('btnPublicar').disabled = false;
+    }
+};
 
-// ═══════════════════════════════════
-//  AUTH
-// ═══════════════════════════════════
+$('contenido').oninput = function() {
+    const left = 280 - this.value.length;
+    $('charCount').textContent = left;
+    $('btnPublicar').disabled = !this.value.trim() && !pendingMedia;
+};
+
+// ========== AUTH ==========
 $('btnConectar').onclick = async () => {
     const nt = window.NostrTools;
     if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
@@ -825,77 +772,42 @@ $('btnConectar').onclick = async () => {
         const input = $('claveInput').value.trim();
         if (input) {
             privKey = input;
-            pubKey  = nt.getPublicKey(privKey);
-            setStatus('✅ Conectado','ok');
+            pubKey = nt.getPublicKey(privKey);
         } else {
             privKey = nt.generatePrivateKey();
-            pubKey  = nt.getPublicKey(privKey);
+            pubKey = nt.getPublicKey(privKey);
             $('claveInput').value = privKey;
-            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
-            setStatus('✅ Cuenta nueva','ok');
+            alert('✅ CUENTA CREADA\n\nGuarda esta clave:\n' + privKey);
         }
-        const short = pubKey.slice(0,10)+'…';
-        $('topPubkey').textContent = short;
+        $('topPubkey').textContent = pubKey.slice(0,10)+'…';
         $('topPubkey').style.display = 'block';
-        $('topPubkey').onclick = () => {
-            navigator.clipboard.writeText(pubKey).then(() => {
-                $('topPubkey').textContent = '¡Copiado!';
-                setTimeout(() => $('topPubkey').textContent = short, 1500);
-            });
-        };
-        $('sideKey').textContent    = pubKey;
+        $('sideKey').textContent = pubKey;
         $('composer').style.display = 'flex';
-        $('btnPublicar').disabled   = false;
-        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
-        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
-
+        $('myAvatar').className = 'composer-avatar ' + avClass(pubKey);
+        $('myAvatar').textContent = pubKey.slice(0,2).toUpperCase();
         await loadFollows();
         await loadFeed();
+        setStatus('✅ Conectado','ok');
     } catch(err) {
-        setStatus('❌ ' + err.message,'err');
+        setStatus('❌ '+err.message,'err');
     } finally {
         $('btnConectar').disabled = false;
     }
 };
 
-// ═══════════════════════════════════
-//  PUBLICAR
-// ═══════════════════════════════════
-$('contenido').oninput = function() {
-    const left = 280 - this.value.length;
-    const cc = $('charCount');
-    cc.textContent = left;
-    cc.className = left < 20 ? 'char-count over' : left < 50 ? 'char-count warn' : 'char-count';
-    $('btnPublicar').disabled = !this.value.trim() || left < 0;
-};
-
-$('btnPublicar').onclick = async () => {
-    if (!privKey) return;
-    const text = $('contenido').value.trim();
-    if (!text) return;
-    $('btnPublicar').disabled = true;
-    setStatus('<span class="spinner"></span> Publicando…');
-    try {
-        const ev = window.NostrTools.finishEvent({
-            kind:1, created_at: Math.floor(Date.now()/1000),
-            tags:[], content: text
-        }, privKey);
-        const ok = await publishEvent(ev);
-        $('contenido').value = '';
-        $('charCount').textContent = '280';
-        feedPosts.set(ev.id, ev);
-        renderFeed();
-        setStatus(`✅ Publicado en ${ok}/${RELAYS.length} relays`,'ok');
-    } catch(err) {
-        setStatus('❌ '+err.message,'err');
-    } finally {
-        $('btnPublicar').disabled = false;
-    }
-};
-
 $('btnRefresh').onclick = loadFeed;
 
-// Arranque
+function switchTab(tab) {
+    currentTab = tab;
+    ['global','siguiendo'].forEach(t => {
+        const cap = t[0].toUpperCase() + t.slice(1);
+        $(`tab${cap}`)?.classList.toggle('active', t===tab);
+        $(`nav${cap}`)?.classList.toggle('active', t===tab);
+    });
+    loadFeed();
+}
+
+// Inicializar
 loadFeed();
 </script>
 </body>
