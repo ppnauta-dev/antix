@@ -572,7 +572,7 @@ function esc(s) {
 // Detecta URLs de imagen/video en texto
 const IMAGE_RE = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
 const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
-
+const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
 // ═══════════════════════════════════
 //  RELAY HELPERS
 // ═══════════════════════════════════
@@ -1101,32 +1101,47 @@ function extractMediaUrls(text) {
     const dataImages = [...text.matchAll(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g)].map(m => m[1]);
     const images = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
     const videos = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
+    const youtubes = [...text.matchAll(YOUTUBE_RE)].map(m => m[1]); // solo el ID
     const videoSet = new Set(videos);
     return {
         images: [...dataImages, ...images.filter(u => !videoSet.has(u))],
-        videos
+        videos,
+        youtubes
     };
 }
 
 function stripMediaUrls(text) {
     return text
         .replace(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g, '')
+        .replace(YOUTUBE_RE, '')
         .replace(IMAGE_RE, '')
         .replace(VIDEO_RE, '')
         .trim();
 }
 
-function buildMediaHtml(images, videos) {
-    if (!images.length && !videos.length) return '';
+function buildMediaHtml(images, videos, youtubes = []) {
+    if (!images.length && !videos.length && !youtubes.length) return '';
 
     let html = '<div class="post-media">';
 
-    // Videos primero (uno por uno)
+    // YouTube embeds
+    youtubes.forEach(id => {
+        html += `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;border:1px solid var(--border);">
+            <iframe 
+                src="https://www.youtube.com/embed/${id}" 
+                style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+                allowfullscreen
+                loading="lazy"
+            ></iframe>
+        </div>`;
+    });
+
+    // Videos normales
     videos.forEach(url => {
         html += `<video src="${esc(url)}" controls preload="metadata" playsinline></video>`;
     });
 
-    // Imágenes en grid si hay más de una
+    // Imágenes
     if (images.length === 1) {
         html += `<img src="${esc(images[0])}" alt="" loading="lazy" onclick="openLightbox('${esc(images[0])}')">`;
     } else if (images.length > 1) {
@@ -1146,7 +1161,6 @@ function buildMediaHtml(images, videos) {
     html += '</div>';
     return html;
 }
-
 // ═══════════════════════════════════
 //  RENDER
 // ═══════════════════════════════════
@@ -1191,9 +1205,9 @@ function renderPost(post, isRepostOf) {
     const name    = esc(displayName(post.pubkey));
     const ago     = timeAgo(post.created_at);
 
-    const { images, videos } = extractMediaUrls(post.content);
+    const { images, videos, youtubes } = extractMediaUrls(post.content);
     const textContent = esc(stripMediaUrls(post.content));
-    const mediaHtml   = buildMediaHtml(images, videos);
+    const mediaHtml   = buildMediaHtml(images, videos, youtubes);
 
     const repostLabel = isRepostOf
         ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
