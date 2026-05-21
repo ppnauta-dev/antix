@@ -43,7 +43,7 @@
             padding: 0 20px; gap: 12px;
             position: sticky; top: 0; z-index: 100;
         }
-        .logo { font-family: var(--mono); font-weight: 600; font-size: 1.05rem; color: var(--accent); }
+        .logo { font-family: var(--mono); font-weight: 600; font-size: 1.05rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
         .logo span { color: var(--accent2); }
         .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
         .pubkey-badge {
@@ -118,35 +118,26 @@
         textarea::placeholder { color: var(--muted); }
 
         /* Media preview strip */
-        .media-preview-strip {
-            display: flex; gap: 8px; flex-wrap: wrap;
-        }
+        .media-preview-strip { display: flex; gap: 8px; flex-wrap: wrap; }
         .media-thumb {
             position: relative; width: 80px; height: 80px;
             border-radius: 8px; overflow: hidden;
             border: 1px solid var(--border); flex-shrink: 0;
         }
-        .media-thumb img, .media-thumb video {
-            width: 100%; height: 100%; object-fit: cover; display: block;
-        }
+        .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
         .media-thumb .remove-media {
             position: absolute; top: 3px; right: 3px;
             background: rgba(0,0,0,0.75); border: none; border-radius: 50%;
             color: #fff; font-size: 0.65rem; width: 18px; height: 18px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            line-height: 1;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;
         }
         .media-thumb .remove-media:hover { background: var(--danger); }
         .media-thumb .upload-overlay {
-            position: absolute; inset: 0;
-            background: rgba(0,0,0,0.55);
-            display: flex; align-items: center; justify-content: center;
-            flex-direction: column; gap: 3px;
+            position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px;
         }
         .media-thumb .upload-overlay .spinner { border-top-color: var(--accent); }
-        .media-thumb .upload-overlay span {
-            font-family: var(--mono); font-size: 0.55rem; color: #fff;
-        }
+        .media-thumb .upload-overlay span { font-family: var(--mono); font-size: 0.55rem; color: #fff; }
         .media-thumb.done .upload-overlay { display: none; }
         .media-thumb.error { border-color: var(--danger); }
         .media-thumb.error .upload-overlay { background: rgba(255,69,96,0.4); }
@@ -165,10 +156,7 @@
         .toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
         .toolbar-btn:disabled { opacity: 0.4; cursor: default; border-color: var(--border); color: var(--muted); }
         .toolbar-btn input[type=file] { display: none; }
-        .upload-progress {
-            font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
-            flex: 1; text-align: right;
-        }
+        .upload-progress { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); flex: 1; text-align: right; }
         .upload-progress.uploading { color: var(--accent); }
         .upload-progress.error { color: var(--danger); }
 
@@ -180,8 +168,7 @@
         /* Botones */
         .btn {
             font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
-            padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer;
-            transition: all 0.15s;
+            padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer; transition: all 0.15s;
         }
         .btn-primary { background: var(--accent); color: #000; }
         .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
@@ -208,8 +195,7 @@
         /* Posts */
         .post {
             padding: 14px 18px; border-bottom: 1px solid var(--border);
-            display: flex; gap: 11px; transition: background 0.1s;
-            animation: fadeIn 0.25s ease;
+            display: flex; gap: 11px; transition: background 0.1s; animation: fadeIn 0.25s ease;
         }
         .post:hover { background: rgba(255,255,255,0.015); }
         .post.is-repost { border-left: 2px solid var(--repost); padding-left: 16px; }
@@ -218,18 +204,11 @@
         .post-avatar {
             width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000;
-            cursor: pointer;
+            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; cursor: pointer;
         }
         .post-body { flex: 1; min-width: 0; }
-        .repost-label {
-            font-family: var(--mono); font-size: 0.62rem; color: var(--repost);
-            margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
-        }
-        .post-meta {
-            display: flex; align-items: baseline; gap: 7px;
-            margin-bottom: 4px; flex-wrap: wrap;
-        }
+        .repost-label { font-family: var(--mono); font-size: 0.62rem; color: var(--repost); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+        .post-meta { display: flex; align-items: baseline; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
         .post-name { font-weight: 600; font-size: 0.86rem; cursor: pointer; }
         .post-name:hover { color: var(--accent); }
         .post-pubkey { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
@@ -241,8 +220,7 @@
         .post-media img {
             max-width: 100%; max-height: 400px; object-fit: contain;
             border-radius: 10px; border: 1px solid var(--border);
-            display: block; cursor: pointer;
-            transition: opacity 0.15s;
+            display: block; cursor: pointer; transition: opacity 0.15s;
         }
         .post-media img:hover { opacity: 0.9; }
         .post-media video {
@@ -250,37 +228,19 @@
             border-radius: 10px; border: 1px solid var(--border);
             display: block; background: #000;
         }
-        /* Grid de múltiples imágenes */
-        .media-grid {
-            display: grid; gap: 4px;
-            border-radius: 10px; overflow: hidden;
-        }
+        .media-grid { display: grid; gap: 4px; border-radius: 10px; overflow: hidden; }
         .media-grid.count-2 { grid-template-columns: 1fr 1fr; }
         .media-grid.count-3 { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
         .media-grid.count-3 .media-grid-item:first-child { grid-column: 1/-1; }
         .media-grid.count-4 { grid-template-columns: 1fr 1fr; }
         .media-grid-item { overflow: hidden; max-height: 220px; }
-        .media-grid-item img, .media-grid-item video {
-            width: 100%; height: 100%; object-fit: cover;
-            border-radius: 0; border: none; max-height: none;
-        }
+        .media-grid-item img, .media-grid-item video { width: 100%; height: 100%; object-fit: cover; border-radius: 0; border: none; max-height: none; }
 
         /* Lightbox */
-        .lightbox {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.92); z-index: 300;
-            align-items: center; justify-content: center;
-        }
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; align-items: center; justify-content: center; }
         .lightbox.open { display: flex; }
-        .lightbox img {
-            max-width: 92vw; max-height: 92vh;
-            object-fit: contain; border-radius: 6px;
-        }
-        .lightbox-close {
-            position: absolute; top: 18px; right: 22px;
-            background: none; border: none; color: #fff;
-            font-size: 1.5rem; cursor: pointer; opacity: 0.7;
-        }
+        .lightbox img { max-width: 92vw; max-height: 92vh; object-fit: contain; border-radius: 6px; }
+        .lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7; }
         .lightbox-close:hover { opacity: 1; }
 
         /* Acciones */
@@ -303,92 +263,42 @@
         .action-icon { font-size: 0.9rem; transition: transform 0.15s; }
         .action-count { font-family: var(--mono); font-size: 0.65rem; min-width: 12px; }
 
-        /* Modal likes */
-        .modal-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7); z-index: 200;
-            align-items: center; justify-content: center;
-        }
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .modal {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 14px; width: 340px; max-height: 480px;
-            display: flex; flex-direction: column; overflow: hidden;
-        }
-        .modal-header {
-            padding: 16px 18px; border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            font-family: var(--mono); font-size: 0.75rem; color: var(--text);
-        }
-        .modal-close {
-            background: none; border: none; color: var(--muted);
-            font-size: 1.1rem; cursor: pointer; line-height: 1;
-        }
+        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 340px; max-height: 480px; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 0.75rem; color: var(--text); }
+        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; line-height: 1; }
         .modal-close:hover { color: var(--text); }
         .modal-body { overflow-y: auto; padding: 8px 0; }
-        .modal-user {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 18px; transition: background 0.1s;
-        }
+        .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; transition: background 0.1s; }
         .modal-user:hover { background: rgba(255,255,255,0.03); }
-        .modal-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; flex-shrink: 0;
-        }
+        .modal-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; flex-shrink: 0; }
         .modal-name { font-size: 0.82rem; font-weight: 600; }
         .modal-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
 
         /* Sidebar derecha */
-        .sidebar-right {
-            padding: 14px; overflow-y: auto;
-            max-height: calc(100vh - 54px);
-            display: flex; flex-direction: column; gap: 14px;
-        }
-        .widget {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px;
-        }
-        .widget-title {
-            font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
-            text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
-        }
+        .sidebar-right { padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); display: flex; flex-direction: column; gap: 14px; }
+        .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+        .widget-title { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
         .auth-input {
             background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
             color: var(--text); font-family: var(--mono); font-size: 0.7rem;
-            padding: 9px 11px; width: 100%; outline: none; transition: border-color 0.2s;
-            margin-bottom: 7px;
+            padding: 9px 11px; width: 100%; outline: none; transition: border-color 0.2s; margin-bottom: 7px;
         }
         .auth-input:focus { border-color: var(--accent); }
         .auth-input::placeholder { color: var(--muted); }
-
-        /* Info widget sobre hosting */
-        .info-note {
-            font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
-            line-height: 1.6; margin-top: 8px; padding-top: 8px;
-            border-top: 1px solid var(--border);
-        }
+        .info-note { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
         .info-note a { color: var(--accent); text-decoration: none; }
         .info-note a:hover { text-decoration: underline; }
 
-        .follow-item {
-            display: flex; align-items: center; gap: 8px;
-            padding: 7px 0; border-bottom: 1px solid var(--border);
-        }
+        .follow-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
         .follow-item:last-child { border-bottom: none; }
-        .follow-avatar {
-            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.55rem; font-weight: 600; color: #000;
-        }
+        .follow-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.55rem; font-weight: 600; color: #000; }
         .follow-info { flex: 1; min-width: 0; }
         .follow-name { font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .follow-key { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
-        .unfollow-btn {
-            background: none; border: 1px solid var(--border); border-radius: 10px;
-            color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer;
-            transition: all 0.15s; font-family: var(--sans);
-        }
+        .unfollow-btn { background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
         .unfollow-btn:hover { border-color: var(--danger); color: var(--danger); }
 
         .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; font-family: var(--mono); line-height: 1.7; }
@@ -401,13 +311,14 @@
         .av4 { background: linear-gradient(135deg,#e040fb,#7c4dff); }
         .av5 { background: linear-gradient(135deg,#ff4560,#ff9800); }
 
+        /* Botón móvil oculto por defecto */
+        #btnMenuMovil { display: none; }
+
         @media (max-width: 860px) {
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
             .feed-col { max-height: none; border-right: none; }
-        @media (max-width: 860px) {
             #btnMenuMovil { display: flex !important; }
-        }        
         }
     </style>
 </head>
@@ -416,13 +327,15 @@
 
     <!-- Topbar -->
     <header class="topbar">
-        <div class="logo">🔥 Anti<span>X</span>
-        <img src="HIy9szhW8AAGLJp.jpg" width="60" height="60" style="border-radius: 50%;"></div>
+        <div class="logo">
+            🔥 Anti<span>X</span>
+            <img src="HIy9szhW8AAGLJp.jpg" style="height:34px;width:34px;border-radius:50%;object-fit:cover;">
+        </div>
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
         <div class="topbar-right">
             <button class="btn btn-outline btn-sm" id="btnRefresh">↺ Refrescar</button>
+            <button class="btn btn-outline btn-sm" id="btnMenuMovil" onclick="abrirMenuMovil()">⚙️</button>
         </div>
-        <button class="btn btn-outline btn-sm" id="btnMenuMovil" style="display:none" onclick="abrirMenuMovil()">⚙️</button>
     </header>
 
     <!-- Sidebar izquierda -->
@@ -453,14 +366,16 @@
             <div class="composer-body">
                 <textarea id="contenido" rows="3" placeholder="¿Qué estás pensando?…" maxlength="280"></textarea>
 
-                <!-- Strip de previews de medios pendientes -->
                 <div class="media-preview-strip" id="mediaPreviewStrip"></div>
 
-                <!-- Toolbar: subir imagen / video -->
                 <div class="composer-toolbar">
                     <button class="toolbar-btn" id="btnAddImage" title="Añadir imagen (jpg, png, gif, webp)">
                         🖼️ Imagen
                         <input type="file" id="fileImage" accept="image/*" multiple>
+                    </button>
+                    <button class="toolbar-btn" id="btnAddVideo" title="Añadir video (mp4, webm, mov)">
+                        🎬 Video
+                        <input type="file" id="fileVideo" accept="video/*" multiple>
                     </button>
                     <span class="upload-progress" id="uploadProgress"></span>
                 </div>
@@ -485,14 +400,13 @@
         </div>
 
         <div class="widget">
-            <div class="widget">
             <div class="widget-title">📤 Subida de medios</div>
             <div class="info-note">
-                <strong>Imagenes:</strong> se comprimen y embeben directamente en el post (sin servidor externo).<br><br>
-                <strong>Videos:</strong> sube a <a href="https://nostr.build" target="_blank">nostr.build</a> o <a href="https://catbox.moe" target="_blank">catbox.moe</a> y pega la URL en el texto del post.<br><br>
-                Limite imagenes: ~10 MB por archivo.
+                <strong>Imágenes:</strong> se comprimen y embeben directamente en el post (sin servidor externo).<br><br>
+                <strong>Videos:</strong> pega una URL de <a href="https://youtube.com" target="_blank">YouTube</a>, <a href="https://catbox.moe" target="_blank">catbox.moe</a> o <a href="https://nostr.build" target="_blank">nostr.build</a> en el texto del post.<br><br>
+                Límite imágenes: ~10 MB por archivo.
             </div>
-        </div></div>
+        </div>
 
         <div class="widget" id="widgetFollows" style="display:none">
             <div class="widget-title">👥 Siguiendo (<span id="followCount">0</span>)</div>
@@ -509,6 +423,25 @@
             <button class="modal-close" onclick="closeLikesModal()">✕</button>
         </div>
         <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<!-- Modal móvil -->
+<div class="modal-overlay" id="modalMovil" onclick="cerrarMenuMovil(event)">
+    <div class="modal" style="width:90%;max-width:340px;">
+        <div class="modal-header">
+            <span>⚙️ Cuenta</span>
+            <button class="modal-close" onclick="cerrarMenuMovil()">✕</button>
+        </div>
+        <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <input class="auth-input" type="password" id="claveInputMovil" placeholder="Clave privada hex (vacío = nueva)">
+            <button class="btn btn-primary" style="width:100%" id="btnConectarMovil">Conectar</button>
+            <div class="info-note" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
+                <strong>Imágenes:</strong> se comprimen y embeben en el post.<br><br>
+                <strong>Videos:</strong> pega una URL de YouTube, catbox.moe o nostr.build en el texto.<br><br>
+                Límite imágenes: ~10 MB.
+            </div>
+        </div>
     </div>
 </div>
 
@@ -533,8 +466,6 @@ let myLikes    = new Set();
 let reposts    = new Map();
 let myReposts  = new Set();
 let currentTab = 'global';
-
-// Media adjunta al post actual (lista de { localUrl, remoteUrl, type, thumbEl, uploading, error })
 let pendingMedia = [];
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
@@ -548,13 +479,6 @@ function setStatus(msg, type='') {
     $('statusBar').innerHTML = msg;
     $('statusBar').className = 'status-bar ' + type;
 }
-function abrirMenuMovil() {
-    $('modalMovil').classList.add('open');
-}
-function cerrarMenuMovil(e) {
-    if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open');
-}
-
 
 function avClass(pk) { return 'av' + (parseInt(pk.slice(0,4),16) % 6); }
 function avInitials(pk) {
@@ -577,10 +501,61 @@ function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Detecta URLs de imagen/video en texto
-const IMAGE_RE = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
-const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
+const IMAGE_RE   = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
+const VIDEO_RE   = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
+
+// ═══════════════════════════════════
+//  MODAL MÓVIL
+// ═══════════════════════════════════
+function abrirMenuMovil() {
+    $('modalMovil').classList.add('open');
+}
+function cerrarMenuMovil(e) {
+    if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open');
+}
+
+// ═══════════════════════════════════
+//  LÓGICA DE CONEXIÓN COMPARTIDA
+// ═══════════════════════════════════
+async function conectar(clave) {
+    const nt = window.NostrTools;
+    if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
+    setStatus('<span class="spinner"></span> Conectando…');
+    try {
+        if (clave) {
+            privKey = clave;
+            pubKey  = nt.getPublicKey(privKey);
+            setStatus('✅ Conectado','ok');
+        } else {
+            privKey = nt.generatePrivateKey();
+            pubKey  = nt.getPublicKey(privKey);
+            $('claveInput').value      = privKey;
+            $('claveInputMovil').value = privKey;
+            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
+            setStatus('✅ Cuenta nueva','ok');
+        }
+        const short = pubKey.slice(0,10)+'…';
+        $('topPubkey').textContent = short;
+        $('topPubkey').style.display = 'block';
+        $('topPubkey').onclick = () => {
+            navigator.clipboard.writeText(pubKey).then(() => {
+                $('topPubkey').textContent = '¡Copiado!';
+                setTimeout(() => $('topPubkey').textContent = short, 1500);
+            });
+        };
+        $('sideKey').textContent    = pubKey;
+        $('composer').style.display = 'flex';
+        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
+        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
+
+        await loadFollows();
+        await loadFeed();
+    } catch(err) {
+        setStatus('❌ ' + err.message,'err');
+    }
+}
+
 // ═══════════════════════════════════
 //  RELAY HELPERS
 // ═══════════════════════════════════
@@ -632,15 +607,9 @@ async function publishEvent(event) {
 
 // ═══════════════════════════════════
 //  PROCESAMIENTO LOCAL DE MEDIA
-//  Estrategia: convertir a base64 Data URL localmente.
-//  Para imágenes: redimensionar/comprimir si pesa > 800 KB.
-//  Para videos:   usar el blob URL directamente (Data URL de video es demasiado grande para Nostr).
-//  El contenido queda embebido en el post como data URL (imágenes)
-//  o se advierte al usuario que los videos deben subirse a un host externo.
 // ═══════════════════════════════════
-
-const MAX_IMG_BYTES = 800 * 1024;   // 800 KB → comprimir antes de embeber
-const MAX_DIM       = 1200;          // px máximo en cualquier lado
+const MAX_IMG_BYTES = 800 * 1024;
+const MAX_DIM       = 1200;
 
 function fileToDataURL(file) {
     return new Promise((resolve, reject) => {
@@ -658,7 +627,6 @@ function compressImage(file, maxDim, maxBytes) {
         img.onload = () => {
             URL.revokeObjectURL(objUrl);
             let { width: w, height: h } = img;
-            // Escalar si excede maxDim
             if (w > maxDim || h > maxDim) {
                 if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
                 else        { w = Math.round(w * maxDim / h); h = maxDim; }
@@ -667,8 +635,6 @@ function compressImage(file, maxDim, maxBytes) {
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-
-            // Comprimir con calidad descendente hasta entrar en maxBytes
             let quality = 0.85;
             const tryEncode = () => {
                 const dataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -691,45 +657,29 @@ async function uploadMedia(file) {
     const isVideo = file.type.startsWith('video/');
 
     if (isVideo) {
-        // Intentar con varios servicios en orden
         const services = [
-            // nostr.build sin auth
             async () => {
                 const fd = new FormData();
                 fd.append('fileToUpload', file);
-                const res = await fetch('https://nostr.build/api/v2/upload/files', {
-                    method: 'POST',
-                    body: fd,
-                    mode: 'cors'
-                });
+                const res = await fetch('https://nostr.build/api/v2/upload/files', { method:'POST', body:fd, mode:'cors' });
                 const json = await res.json();
                 const url = json?.data?.[0]?.url;
                 if (!url) throw new Error('sin url');
                 return url;
             },
-            // catbox.moe
             async () => {
                 const fd = new FormData();
                 fd.append('reqtype', 'fileupload');
                 fd.append('fileToUpload', file);
-                const res = await fetch('https://catbox.moe/user.php', {
-                    method: 'POST',
-                    body: fd,
-                    mode: 'cors'
-                });
+                const res = await fetch('https://catbox.moe/user.php', { method:'POST', body:fd, mode:'cors' });
                 const text = await res.text();
                 if (!text.startsWith('https://')) throw new Error('sin url');
                 return text.trim();
             },
-            // 0x0.st
             async () => {
                 const fd = new FormData();
                 fd.append('file', file);
-                const res = await fetch('https://0x0.st', {
-                    method: 'POST',
-                    body: fd,
-                    mode: 'cors'
-                });
+                const res = await fetch('https://0x0.st', { method:'POST', body:fd, mode:'cors' });
                 const text = await res.text();
                 if (!text.startsWith('https://')) throw new Error('sin url');
                 return text.trim();
@@ -746,10 +696,10 @@ async function uploadMedia(file) {
             }
         }
 
-        throw new Error('VIDEO_CORS: Ningún servicio pudo subir el video. Intenta con un archivo más pequeño o sube manualmente a catbox.moe');
+        throw new Error('VIDEO_CORS: No se pudo subir automáticamente. Sube el video a catbox.moe o nostr.build y pega la URL en el texto.');
     }
 
-    // Imágenes — igual que antes
+    // Imágenes
     let dataUrl;
     if (file.size > MAX_IMG_BYTES || file.type === 'image/bmp') {
         dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
@@ -762,8 +712,6 @@ async function uploadMedia(file) {
     }
     return { dataUrl, isExternal: false };
 }
-
-
 
 // ═══════════════════════════════════
 //  GESTIÓN DE MEDIA PENDIENTE
@@ -799,7 +747,6 @@ function renderMediaPreviews() {
             thumb.appendChild(img);
         }
 
-        // Overlay de carga
         if (!m.remoteUrl && !m.error) {
             const ov = document.createElement('div');
             ov.className = 'upload-overlay';
@@ -813,7 +760,6 @@ function renderMediaPreviews() {
             thumb.appendChild(ov);
         }
 
-        // Botón eliminar
         const rm = document.createElement('button');
         rm.className = 'remove-media';
         rm.innerHTML = '✕';
@@ -838,7 +784,7 @@ async function handleFiles(files) {
         const isVideo = file.type.startsWith('video/');
 
         if (!isVideo && file.size > 10 * 1024 * 1024) {
-            alert('"' + file.name + '" es demasiado grande. Max ~10 MB para imagenes embebidas.');
+            alert('"' + file.name + '" es demasiado grande. Max ~10 MB para imágenes embebidas.');
             continue;
         }
         if (isVideo && file.size > 200 * 1024 * 1024) {
@@ -861,8 +807,8 @@ async function handleFiles(files) {
             entry.uploading = false;
             console.error('Media error:', err.message);
             if (err.message.startsWith('VIDEO_CORS:')) {
-                setUploadProgress('Video: usa nostr.build y pega la URL en el texto', 'error');
-                alert('Videos: sube el video a nostr.build.com o catbox.moe y pega la URL directamente en el texto del post.');
+                setUploadProgress('Video: sube a catbox.moe o nostr.build y pega la URL en el texto', 'error');
+                alert('No se pudo subir el video automáticamente.\n\nSube el video a catbox.moe o nostr.build y pega la URL directamente en el texto del post.');
             } else {
                 setUploadProgress('Error: ' + err.message, 'error');
             }
@@ -874,7 +820,7 @@ async function handleFiles(files) {
             const ok   = pendingMedia.filter(m => m.remoteUrl).length;
             const fail = pendingMedia.filter(m => m.error).length;
             if (fail === 0 && ok > 0) {
-                setUploadProgress('OK: ' + ok + ' imagen' + (ok > 1 ? 'es listas' : ' lista'), '');
+                setUploadProgress('OK: ' + ok + (ok > 1 ? ' archivos listos' : ' archivo listo'), '');
             } else if (fail > 0 && ok > 0) {
                 setUploadProgress(ok + ' ok, ' + fail + ' con error', 'error');
             } else if (fail > 0) {
@@ -884,19 +830,16 @@ async function handleFiles(files) {
     }
 }
 
-
-
 // Conectar inputs de archivo
 $('btnAddImage').onclick = () => $('fileImage').click();
 $('btnAddVideo').onclick = () => $('fileVideo').click();
-
 $('fileImage').onchange = e => { handleFiles([...e.target.files]); e.target.value=''; };
 $('fileVideo').onchange = e => { handleFiles([...e.target.files]); e.target.value=''; };
 
-// Drag & drop sobre el composer
+// Drag & drop
 const composerEl = $('composer');
 composerEl.addEventListener('dragover', e => { e.preventDefault(); composerEl.style.outline = '2px dashed var(--accent)'; });
-composerEl.addEventListener('dragleave', ()  => { composerEl.style.outline = ''; });
+composerEl.addEventListener('dragleave', () => { composerEl.style.outline = ''; });
 composerEl.addEventListener('drop', e => {
     e.preventDefault();
     composerEl.style.outline = '';
@@ -904,7 +847,7 @@ composerEl.addEventListener('drop', e => {
     if (files.length) handleFiles(files);
 });
 
-// Pegar imágenes desde portapapeles
+// Pegar desde portapapeles
 document.addEventListener('paste', e => {
     if (!privKey) return;
     const items = [...(e.clipboardData?.items || [])];
@@ -1100,17 +1043,19 @@ function closeLightbox() {
     $('lightbox').classList.remove('open');
     $('lightboxImg').src = '';
 }
-document.addEventListener('keydown', e => { if (e.key==='Escape') { closeLightbox(); closeLikesModal(); } });
+document.addEventListener('keydown', e => {
+    if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); }
+});
 
 // ═══════════════════════════════════
 //  RENDERIZADO DE MEDIOS EN POSTS
 // ═══════════════════════════════════
 function extractMediaUrls(text) {
     const dataImages = [...text.matchAll(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g)].map(m => m[1]);
-    const images = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
-    const videos = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
-    const youtubes = [...text.matchAll(YOUTUBE_RE)].map(m => m[1]); // solo el ID
-    const videoSet = new Set(videos);
+    const images     = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
+    const videos     = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
+    const youtubes   = [...text.matchAll(YOUTUBE_RE)].map(m => m[1]);
+    const videoSet   = new Set(videos);
     return {
         images: [...dataImages, ...images.filter(u => !videoSet.has(u))],
         videos,
@@ -1132,24 +1077,16 @@ function buildMediaHtml(images, videos, youtubes = []) {
 
     let html = '<div class="post-media">';
 
-    // YouTube embeds
     youtubes.forEach(id => {
         html += `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;border:1px solid var(--border);">
-            <iframe 
-                src="https://www.youtube.com/embed/${id}" 
-                style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
-                allowfullscreen
-                loading="lazy"
-            ></iframe>
+            <iframe src="https://www.youtube.com/embed/${id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
         </div>`;
     });
 
-    // Videos normales
     videos.forEach(url => {
         html += `<video src="${esc(url)}" controls preload="metadata" playsinline></video>`;
     });
 
-    // Imágenes
     if (images.length === 1) {
         html += `<img src="${esc(images[0])}" alt="" loading="lazy" onclick="openLightbox('${esc(images[0])}')">`;
     } else if (images.length > 1) {
@@ -1169,6 +1106,7 @@ function buildMediaHtml(images, videos, youtubes = []) {
     html += '</div>';
     return html;
 }
+
 // ═══════════════════════════════════
 //  RENDER
 // ═══════════════════════════════════
@@ -1207,11 +1145,11 @@ function buildActions(post) {
 }
 
 function renderPost(post, isRepostOf) {
-    const id      = post.id;
-    const ac      = avClass(post.pubkey);
-    const initials= avInitials(post.pubkey);
-    const name    = esc(displayName(post.pubkey));
-    const ago     = timeAgo(post.created_at);
+    const id       = post.id;
+    const ac       = avClass(post.pubkey);
+    const initials = avInitials(post.pubkey);
+    const name     = esc(displayName(post.pubkey));
+    const ago      = timeAgo(post.created_at);
 
     const { images, videos, youtubes } = extractMediaUrls(post.content);
     const textContent = esc(stripMediaUrls(post.content));
@@ -1259,15 +1197,15 @@ async function loadFeed() {
     setStatus('<span class="spinner"></span> Cargando feed…');
     feedPosts.clear();
 
-    const filter = currentTab==='global'
-        ? { kinds:[1], limit:40 }
-        : { kinds:[1], authors:[...(pubKey?[pubKey]:[]), ...follows], limit:60 };
-
     if (currentTab==='siguiendo' && !follows.size && !pubKey) {
         setStatus('Sigue a alguien primero', '');
         $('feed').innerHTML = `<div class="empty-state">Aún no sigues a nadie.<br>Cambia al feed Global para empezar.</div>`;
         return;
     }
+
+    const filter = currentTab==='global'
+        ? { kinds:[1], limit:40 }
+        : { kinds:[1], authors:[...(pubKey?[pubKey]:[]), ...follows], limit:60 };
 
     await Promise.all(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
@@ -1302,55 +1240,24 @@ function switchTab(tab) {
 }
 
 // ═══════════════════════════════════
-//  AUTH
+//  AUTH — Desktop
 // ═══════════════════════════════════
 $('btnConectar').onclick = async () => {
-    const nt = window.NostrTools;
-    if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
     $('btnConectar').disabled = true;
-    setStatus('<span class="spinner"></span> Conectando…');
-    try {
-        const input = $('claveInput').value.trim();
-        if (input) {
-            privKey = input;
-            pubKey  = nt.getPublicKey(privKey);
-            setStatus('✅ Conectado','ok');
-        } else {
-            privKey = nt.generatePrivateKey();
-            pubKey  = nt.getPublicKey(privKey);
-            $('claveInput').value = privKey;
-            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
-            setStatus('✅ Cuenta nueva','ok');
-        }
-        const short = pubKey.slice(0,10)+'…';
-        $('topPubkey').textContent = short;
-        $('topPubkey').style.display = 'block';
-        $('topPubkey').onclick = () => {
-            navigator.clipboard.writeText(pubKey).then(() => {
-                $('topPubkey').textContent = '¡Copiado!';
-                setTimeout(() => $('topPubkey').textContent = short, 1500);
-            });
-        };
-        $('sideKey').textContent    = pubKey;
-        $('composer').style.display = 'flex';
-        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
-        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
+    await conectar($('claveInput').value.trim());
+    $('btnConectar').disabled = false;
+};
 
-        await loadFollows();
-        await loadFeed();
-    } catch(err) {
-        setStatus('❌ ' + err.message,'err');
-    } finally {
-        $('btnConectar').disabled = false;
-    }
-};
+// ═══════════════════════════════════
+//  AUTH — Móvil
+// ═══════════════════════════════════
 $('btnConectarMovil').onclick = async () => {
-    // Copiar la clave del input móvil al principal y disparar conexión
-    const val = $('claveInputMovil').value.trim();
-    $('claveInput').value = val;
+    $('btnConectarMovil').disabled = true;
     cerrarMenuMovil();
-    $('btnConectar').click();
+    await conectar($('claveInputMovil').value.trim());
+    $('btnConectarMovil').disabled = false;
 };
+
 // ═══════════════════════════════════
 //  PUBLICAR
 // ═══════════════════════════════════
@@ -1366,7 +1273,6 @@ $('btnPublicar').onclick = async () => {
     if (!privKey) return;
     let text = $('contenido').value.trim();
 
-    // Agregar URLs de medios al contenido (convención Nostr: URLs al final, una por línea)
     const mediaUrls = pendingMedia.filter(m => m.remoteUrl).map(m => m.remoteUrl);
     if (mediaUrls.length) {
         text = (text ? text + '\n\n' : '') + mediaUrls.join('\n');
@@ -1384,12 +1290,10 @@ $('btnPublicar').onclick = async () => {
         const ok = await publishEvent(ev);
         $('contenido').value = '';
         $('charCount').textContent = '280';
-        // Limpiar medios
         pendingMedia.forEach(m => URL.revokeObjectURL(m.localUrl));
         pendingMedia = [];
         renderMediaPreviews();
         setUploadProgress('');
-
         feedPosts.set(ev.id, ev);
         renderFeed();
         setStatus(`✅ Publicado en ${ok}/${RELAYS.length} relays`, 'ok');
@@ -1405,23 +1309,5 @@ $('btnRefresh').onclick = loadFeed;
 // Arranque
 loadFeed();
 </script>
-<!-- Modal móvil -->
-<div class="modal-overlay" id="modalMovil" onclick="cerrarMenuMovil(event)">
-    <div class="modal" style="width:90%;max-width:340px;">
-        <div class="modal-header">
-            <span>⚙️ Cuenta</span>
-            <button class="modal-close" onclick="cerrarMenuMovil()">✕</button>
-        </div>
-        <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:10px;">
-            <input class="auth-input" type="password" id="claveInputMovil" placeholder="Clave privada hex (vacío = nueva)">
-            <button class="btn btn-primary" style="width:100%" id="btnConectarMovil">Conectar</button>
-            <div class="info-note" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
-                <strong>Imágenes:</strong> se comprimen y embeben en el post.<br><br>
-                <strong>Videos:</strong> pega una URL de YouTube, catbox.moe o nostr.build en el texto.<br><br>
-                Límite imágenes: ~10 MB.
-            </div>
-        </div>
-    </div>
-</div>    
 </body>
 </html>
