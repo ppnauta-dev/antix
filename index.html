@@ -1060,18 +1060,22 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') { closeLightbo
 //  RENDERIZADO DE MEDIOS EN POSTS
 // ═══════════════════════════════════
 function extractMediaUrls(text) {
+    const dataImages = [...text.matchAll(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g)].map(m => m[1]);
     const images = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
     const videos = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
-    // Eliminar duplicados entre imágenes y videos
     const videoSet = new Set(videos);
     return {
-        images: images.filter(u => !videoSet.has(u)),
+        images: [...dataImages, ...images.filter(u => !videoSet.has(u))],
         videos
     };
 }
 
 function stripMediaUrls(text) {
-    return text.replace(IMAGE_RE, '').replace(VIDEO_RE, '').trim();
+    return text
+        .replace(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g, '')
+        .replace(IMAGE_RE, '')
+        .replace(VIDEO_RE, '')
+        .trim();
 }
 
 function buildMediaHtml(images, videos) {
