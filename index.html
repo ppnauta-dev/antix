@@ -682,27 +682,33 @@ function compressImage(file, maxDim, maxBytes) {
 async function uploadMedia(file) {
     const isVideo = file.type.startsWith('video/');
 
-    if (isVideo) {
-        // Videos: el Data URL sería gigante. Usamos el blob URL local para la preview,
-        // pero no podemos embeber un video de MB en el post.
-        // Solución: intentar subir a nostr.build sin restricción de CORS *desde* el browser real,
-        // y si falla, avisar al usuario que abra nostr.build y pegue la URL manualmente.
+if (isVideo) {
+    // Intentar catbox.moe (más permisivo con CORS)
+    try {
+        const fd = new FormData();
+        fd.append('reqtype', 'fileupload');
+        fd.append('fileToUpload', file);
+        const res = await fetch('https://catbox.moe/user.php', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const url = await res.text();
+        if (url.startsWith('https://')) return { dataUrl: url.trim(), isExternal: true };
+        throw new Error('Sin URL válida');
+    } catch(e1) {
+        // Intentar nostr.build como fallback
         try {
             const fd = new FormData();
             fd.append('fileToUpload', file);
-            const res = await fetch('https://nostr.build/api/v2/upload/files', { method:'POST', body:fd });
+            const res = await fetch('https://nostr.build/api/v2/upload/files', { method: 'POST', body: fd });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
-            const urlTag = json?.nip94_event?.tags?.find(t => t[0]==='url');
-            if (urlTag?.[1]) return { dataUrl: urlTag[1], isExternal: true };
-            if (json?.data?.[0]?.url) return { dataUrl: json.data[0].url, isExternal: true };
+            const url = json?.data?.[0]?.url || json?.nip94_event?.tags?.find(t => t[0]==='url')?.[1];
+            if (url) return { dataUrl: url, isExternal: true };
             throw new Error('Sin URL en respuesta');
-        } catch(e) {
-            // Si falla CORS, devolvemos el blob URL con una advertencia especial
-            // El usuario verá la preview pero el post no se podrá publicar con ese video
-            throw new Error('VIDEO_CORS: Para videos, sube el archivo a nostr.build, imgur.com o similar y pega la URL directamente en el texto del post.');
+        } catch(e2) {
+            throw new Error('VIDEO_CORS: No se pudo subir automáticamente. Sube el video a catbox.moe o nostr.build manualmente y pega la URL en el texto.');
         }
     }
+}
 
     // ── Imágenes: comprimir y embeber como Data URL ───────────────────────────
     let dataUrl;
