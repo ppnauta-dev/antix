@@ -755,20 +755,7 @@ async function uploadMedia(file) {
     return { dataUrl, isExternal: false };
 }
 
-    // ── Imágenes: comprimir y embeber como Data URL ───────────────────────────
-    let dataUrl;
-    if (file.size > MAX_IMG_BYTES || file.type === 'image/bmp') {
-        dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
-    } else {
-        dataUrl = await fileToDataURL(file);
-        // Si aun así es grande, comprimir
-        const bytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3/4);
-        if (bytes > MAX_IMG_BYTES) {
-            dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
-        }
-    }
-    return { dataUrl, isExternal: false };
-}
+
 
 // ═══════════════════════════════════
 //  GESTIÓN DE MEDIA PENDIENTE
