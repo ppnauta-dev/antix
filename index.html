@@ -682,32 +682,77 @@ function compressImage(file, maxDim, maxBytes) {
 async function uploadMedia(file) {
     const isVideo = file.type.startsWith('video/');
 
-if (isVideo) {
-    // Intentar catbox.moe (más permisivo con CORS)
-    try {
-        const fd = new FormData();
-        fd.append('reqtype', 'fileupload');
-        fd.append('fileToUpload', file);
-        const res = await fetch('https://catbox.moe/user.php', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const url = await res.text();
-        if (url.startsWith('https://')) return { dataUrl: url.trim(), isExternal: true };
-        throw new Error('Sin URL válida');
-    } catch(e1) {
-        // Intentar nostr.build como fallback
-        try {
-            const fd = new FormData();
-            fd.append('fileToUpload', file);
-            const res = await fetch('https://nostr.build/api/v2/upload/files', { method: 'POST', body: fd });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const json = await res.json();
-            const url = json?.data?.[0]?.url || json?.nip94_event?.tags?.find(t => t[0]==='url')?.[1];
-            if (url) return { dataUrl: url, isExternal: true };
-            throw new Error('Sin URL en respuesta');
-        } catch(e2) {
-            throw new Error('VIDEO_CORS: No se pudo subir automáticamente. Sube el video a catbox.moe o nostr.build manualmente y pega la URL en el texto.');
+    if (isVideo) {
+        // Intentar con varios servicios en orden
+        const services = [
+            // nostr.build sin auth
+            async () => {
+                const fd = new FormData();
+                fd.append('fileToUpload', file);
+                const res = await fetch('https://nostr.build/api/v2/upload/files', {
+                    method: 'POST',
+                    body: fd,
+                    mode: 'cors'
+                });
+                const json = await res.json();
+                const url = json?.data?.[0]?.url;
+                if (!url) throw new Error('sin url');
+                return url;
+            },
+            // catbox.moe
+            async () => {
+                const fd = new FormData();
+                fd.append('reqtype', 'fileupload');
+                fd.append('fileToUpload', file);
+                const res = await fetch('https://catbox.moe/user.php', {
+                    method: 'POST',
+                    body: fd,
+                    mode: 'cors'
+                });
+                const text = await res.text();
+                if (!text.startsWith('https://')) throw new Error('sin url');
+                return text.trim();
+            },
+            // 0x0.st
+            async () => {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('https://0x0.st', {
+                    method: 'POST',
+                    body: fd,
+                    mode: 'cors'
+                });
+                const text = await res.text();
+                if (!text.startsWith('https://')) throw new Error('sin url');
+                return text.trim();
+            }
+        ];
+
+        for (const service of services) {
+            try {
+                const url = await service();
+                return { dataUrl: url, isExternal: true };
+            } catch(e) {
+                console.warn('Servicio falló, intentando siguiente...', e);
+                continue;
+            }
+        }
+
+        throw new Error('VIDEO_CORS: Ningún servicio pudo subir el video. Intenta con un archivo más pequeño o sube manualmente a catbox.moe');
+    }
+
+    // Imágenes — igual que antes
+    let dataUrl;
+    if (file.size > MAX_IMG_BYTES || file.type === 'image/bmp') {
+        dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
+    } else {
+        dataUrl = await fileToDataURL(file);
+        const bytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3/4);
+        if (bytes > MAX_IMG_BYTES) {
+            dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
         }
     }
+    return { dataUrl, isExternal: false };
 }
 
     // ── Imágenes: comprimir y embeber como Data URL ───────────────────────────
