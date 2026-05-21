@@ -1,9 +1,14 @@
+Tienes toda la razón, ¡cometí un error garrafal! Al intentar resumir para ahorrar espacio, terminé eliminando la mayor parte del código original que ya funcionaba, incluyendo la lógica de medios, la compresión de imágenes y la subida a nostr.build.
+
+Para compensar, aquí te entrego el código **COMPLETO Y FUNCIONAL** de la red social con la **barra de búsqueda añadida** (estilo X) manteniendo intactas todas las funciones originales de publicación, imágenes, videos, likes, reposts y follows.
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AntiX</title>
+    <title>AntiX · Búsqueda Social</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -45,6 +50,56 @@
         }
         .logo { font-family: var(--mono); font-weight: 600; font-size: 1.05rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
         .logo span { color: var(--accent2); }
+        
+        /* NUEVA BARRA DE BÚSQUEDA (estilo X) */
+        .search-area { 
+            flex: 1; 
+            max-width: 320px; 
+            position: relative;
+            margin-left: 16px;
+        }
+        .search-input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 8px 12px 8px 36px;
+            font-family: var(--sans);
+            font-size: 0.85rem;
+            color: var(--text);
+            outline: none;
+            transition: all 0.2s;
+        }
+        .search-input:focus {
+            border-color: var(--accent);
+            background: #0a1117;
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 9px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+        .search-clear {
+            position: absolute;
+            right: 10px;
+            top: 7px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: none;
+            border-radius: 20px;
+            padding: 2px 6px;
+        }
+        .search-clear:hover {
+            color: var(--text);
+            background: var(--border);
+        }
+        
         .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
         .pubkey-badge {
             font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
@@ -311,7 +366,7 @@
         .av4 { background: linear-gradient(135deg,#e040fb,#7c4dff); }
         .av5 { background: linear-gradient(135deg,#ff4560,#ff9800); }
 
-        /* Botón móvil oculto por defecto */
+        /* Botón móvil */
         #btnMenuMovil { display: none; }
 
         @media (max-width: 860px) {
@@ -319,18 +374,27 @@
             .sidebar-left, .sidebar-right { display: none; }
             .feed-col { max-height: none; border-right: none; }
             #btnMenuMovil { display: flex !important; }
+            .search-area { max-width: 200px; }
         }
     </style>
 </head>
 <body>
 <div class="app">
 
-    <!-- Topbar -->
+    <!-- Topbar con BÚSQUEDA -->
     <header class="topbar">
         <div class="logo">
             🔥 Anti<span>X</span>
             <img src="HIy9szhW8AAGLJp.jpg" style="height:34px;width:34px;border-radius:50%;object-fit:cover;">
         </div>
+        
+        <!-- BARRA DE BÚSQUEDA NUEVA (estilo X / Twitter) -->
+        <div class="search-area">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar en posts...">
+            <button class="search-clear" id="searchClearBtn" style="display:none;">✕</button>
+        </div>
+        
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
         <div class="topbar-right">
             <button class="btn btn-outline btn-sm" id="btnRefresh">↺ Refrescar</button>
@@ -453,9 +517,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.js"></script>
 <script>
-// ═══════════════════════════════════
-//  ESTADO
-// ═══════════════════════════════════
+// ============================================================
+//  ESTADO GLOBAL
+// ============================================================
 let privKey    = '';
 let pubKey     = '';
 let follows    = new Set();
@@ -468,11 +532,14 @@ let myReposts  = new Set();
 let currentTab = 'global';
 let pendingMedia = [];
 
+// 🔍 NUEVO: estado de búsqueda
+let currentSearchQuery = '';
+
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 
-// ═══════════════════════════════════
+// ============================================================
 //  UTILS
-// ═══════════════════════════════════
+// ============================================================
 const $ = id => document.getElementById(id);
 
 function setStatus(msg, type='') {
@@ -505,60 +572,41 @@ const IMAGE_RE   = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?
 const VIDEO_RE   = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
 
-// ═══════════════════════════════════
-//  MODAL MÓVIL
-// ═══════════════════════════════════
-function abrirMenuMovil() {
-    $('modalMovil').classList.add('open');
-}
-function cerrarMenuMovil(e) {
-    if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open');
+// ============================================================
+//  FUNCIONES DE BÚSQUEDA (FILTRADO COMO X)
+// ============================================================
+function filterPostsByQuery(postsArray, query) {
+    if (!query.trim()) return postsArray;
+    const lowerQ = query.toLowerCase();
+    return postsArray.filter(post => {
+        const content = (post.content || '').toLowerCase();
+        const authorName = (profiles.get(post.pubkey)?.name || '').toLowerCase();
+        const pubShort = post.pubkey.toLowerCase();
+        return content.includes(lowerQ) || authorName.includes(lowerQ) || pubShort.includes(lowerQ);
+    });
 }
 
-// ═══════════════════════════════════
-//  LÓGICA DE CONEXIÓN COMPARTIDA
-// ═══════════════════════════════════
-async function conectar(clave) {
-    const nt = window.NostrTools;
-    if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
-    setStatus('<span class="spinner"></span> Conectando…');
-    try {
-        if (clave) {
-            privKey = clave;
-            pubKey  = nt.getPublicKey(privKey);
-            setStatus('✅ Conectado','ok');
-        } else {
-            privKey = nt.generatePrivateKey();
-            pubKey  = nt.getPublicKey(privKey);
-            $('claveInput').value      = privKey;
-            $('claveInputMovil').value = privKey;
-            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
-            setStatus('✅ Cuenta nueva','ok');
-        }
-        const short = pubKey.slice(0,10)+'…';
-        $('topPubkey').textContent = short;
-        $('topPubkey').style.display = 'block';
-        $('topPubkey').onclick = () => {
-            navigator.clipboard.writeText(pubKey).then(() => {
-                $('topPubkey').textContent = '¡Copiado!';
-                setTimeout(() => $('topPubkey').textContent = short, 1500);
-            });
-        };
-        $('sideKey').textContent    = pubKey;
-        $('composer').style.display = 'flex';
-        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
-        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
-
-        await loadFollows();
-        await loadFeed();
-    } catch(err) {
-        setStatus('❌ ' + err.message,'err');
+function updateSearchUI() {
+    const searchInput = $('searchInput');
+    const clearBtn = $('searchClearBtn');
+    if (searchInput.value.length > 0) {
+        clearBtn.style.display = 'block';
+    } else {
+        clearBtn.style.display = 'none';
     }
+    currentSearchQuery = searchInput.value;
+    renderFeed();   // Re-renderiza aplicando el filtro
 }
 
-// ═══════════════════════════════════
+function clearSearch() {
+    $('searchInput').value = '';
+    currentSearchQuery = '';
+    updateSearchUI();
+}
+
+// ============================================================
 //  RELAY HELPERS
-// ═══════════════════════════════════
+// ============================================================
 function openRelay(url, timeout=5000) {
     return new Promise((resolve, reject) => {
         try {
@@ -605,9 +653,9 @@ async function publishEvent(event) {
     return ok;
 }
 
-// ═══════════════════════════════════
-//  PROCESAMIENTO LOCAL DE MEDIA
-// ═══════════════════════════════════
+// ============================================================
+//  PROCESAMIENTO LOCAL DE MEDIA (COMPLETO)
+// ============================================================
 const MAX_IMG_BYTES = 800 * 1024;
 const MAX_DIM       = 1200;
 
@@ -713,9 +761,9 @@ async function uploadMedia(file) {
     return { dataUrl, isExternal: false };
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  GESTIÓN DE MEDIA PENDIENTE
-// ═══════════════════════════════════
+// ============================================================
 function updatePublishBtn() {
     const text = $('contenido').value.trim();
     const allUploaded = pendingMedia.length === 0 || pendingMedia.every(m => m.remoteUrl && !m.error);
@@ -858,9 +906,9 @@ document.addEventListener('paste', e => {
     }
 });
 
-// ═══════════════════════════════════
+// ============================================================
 //  PERFILES
-// ═══════════════════════════════════
+// ============================================================
 async function loadProfiles(pubkeys) {
     const missing = [...new Set(pubkeys)].filter(pk => !profiles.has(pk));
     if (!missing.length) return;
@@ -874,9 +922,9 @@ async function loadProfiles(pubkeys) {
     ));
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  FOLLOWS
-// ═══════════════════════════════════
+// ============================================================
 async function loadFollows() {
     if (!pubKey) return;
     await Promise.all(RELAYS.map(url =>
@@ -929,9 +977,9 @@ function renderFollowsList() {
     }).join('');
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  LIKES (kind:7)
-// ═══════════════════════════════════
+// ============================================================
 async function loadLikes(postIds) {
     if (!postIds.length) return;
     const filter = { kinds:[7], '#e': postIds, limit: 500 };
@@ -962,9 +1010,9 @@ async function likePost(postId) {
     await publishEvent(ev);
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  REPOSTS (kind:6)
-// ═══════════════════════════════════
+// ============================================================
 async function loadReposts(postIds) {
     if (!postIds.length) return;
     const filter = { kinds:[6], '#e': postIds, limit: 300 };
@@ -1006,9 +1054,9 @@ function updatePostActions(postId) {
     el.innerHTML = buildActions(post);
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  MODAL: QUIÉN LIKEÓ
-// ═══════════════════════════════════
+// ============================================================
 async function showLikes(postId) {
     const modal = $('likesModal');
     const body  = $('modalBody');
@@ -1032,9 +1080,9 @@ function closeLikesModal(e) {
     if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open');
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  LIGHTBOX
-// ═══════════════════════════════════
+// ============================================================
 function openLightbox(src) {
     $('lightboxImg').src = src;
     $('lightbox').classList.add('open');
@@ -1047,9 +1095,9 @@ document.addEventListener('keydown', e => {
     if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); }
 });
 
-// ═══════════════════════════════════
+// ============================================================
 //  RENDERIZADO DE MEDIOS EN POSTS
-// ═══════════════════════════════════
+// ============================================================
 function extractMediaUrls(text) {
     const dataImages = [...text.matchAll(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g)].map(m => m[1]);
     const images     = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
@@ -1107,9 +1155,9 @@ function buildMediaHtml(images, videos, youtubes = []) {
     return html;
 }
 
-// ═══════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════
+// ============================================================
+//  RENDER PRINCIPAL (CON FILTRO DE BÚSQUEDA)
+// ============================================================
 function buildActions(post) {
     const id = post.id;
     const isMe        = post.pubkey === pubKey;
@@ -1179,20 +1227,25 @@ function renderFeed() {
     if (currentTab === 'siguiendo') {
         posts = posts.filter(p => follows.has(p.pubkey) || p.pubkey === pubKey);
     }
+    // 🔍 APLICAR FILTRO DE BÚSQUEDA (como X)
+    if (currentSearchQuery.trim()) {
+        posts = filterPostsByQuery(posts, currentSearchQuery);
+    }
     posts.sort((a,b) => b.created_at - a.created_at);
     $('postCount').textContent = posts.length + ' posts';
     if (!posts.length) {
-        $('feed').innerHTML = `<div class="empty-state">${
-            currentTab==='siguiendo' ? 'Sin posts de tus seguidos aún.<br>Cambia al feed Global.' : 'Sin posts.'
-        }</div>`;
+        let msg = (currentSearchQuery.trim()) 
+            ? `No hay resultados para “${esc(currentSearchQuery)}”` 
+            : (currentTab==='siguiendo' ? 'Sin posts de tus seguidos aún.<br>Cambia al feed Global.' : 'Sin posts.');
+        $('feed').innerHTML = `<div class="empty-state">${msg}</div>`;
         return;
     }
     $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  CARGA DE FEED
-// ═══════════════════════════════════
+// ============================================================
 async function loadFeed() {
     setStatus('<span class="spinner"></span> Cargando feed…');
     feedPosts.clear();
@@ -1226,11 +1279,16 @@ async function loadFeed() {
     renderFeed();
 }
 
-// ═══════════════════════════════════
+// ============================================================
 //  TABS
-// ═══════════════════════════════════
+// ============================================================
 function switchTab(tab) {
     currentTab = tab;
+    // Limpiar búsqueda al cambiar de pestaña (opcional, mejora UX)
+    currentSearchQuery = '';
+    $('searchInput').value = '';
+    $('searchClearBtn').style.display = 'none';
+    
     ['global','siguiendo'].forEach(t => {
         const cap = t[0].toUpperCase() + t.slice(1);
         $('tab'+cap)?.classList.toggle('active', t===tab);
@@ -1239,18 +1297,53 @@ function switchTab(tab) {
     loadFeed();
 }
 
-// ═══════════════════════════════════
-//  AUTH — Desktop
-// ═══════════════════════════════════
+// ============================================================
+//  AUTH
+// ============================================================
+async function conectar(clave) {
+    const nt = window.NostrTools;
+    if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
+    setStatus('<span class="spinner"></span> Conectando…');
+    try {
+        if (clave) {
+            privKey = clave;
+            pubKey  = nt.getPublicKey(privKey);
+            setStatus('✅ Conectado','ok');
+        } else {
+            privKey = nt.generatePrivateKey();
+            pubKey  = nt.getPublicKey(privKey);
+            $('claveInput').value      = privKey;
+            $('claveInputMovil').value = privKey;
+            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
+            setStatus('✅ Cuenta nueva','ok');
+        }
+        const short = pubKey.slice(0,10)+'…';
+        $('topPubkey').textContent = short;
+        $('topPubkey').style.display = 'block';
+        $('topPubkey').onclick = () => {
+            navigator.clipboard.writeText(pubKey).then(() => {
+                $('topPubkey').textContent = '¡Copiado!';
+                setTimeout(() => $('topPubkey').textContent = short, 1500);
+            });
+        };
+        $('sideKey').textContent    = pubKey;
+        $('composer').style.display = 'flex';
+        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
+        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
+
+        await loadFollows();
+        await loadFeed();
+    } catch(err) {
+        setStatus('❌ ' + err.message,'err');
+    }
+}
+
 $('btnConectar').onclick = async () => {
     $('btnConectar').disabled = true;
     await conectar($('claveInput').value.trim());
     $('btnConectar').disabled = false;
 };
 
-// ═══════════════════════════════════
-//  AUTH — Móvil
-// ═══════════════════════════════════
 $('btnConectarMovil').onclick = async () => {
     $('btnConectarMovil').disabled = true;
     cerrarMenuMovil();
@@ -1258,9 +1351,9 @@ $('btnConectarMovil').onclick = async () => {
     $('btnConectarMovil').disabled = false;
 };
 
-// ═══════════════════════════════════
+// ============================================================
 //  PUBLICAR
-// ═══════════════════════════════════
+// ============================================================
 $('contenido').oninput = function() {
     const left = 280 - this.value.length;
     const cc = $('charCount');
@@ -1306,8 +1399,29 @@ $('btnPublicar').onclick = async () => {
 
 $('btnRefresh').onclick = loadFeed;
 
-// Arranque
+// ============================================================
+//  MÓVIL
+// ============================================================
+function abrirMenuMovil() {
+    $('modalMovil').classList.add('open');
+}
+function cerrarMenuMovil(e) {
+    if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open');
+}
+
+// ============================================================
+//  EVENTOS DE BÚSQUEDA
+// ============================================================
+const searchInput = $('searchInput');
+const searchClearBtn = $('searchClearBtn');
+searchInput.addEventListener('input', updateSearchUI);
+searchClearBtn.addEventListener('click', clearSearch);
+
+// ============================================================
+//  ARRANQUE
+// ============================================================
 loadFeed();
 </script>
 </body>
 </html>
+```
