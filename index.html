@@ -405,6 +405,9 @@
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
             .feed-col { max-height: none; border-right: none; }
+        @media (max-width: 860px) {
+            #btnMenuMovil { display: flex !important; }
+        }        
         }
     </style>
 </head>
@@ -545,7 +548,20 @@ function setStatus(msg, type='') {
     $('statusBar').innerHTML = msg;
     $('statusBar').className = 'status-bar ' + type;
 }
+function abrirMenuMovil() {
+    $('modalMovil').classList.add('open');
+}
+function cerrarMenuMovil(e) {
+    if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open');
+}
 
+$('btnConectarMovil').onclick = async () => {
+    // Copiar la clave del input móvil al principal y disparar conexión
+    const val = $('claveInputMovil').value.trim();
+    $('claveInput').value = val;
+    cerrarMenuMovil();
+    $('btnConectar').click();
+};
 function avClass(pk) { return 'av' + (parseInt(pk.slice(0,4),16) % 6); }
 function avInitials(pk) {
     const p = profiles.get(pk);
@@ -1389,5 +1405,23 @@ $('btnRefresh').onclick = loadFeed;
 // Arranque
 loadFeed();
 </script>
+<!-- Modal móvil -->
+<div class="modal-overlay" id="modalMovil" onclick="cerrarMenuMovil(event)">
+    <div class="modal" style="width:90%;max-width:340px;">
+        <div class="modal-header">
+            <span>⚙️ Cuenta</span>
+            <button class="modal-close" onclick="cerrarMenuMovil()">✕</button>
+        </div>
+        <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:10px;">
+            <input class="auth-input" type="password" id="claveInputMovil" placeholder="Clave privada hex (vacío = nueva)">
+            <button class="btn btn-primary" style="width:100%" id="btnConectarMovil">Conectar</button>
+            <div class="info-note" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
+                <strong>Imágenes:</strong> se comprimen y embeben en el post.<br><br>
+                <strong>Videos:</strong> pega una URL de YouTube, catbox.moe o nostr.build en el texto.<br><br>
+                Límite imágenes: ~10 MB.
+            </div>
+        </div>
+    </div>
+</div>    
 </body>
 </html>
