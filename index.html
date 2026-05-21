@@ -26,27 +26,38 @@
     <script>
         let privKey = '';
         let pubKey = '';
-
+    
         document.getElementById('conectar').onclick = async () => {
-            const inputPriv = document.getElementById('clave').value;
-            if (inputPriv) {
-                privKey = inputPriv;
-                pubKey = await window.nostrTools.getPublicKey(privKey);
-                alert('Conectado con clave existente. Tu pubkey: ' + pubKey.slice(0,10) + '...');
-            } else {
-                privKey = window.nostrTools.generatePrivateKey();
-                pubKey = await window.nostrTools.getPublicKey(privKey);
-                alert('✅ Cuenta creada. GUARDA ESTA CLAVE PRIVADA:\n' + privKey + '\n\nSin ella no podrás recuperar tu cuenta.');
-                document.getElementById('clave').value = privKey;
+            try {
+                const inputPriv = document.getElementById('clave').value;
+                
+                if (inputPriv) {
+                    // Usar clave existente
+                    privKey = inputPriv;
+                    pubKey = await window.nostrTools.getPublicKey(privKey);
+                    alert('Conectado con clave existente. Tu pubkey: ' + pubKey.slice(0,10) + '...');
+                } else {
+                    // Generar nueva cuenta
+                    privKey = window.nostrTools.generatePrivateKey();
+                    pubKey = await window.nostrTools.getPublicKey(privKey);
+                    alert('✅ CUENTA CREADA\n\nGUARDA ESTA CLAVE PRIVADA:\n' + privKey + '\n\nSin ella no podrás recuperar tu cuenta.');
+                    document.getElementById('clave').value = privKey;
+                }
+                
+                // Mostrar que está conectado
+                document.getElementById('publicar').style.display = 'block';
+                cargarFeed();
+            } catch(error) {
+                alert('Error: ' + error.message);
             }
-            cargarFeed();
         };
-
+    
+        document.getElementById('publicar').style.display = 'none'; // Ocultar botón hasta conectar
         document.getElementById('publicar').onclick = async () => {
             if (!privKey) { alert('Primero conecta o genera cuenta'); return; }
             const contenido = document.getElementById('contenido').value;
             if (!contenido) return;
-
+    
             const evento = {
                 kind: 1,
                 pubkey: pubKey,
@@ -56,38 +67,47 @@
             };
             evento.id = await window.nostrTools.getEventHash(evento);
             evento.sig = await window.nostrTools.signEvent(evento, privKey);
-
+    
             const relays = ['wss://relay.damus.io', 'wss://nos.lol'];
             for (let relay of relays) {
-                const ws = new WebSocket(relay);
-                ws.onopen = () => {
-                    ws.send(JSON.stringify(['EVENT', evento]));
-                    ws.close();
-                };
+                try {
+                    const ws = new WebSocket(relay);
+                    ws.onopen = () => {
+                        ws.send(JSON.stringify(['EVENT', evento]));
+                        setTimeout(() => ws.close(), 1000);
+                    };
+                } catch(e) {}
             }
             document.getElementById('contenido').value = '';
             setTimeout(cargarFeed, 2000);
         };
-
+    
         async function cargarFeed() {
             const filtro = { kinds: [1], limit: 30 };
             const relays = ['wss://relay.damus.io', 'wss://nos.lol'];
             let posts = [];
+            
             for (let relay of relays) {
-                const ws = new WebSocket(relay);
-                ws.onopen = () => ws.send(JSON.stringify(['REQ', 'feed', filtro]));
-                ws.onmessage = (e) => {
-                    const msg = JSON.parse(e.data);
-                    if (msg[0] === 'EVENT' && msg[2]?.kind === 1) posts.push(msg[2]);
-                };
-                await new Promise(r => setTimeout(r, 3000));
-                ws.close();
+                try {
+                    const ws = new WebSocket(relay);
+                    ws.onopen = () => ws.send(JSON.stringify(['REQ', 'feed', filtro]));
+                    ws.onmessage = (e) => {
+                        const msg = JSON.parse(e.data);
+                        if (msg[0] === 'EVENT' && msg[2]?.kind === 1) {
+                            posts.push(msg[2]);
+                        }
+                    };
+                    await new Promise(r => setTimeout(r, 3000));
+                    ws.close();
+                } catch(e) {}
             }
+            
             posts.sort((a,b) => b.created_at - a.created_at);
             const feedDiv = document.getElementById('feed');
             feedDiv.innerHTML = posts.map(p => `<div class="post"><strong>${p.pubkey.slice(0,8)}</strong><p>${p.content}</p></div>`).join('');
         }
-
+    
+        // Cargar feed al inicio
         cargarFeed();
     </script>
 </body>
