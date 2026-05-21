@@ -486,10 +486,11 @@
         <div class="widget">
             <div class="widget-title">📤 Subida de medios</div>
             <div class="info-note">
-                Las imágenes y videos se suben a
-                <a href="https://nostr.build" target="_blank">nostr.build</a>,
-                un hosting gratuito para la red Nostr.<br><br>
-                Las URLs se adjuntan automáticamente al post.<br><br>
+                Los archivos se suben intentando en orden:<br>
+                1. <a href="https://nostrcheck.me" target="_blank">nostrcheck.me</a><br>
+                2. <a href="https://void.cat" target="_blank">void.cat</a><br>
+                3. <a href="https://nostr.build" target="_blank">nostr.build</a><br><br>
+                Si un servicio falla por CORS, se prueba el siguiente automáticamente.<br><br>
                 Límites: imágenes hasta <strong>100 MB</strong>,
                 videos hasta <strong>500 MB</strong>.
             </div>
@@ -627,30 +628,75 @@ async function publishEvent(event) {
 // ═══════════════════════════════════
 //  UPLOAD A NOSTR.BUILD (NIP-96)
 // ═══════════════════════════════════
-async function uploadToNostrBuild(file) {
-    const formData = new FormData();
-    formData.append('fileToUpload', file);
+// ── Intento 1: nostrcheck.me (NIP-96, CORS abierto) ──────────────────────────
+async function tryNostrCheck(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('https://nostrcheck.me/api/v2/media', {
+        method: 'POST',
+        body: fd
+    });
+    if (!res.ok) throw new Error(`nostrcheck HTTP ${res.status}`);
+    const json = await res.json();
+    // NIP-96: { status, nip94_event: { tags: [['url', '...'], ...] } }
+    const urlTag = json?.nip94_event?.tags?.find(t => t[0] === 'url');
+    if (urlTag?.[1]) return urlTag[1];
+    if (json?.url) return json.url;
+    throw new Error('nostrcheck: no URL en respuesta');
+}
 
+// ── Intento 2: void.cat (acepta multipart, CORS abierto) ─────────────────────
+async function tryVoidCat(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('https://void.cat/upload', {
+        method: 'POST',
+        body: fd
+    });
+    if (!res.ok) throw new Error(`void.cat HTTP ${res.status}`);
+    const json = await res.json();
+    // void.cat devuelve { file: { id, ... } } → URL construida
+    if (json?.file?.id) return `https://void.cat/d/${json.file.id}`;
+    if (json?.url) return json.url;
+    throw new Error('void.cat: no URL en respuesta');
+}
+
+// ── Intento 3: nostr.build legacy API ────────────────────────────────────────
+async function tryNostrBuild(file) {
+    const fd = new FormData();
+    fd.append('fileToUpload', file);
     const res = await fetch('https://nostr.build/api/v2/upload/files', {
         method: 'POST',
-        body: formData
+        body: fd
     });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`nostr.build HTTP ${res.status}`);
     const json = await res.json();
-
-    // nostr.build NIP-96 devuelve { status, nip94_event }
-    // La URL está en los tags del evento NIP-94
-    if (json?.nip94_event?.tags) {
-        const urlTag = json.nip94_event.tags.find(t => t[0] === 'url');
-        if (urlTag?.[1]) return urlTag[1];
-    }
-    // Fallback: campo url directo si lo hay
-    if (json?.url) return json.url;
-    // Fallback legacy
+    const urlTag = json?.nip94_event?.tags?.find(t => t[0] === 'url');
+    if (urlTag?.[1]) return urlTag[1];
     if (json?.data?.[0]?.url) return json.data[0].url;
+    if (json?.url) return json.url;
+    throw new Error('nostr.build: no URL en respuesta');
+}
 
-    throw new Error('No se pudo obtener URL del servidor');
+// ── Orchestrador con fallbacks ────────────────────────────────────────────────
+async function uploadMedia(file) {
+    const attempts = [
+        { name: 'nostrcheck.me', fn: tryNostrCheck },
+        { name: 'void.cat',      fn: tryVoidCat    },
+        { name: 'nostr.build',   fn: tryNostrBuild },
+    ];
+    const errors = [];
+    for (const { name, fn } of attempts) {
+        try {
+            const url = await fn(file);
+            console.log(`✓ Subido a ${name}:`, url);
+            return url;
+        } catch (err) {
+            console.warn(`✗ ${name}:`, err.message);
+            errors.push(`${name}: ${err.message}`);
+        }
+    }
+    throw new Error('Todos los servicios fallaron:\n' + errors.join('\n'));
 }
 
 // ═══════════════════════════════════
@@ -744,7 +790,7 @@ async function handleFiles(files) {
         setUploadProgress(`Subiendo ${total} archivo${total>1?'s':''}…`, 'uploading');
 
         try {
-            const url = await uploadToNostrBuild(file);
+            const url = await uploadMedia(file);
             entry.remoteUrl = url;
             entry.uploading = false;
         } catch (err) {
