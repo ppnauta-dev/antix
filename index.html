@@ -818,6 +818,9 @@ let replies = new Map();        // postId -> array de respuestas
 let replyLikes = new Map();     // replyId -> Set de usuarios que dieron like
 let myReplyLikes = new Set();   // replies que me gustan
 let expandedReplies = new Set(); // posts con respuestas expandidas
+// Configuración de firma
+let firmaAutomatica = true;
+let textoFirma = '\n\n---\n📱 Publicado desde Anti X - El cliente Nostr que sube imágenes directas\n🔗 https://ppnauta-dev.github.io/antix/';    
 const RELAYS = [
     'wss://relay.damus.io',
     'wss://nos.lol',
@@ -2364,8 +2367,17 @@ $('contenido').oninput = function() {
 $('btnPublicar').onclick = async () => {
     if (!privKey) return;
     let text = $('contenido').value.trim();
+
     const mediaUrls = pendingMedia.filter(m => m.remoteUrl).map(m => m.remoteUrl);
-    if (mediaUrls.length) text = (text ? text + '\n\n' : '') + mediaUrls.join('\n');
+    if (mediaUrls.length) {
+        text = (text ? text + '\n\n' : '') + mediaUrls.join('\n');
+    }
+    
+    // 🔥 AÑADIR FIRMA AUTOMÁTICA
+    if (firmaAutomatica && text) {
+        text = text + textoFirma;
+    }
+    
     if (!text) return;
     $('btnPublicar').disabled = true;
     setStatus('<span class="spinner"></span> Publicando...');
