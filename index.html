@@ -1001,8 +1001,6 @@ function showReplyForm(postId) {
 function renderReplies(postId) {
     const postReplies = replies.get(postId) || [];
     
-    console.log(`💬 renderReplies para ${postId}: ${postReplies.length} respuestas`);
-    
     if (!postReplies.length) return '';
     
     if (typeof window.expandedReplies === 'undefined') window.expandedReplies = new Set();
@@ -1010,16 +1008,13 @@ function renderReplies(postId) {
     const visibleReplies = isExpanded ? postReplies : postReplies.slice(0, 2);
     const hasMore = postReplies.length > 2 && !isExpanded;
     
-    let html = `<div class="reply-thread" style="margin-top: 12px; margin-left: 20px; padding-left: 12px; border-left: 2px solid var(--border);">`;
+    let html = `<div class="replies-container" style="margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--border);">`;
     
     visibleReplies.forEach(reply => {
         const replyProfile = profiles.get(reply.pubkey) || {};
         const replyName = esc(displayName(reply.pubkey));
-        const replyInitials = avInitials(reply.pubkey);
-        const replyAc = avClass(reply.pubkey);
         const replyTime = timeAgo(reply.created_at);
         
-        // Limpiar el contenido de la respuesta (sin URLs de medios)
         let replyContent = reply.content || '';
         replyContent = replyContent.replace(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g, '');
         replyContent = esc(replyContent.trim());
@@ -1027,34 +1022,41 @@ function renderReplies(postId) {
         const likeCount = (window.replyLikes?.get(reply.id)?.size) || 0;
         const isLiked = window.myReplyLikes?.has(reply.id) || false;
         
-        const avatarStyle = replyProfile.picture 
-            ? `style="background: url(${replyProfile.picture}) center/cover no-repeat; background-size: cover;"`
-            : `class="reply-avatar ${replyAc}"`;
-        const avatarContent = replyProfile.picture ? '' : replyInitials;
+        // 🔥 AVATAR CORREGIDO
+        let replyAvatarHtml = '';
+        if (replyProfile.picture) {
+            replyAvatarHtml = `<div style="width: 28px; height: 28px; border-radius: 50%; background: url(${replyProfile.picture}) center/cover no-repeat; background-size: cover; flex-shrink: 0;"></div>`;
+        } else {
+            const replyAc = avClass(reply.pubkey);
+            const replyInitials = avInitials(reply.pubkey);
+            replyAvatarHtml = `<div class="${replyAc}" style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; flex-shrink: 0;">${replyInitials}</div>`;
+        }
         
         html += `
-            <div class="reply-item" data-reply-id="${reply.id}" style="margin-top: 12px; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 10px;">
-                <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                    <div ${avatarStyle} style="width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; background-size: cover;">${avatarContent}</div>
-                    <span style="font-weight: 600; font-size: 0.75rem;">${replyName}</span>
-                    <span style="font-family: monospace; font-size: 0.55rem; color: var(--muted);">${reply.pubkey.slice(0,8)}…</span>
-                    <span style="font-family: monospace; font-size: 0.55rem; color: var(--muted); margin-left: auto;">${replyTime}</span>
-                </div>
-                <div style="font-size: 0.8rem; line-height: 1.45; margin-bottom: 6px; word-break: break-word;">${replyContent}</div>
-                <div style="display: flex; gap: 12px;">
-                    <button class="reply-action-btn" onclick="likeReply('${postId}', '${reply.id}', '${reply.pubkey}')" style="background: none; border: none; cursor: pointer; font-size: 0.65rem; color: var(--muted); display: flex; align-items: center; gap: 4px;">
-                        <span>${isLiked ? '❤️' : '🤍'}</span>
-                        <span>${likeCount || ''}</span>
-                    </button>
+            <div style="display: flex; gap: 10px; margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 12px;">
+                ${replyAvatarHtml}
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                        <span style="font-weight: 600; font-size: 0.8rem;">${replyName}</span>
+                        <span style="font-family: monospace; font-size: 0.6rem; color: var(--muted);">${reply.pubkey.substring(0,8)}…</span>
+                        <span style="font-family: monospace; font-size: 0.6rem; color: var(--muted); margin-left: auto;">${replyTime}</span>
+                    </div>
+                    <div style="font-size: 0.85rem; line-height: 1.4; word-break: break-word;">${replyContent}</div>
+                    <div style="display: flex; gap: 12px; margin-top: 8px;">
+                        <button class="reply-like-btn" onclick="likeReply('${postId}', '${reply.id}', '${reply.pubkey}')" style="background: none; border: none; cursor: pointer; font-size: 0.7rem; color: ${isLiked ? 'var(--like)' : 'var(--muted)'}; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 16px;">
+                            <span>${isLiked ? '❤️' : '🤍'}</span>
+                            <span>${likeCount || ''}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
     });
     
     if (hasMore) {
-        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')" style="background: none; border: none; color: var(--accent); font-size: 0.65rem; cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 16px;">Ver las ${postReplies.length - 2} respuestas restantes ↓</button>`;
+        html += `<button onclick="toggleReplies('${postId}')" style="background: none; border: none; color: var(--accent); font-size: 0.7rem; cursor: pointer; margin-top: 12px; padding: 6px 12px; border-radius: 20px; width: 100%; text-align: center;">Ver las ${postReplies.length - 2} respuestas restantes ↓</button>`;
     } else if (isExpanded && postReplies.length > 2) {
-        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')" style="background: none; border: none; color: var(--accent); font-size: 0.65rem; cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 16px;">Mostrar menos ↑</button>`;
+        html += `<button onclick="toggleReplies('${postId}')" style="background: none; border: none; color: var(--accent); font-size: 0.7rem; cursor: pointer; margin-top: 12px; padding: 6px 12px; border-radius: 20px; width: 100%; text-align: center;">Mostrar menos ↑</button>`;
     }
     
     html += `</div>`;
