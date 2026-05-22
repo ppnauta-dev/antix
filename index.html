@@ -852,6 +852,17 @@ const RELAYS = [
     'wss://relay.snort.social'        // ✅ Popular
     ];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
+
+function initYoutube() {
+    const savedChannel = localStorage.getItem('antix_youtube_channel');
+    if (savedChannel) {
+        youtubeChannelHandle = savedChannel;
+        console.log('🎬 Canal cargado:', youtubeChannelHandle);
+    }
+}
+
+// ✅ EJECUTAR LA FUNCIÓN
+initYoutube();    
 // ============================================================
 //  SISTEMA DE RESPUESTAS (REPLIES)
 // ============================================================
