@@ -825,27 +825,32 @@ const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'ws
 // Cargar respuestas de posts específicos
 async function loadReplies(postIds) {
     if (!postIds.length) return;
+    console.log('📥 Cargando respuestas para', postIds.length, 'posts');
     
     const filter = { kinds: [1], '#e': postIds, limit: 500 };
     
     await Promise.all(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
             if (ev.kind !== 1) return;
-            
-            // Buscar tag 'e' que indica a qué post responde
             const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
             if (!eTag) return;
-            
             const parentId = eTag[1];
             if (!replies.has(parentId)) replies.set(parentId, []);
             
-            // Evitar duplicados
             const existing = replies.get(parentId).find(r => r.id === ev.id);
             if (!existing) {
                 replies.get(parentId).push(ev);
+                console.log(`📝 Respuesta cargada para ${parentId.slice(0,8)}`);
             }
         }, 6000)
     ));
+    
+    // Ordenar respuestas por tiempo
+    for (const [postId, repliesList] of replies) {
+        repliesList.sort((a, b) => a.created_at - b.created_at);
+    }
+    
+    console.log('✅ Respuestas cargadas:', replies.size, 'posts tienen respuestas');
 }
 
 // Publicar una respuesta
