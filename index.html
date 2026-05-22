@@ -638,10 +638,7 @@ const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)
 // ============================================================
 //  SEGUIDORES (FOLLOWERS COUNT) - VERSIÓN COMPLETA
 // ============================================================
-// ============================================================
-//  SEGUIDORES - VERSIÓN CORREGIDA
-// ============================================================
-const followersPending = new Set();
+
 
 async function loadFollowersForPubkeys(pubkeys) {
     const toLoad = pubkeys.filter(pk => !followersCount.has(pk) && !followersPending.has(pk));
