@@ -3,9 +3,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes, viewport-fit=cover">
-    <meta name="theme-color" content="#080b0f">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AntiX · Búsqueda Global</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -42,40 +39,33 @@
             background: var(--surface);
             border-bottom: 1px solid var(--border);
             display: flex; align-items: center;
-            padding: 0 12px;
-            gap: 8px;
+            padding: 0 20px; gap: 12px;
             position: sticky; top: 0; z-index: 100;
         }
-        .logo { font-family: var(--mono); font-weight: 600; font-size: 0.9rem; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+        .logo { font-family: var(--mono); font-weight: 600; font-size: 1.05rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
         .logo span { color: var(--accent2); }
-        .logo img { height: 28px; width: 28px; border-radius: 50%; object-fit: cover; }
+        .logo img { height: 34px; width: 34px; border-radius: 50%; object-fit: cover; }
 
-        .search-area { flex: 1; max-width: 280px; position: relative; }
+        .search-area { flex: 1; max-width: 360px; position: relative; margin-left: 16px; }
         .search-input {
             width: 100%; background: var(--bg); border: 1px solid var(--border);
-            border-radius: 40px; padding: 6px 10px 6px 32px;
-            font-family: var(--sans); font-size: 0.75rem; color: var(--text);
-            outline: none;
+            border-radius: 40px; padding: 8px 12px 8px 38px;
+            font-family: var(--sans); font-size: 0.85rem; color: var(--text);
+            outline: none; transition: all 0.2s;
         }
         .search-input:focus { border-color: var(--accent); background: #0a1117; }
-        .search-icon { position: absolute; left: 10px; top: 7px; color: var(--muted); font-size: 0.8rem; pointer-events: none; }
-        .search-clear { position: absolute; right: 8px; top: 5px; background: none; border: none; color: var(--muted); font-size: 0.8rem; cursor: pointer; display: none; padding: 2px 4px; }
+        .search-icon { position: absolute; left: 14px; top: 9px; color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+        .search-clear { position: absolute; right: 10px; top: 7px; background: none; border: none; color: var(--muted); font-size: 0.9rem; cursor: pointer; display: none; border-radius: 20px; padding: 2px 6px; }
+        .search-clear:hover { color: var(--text); background: var(--border); }
 
-        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+        .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
         .pubkey-badge {
-            font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
+            font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
             background: var(--bg); border: 1px solid var(--border);
-            padding: 3px 8px; border-radius: 20px; cursor: pointer;
-            display: none;
+            padding: 4px 10px; border-radius: 20px; cursor: pointer;
         }
-        .btn-icon {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-            padding: 6px 10px; cursor: pointer; font-size: 0.9rem;
-            display: flex; align-items: center; gap: 4px;
-        }
-        .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+        .pubkey-badge:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* Sidebar izquierda - visible en desktop, oculta en móvil */
         .sidebar-left {
             border-right: 1px solid var(--border);
             padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
@@ -89,118 +79,172 @@
         }
         .nav-btn:hover { background: var(--border); color: var(--text); }
         .nav-btn.active { background: rgba(0,212,255,0.1); color: var(--accent); }
-        .nav-btn .icon { width: 20px; text-align: center; }
+        .nav-btn .icon { width: 18px; text-align: center; }
         .sidebar-divider {
             margin: 10px 0; padding: 10px 12px 4px;
             border-top: 1px solid var(--border);
             font-family: var(--mono); font-size: 0.62rem;
             color: var(--muted); text-transform: uppercase;
         }
-        .side-key { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); padding: 4px 12px; word-break: break-all; }
+        .side-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); padding: 4px 12px; word-break: break-all; }
 
         .feed-col {
             border-right: 1px solid var(--border);
             display: flex; flex-direction: column;
-            overflow-y: auto;
-            height: 100vh;
+            overflow-y: auto; max-height: calc(100vh - 54px);
         }
         .feed-header {
-            padding: 10px 16px; border-bottom: 1px solid var(--border);
+            padding: 12px 18px; border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
             position: sticky; top: 0; background: var(--bg); z-index: 10;
         }
         .feed-tabs { display: flex; gap: 4px; }
         .feed-tab {
             background: none; border: 1px solid transparent; color: var(--muted);
-            font-family: var(--mono); font-size: 0.65rem; padding: 4px 10px;
+            font-family: var(--mono); font-size: 0.68rem; padding: 5px 12px;
             border-radius: 20px; cursor: pointer;
         }
         .feed-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
 
         .search-badge {
             background: rgba(0,212,255,0.15); border: 1px solid var(--accent);
-            border-radius: 20px; padding: 3px 10px;
-            font-family: var(--mono); font-size: 0.65rem;
-            color: var(--accent); display: inline-flex; align-items: center; gap: 6px;
+            border-radius: 20px; padding: 4px 12px;
+            font-family: var(--mono); font-size: 0.68rem;
+            color: var(--accent); display: inline-flex; align-items: center; gap: 8px;
         }
         .search-badge button { background: none; border: none; color: var(--accent); cursor: pointer; }
 
         .composer {
-            padding: 12px 16px; border-bottom: 1px solid var(--border);
-            display: none; gap: 10px;
+            padding: 14px 18px; border-bottom: 1px solid var(--border);
+            display: none; gap: 12px;
         }
         .composer-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; cursor: pointer; background-size: cover !important; background-position: center !important; }
         .composer-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        textarea { background: transparent; border: none; color: var(--text); font-family: var(--sans); font-size: 0.88rem; resize: none; outline: none; width: 100%; min-height: 50px; }
+        textarea { background: transparent; border: none; color: var(--text); font-family: var(--sans); font-size: 0.92rem; resize: none; outline: none; width: 100%; min-height: 56px; }
         textarea::placeholder { color: var(--muted); }
         
         .media-preview-strip { display: flex; gap: 8px; flex-wrap: wrap; }
-        .media-thumb { position: relative; width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex-shrink: 0; background: #0a0f14; }
+        .media-thumb { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex-shrink: 0; background: #0a0f14; }
         .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .media-thumb .remove-media { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.75); border: none; border-radius: 50%; color: #fff; font-size: 0.6rem; width: 16px; height: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .media-thumb .remove-media { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.75); border: none; border-radius: 50%; color: #fff; font-size: 0.65rem; width: 18px; height: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .media-thumb .remove-media:hover { background: var(--danger); }
-        .media-thumb .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; z-index: 5; }
-        .media-thumb .upload-overlay .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-        .media-thumb .upload-overlay span { font-family: var(--mono); font-size: 0.5rem; color: #fff; }
+        .media-thumb .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px; z-index: 5; }
+        .media-thumb .upload-overlay .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .media-thumb .upload-overlay span { font-family: var(--mono); font-size: 0.55rem; color: #fff; }
         .media-thumb.done .upload-overlay { display: none; }
         .media-thumb.error { border-color: var(--danger); }
         
-        .composer-toolbar { display: flex; align-items: center; gap: 6px; padding-top: 4px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-        .toolbar-btn { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; padding: 4px 8px; font-size: 0.75rem; display: flex; align-items: center; gap: 4px; }
+        .composer-toolbar { display: flex; align-items: center; gap: 6px; padding-top: 4px; border-top: 1px solid var(--border); }
+        .toolbar-btn { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; padding: 5px 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
         .toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .toolbar-btn:disabled { opacity: 0.4; cursor: default; }
         .toolbar-btn input[type=file] { display: none; }
-        .upload-progress { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); flex: 1; text-align: right; }
+        .upload-progress { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); flex: 1; text-align: right; }
+        .upload-progress.uploading { color: var(--accent); }
+        .upload-progress.error { color: var(--danger); }
         .composer-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
-        .char-count { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
+        .char-count { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
         .char-count.warn { color: #ff9800; }
         .char-count.over { color: var(--danger); }
         
-        .btn { font-family: var(--sans); font-size: 0.75rem; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: none; cursor: pointer; }
+        .btn { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer; }
         .btn-primary { background: var(--accent); color: #000; }
-        .btn-primary:hover { background: #33ddff; }
-        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; }
+        .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
+        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; transform: none; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-        .btn-sm { font-size: 0.7rem; padding: 4px 10px; }
+        .btn-sm { font-size: 0.72rem; padding: 5px 12px; }
         
-        .status-bar { padding: 6px 16px; font-family: var(--mono); font-size: 0.65rem; color: var(--muted); border-bottom: 1px solid var(--border); min-height: 32px; display: flex; align-items: center; gap: 6px; }
+        .status-bar { padding: 7px 18px; font-family: var(--mono); font-size: 0.68rem; color: var(--muted); border-bottom: 1px solid var(--border); min-height: 32px; display: flex; align-items: center; gap: 7px; }
         .status-bar.ok { color: var(--green); }
         .status-bar.err { color: var(--danger); }
-        .spinner { display: inline-block; width: 8px; height: 8px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .spinner { display: inline-block; width: 9px; height: 9px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .post { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; transition: background 0.1s; }
+        .post { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 11px; transition: background 0.1s; animation: fadeIn 0.25s ease; }
         .post:hover { background: rgba(255,255,255,0.015); }
-        .post.is-repost { border-left: 2px solid var(--repost); padding-left: 14px; }
+        .post.is-repost { border-left: 2px solid var(--repost); padding-left: 16px; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; } }
         .post-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; cursor: pointer; background-size: cover !important; background-position: center !important; }
         .post-body { flex: 1; min-width: 0; }
-        .repost-label { font-family: var(--mono); font-size: 0.6rem; color: var(--repost); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
-        .post-meta { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
-        .post-name-info { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
-        .post-name { font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+        .repost-label { font-family: var(--mono); font-size: 0.62rem; color: var(--repost); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+        .post-meta { display: flex; align-items: baseline; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
+        .post-name-info {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .post-name { font-weight: 600; font-size: 0.86rem; cursor: pointer; }
         .post-name:hover { color: var(--accent); }
         .post-followers {
-            font-family: var(--mono); font-size: 0.55rem; color: var(--green);
-            background: rgba(0,230,118,0.1); padding: 2px 5px; border-radius: 20px;
-            white-space: nowrap; cursor: pointer;
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--green);
+            background: rgba(0,230,118,0.1);
+            padding: 2px 6px;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .post-pubkey { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
-        .post-time { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); margin-left: auto; }
-        .post-content { font-size: 0.82rem; line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
+        .post-followers:hover {
+            background: rgba(0,230,118,0.2);
+            transform: scale(1.02);
+        }
+        .post-followers.loading {
+            opacity: 0.5;
+            background: rgba(0,230,118,0.05);
+            cursor: wait;
+        }
+        .post-pubkey { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
+        .post-time { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); margin-left: auto; }
+        .post-content { font-size: 0.88rem; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
         
-        .post-media { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-        .post-media img { width: 100%; height: auto; max-height: 400px; object-fit: scale-down; border-radius: 10px; border: 1px solid var(--border); display: block; cursor: pointer; background: #0a0f14; }
-        .post-media video { width: 100%; height: auto; max-height: 300px; border-radius: 10px; border: 1px solid var(--border); display: block; background: #000; }
-        .media-grid { display: grid; gap: 3px; border-radius: 10px; overflow: hidden; background: #0a0f14; }
+        .post-media { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .post-media img {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: scale-down;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: block;
+            cursor: pointer;
+            background: #0a0f14;
+        }
+        .post-media img:hover { opacity: 0.9; }
+        .post-media video {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: block;
+            background: #000;
+        }
+        .media-grid { display: grid; gap: 4px; border-radius: 10px; overflow: hidden; background: #0a0f14; }
         .media-grid.count-2 { grid-template-columns: repeat(2, 1fr); }
-        .media-grid.count-3 { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(120px, auto); }
+        .media-grid.count-3 { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(150px, auto); }
         .media-grid.count-3 .media-grid-item:first-child { grid-column: span 2; }
         .media-grid.count-4 { grid-template-columns: repeat(2, 1fr); }
-        .media-grid-item { overflow: hidden; background: #0a0f14; display: flex; align-items: center; justify-content: center; min-height: 120px; }
-        .media-grid-item img { width: 100%; height: 100%; object-fit: scale-down; cursor: pointer; }
+        .media-grid-item {
+            overflow: hidden;
+            background: #0a0f14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+        }
+        .media-grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: scale-down;
+            cursor: pointer;
+        }
 
-        .post-actions { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
-        .action-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: var(--sans); font-size: 0.68rem; color: var(--muted); padding: 4px 8px; border-radius: 20px; }
+        .post-actions { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+        .action-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); padding: 5px 10px; border-radius: 20px; transition: all 0.15s; }
         .action-btn:hover { background: rgba(255,255,255,0.05); }
         .action-btn.like-btn:hover { color: var(--like); }
         .action-btn.like-btn.liked { color: var(--like); }
@@ -208,41 +252,83 @@
         .action-btn.repost-btn.reposted { color: var(--repost); }
         .action-btn.follow-btn:hover { color: var(--accent); }
         .action-btn.follow-btn.following { color: var(--green); }
+        .action-icon { font-size: 0.9rem; transition: transform 0.15s; }
+        .action-count { font-family: var(--mono); font-size: 0.65rem; min-width: 12px; }
 
-        /* Modales */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 380px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; margin: 16px; }
-        .modal-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 0.8rem; }
-        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; padding: 0 8px; }
-        .modal-body { overflow-y: auto; padding: 14px; }
-        .modal-user { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 400px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); }
+        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+        .modal-body { overflow-y: auto; padding: 16px; }
+        .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; }
         .modal-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; background-size: cover !important; background-position: center !important; }
 
-        /* Perfil */
-        .profile-picture-area { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 10px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); }
-        .profile-preview { width: 70px; height: 70px; border-radius: 50%; background-size: cover !important; background-position: center !important; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 1.2rem; color: var(--muted); }
-        .profile-upload-btn { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; font-size: 0.75rem; }
-        .profile-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 0.8rem; padding: 8px 10px; width: 100%; outline: none; margin-bottom: 10px; }
-        .profile-input:focus { border-color: var(--accent); }
+        .profile-picture-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .profile-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-size: cover !important;
+            background-position: center !important;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 1.5rem;
+            color: var(--muted);
+        }
+        .profile-upload-btn {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .profile-upload-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .profile-upload-btn input {
+            display: none;
+        }
 
-        /* Sidebar derecha - solo visible en desktop */
-        .sidebar-right { padding: 12px; overflow-y: auto; max-height: calc(100vh - 54px); display: flex; flex-direction: column; gap: 12px; }
-        .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-        .widget-title { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
-        .auth-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 0.65rem; padding: 8px 10px; width: 100%; outline: none; margin-bottom: 6px; }
-        .info-note { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); line-height: 1.5; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .follow-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+        .sidebar-right { padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); display: flex; flex-direction: column; gap: 14px; }
+        .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+        .widget-title { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+        .auth-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 0.7rem; padding: 9px 11px; width: 100%; outline: none; margin-bottom: 7px; }
+        .auth-input:focus { border-color: var(--accent); }
+        .profile-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 0.8rem; padding: 8px 11px; width: 100%; outline: none; margin-bottom: 10px; }
+        .profile-input:focus { border-color: var(--accent); }
+        .info-note { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+        .follow-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+        .follow-item:last-child { border-bottom: none; }
         .follow-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.55rem; font-weight: 600; color: #000; background-size: cover !important; background-position: center !important; }
         .follow-info { flex: 1; min-width: 0; }
-        .follow-name { font-size: 0.75rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .unfollow-btn { background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 0.6rem; padding: 3px 6px; cursor: pointer; }
-
-        .empty-state { padding: 30px 16px; text-align: center; color: var(--muted); font-size: 0.78rem; font-family: var(--mono); }
-        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 300; align-items: center; justify-content: center; }
+        .follow-name { font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .follow-key { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
+        .unfollow-btn { background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer; }
+        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; font-family: var(--mono); }
+        
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; align-items: center; justify-content: center; }
         .lightbox.open { display: flex; }
-        .lightbox img { max-width: 95vw; max-height: 95vh; object-fit: contain; border-radius: 8px; }
-        .lightbox-close { position: absolute; top: 16px; right: 20px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        .lightbox img { max-width: 92vw; max-height: 92vh; object-fit: contain; border-radius: 6px; }
+        .lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
         
         .av0 { background: linear-gradient(135deg,#00d4ff,#0066ff); }
         .av1 { background: linear-gradient(135deg,#ff3cac,#ff6b35); }
@@ -251,31 +337,13 @@
         .av4 { background: linear-gradient(135deg,#e040fb,#7c4dff); }
         .av5 { background: linear-gradient(135deg,#ff4560,#ff9800); }
 
-        /* Botones móviles */
         #btnMenuMovil { display: none; }
-        .mobile-menu-btn { display: none; }
-
-        /* MÓVIL - ESTILOS RESPONSIVE */
         @media (max-width: 860px) {
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
-            .feed-col { border-right: none; height: 100vh; }
-            #btnMenuMovil, .mobile-menu-btn { display: flex !important; }
-            .search-area { max-width: 160px; }
-            .topbar { padding: 0 10px; gap: 6px; }
-            .logo { font-size: 0.8rem; }
-            .post-avatar { width: 32px; height: 32px; }
-            .post-name { font-size: 0.78rem; }
-            .post-content { font-size: 0.78rem; }
-        }
-
-        @media (max-width: 480px) {
-            .search-area { max-width: 130px; }
-            .search-input { font-size: 0.7rem; padding: 5px 8px 5px 28px; }
-            .search-icon { left: 8px; top: 6px; font-size: 0.7rem; }
-            .topbar-right .btn-outline { padding: 4px 8px; font-size: 0.65rem; }
-            .post { padding: 10px 12px; gap: 8px; }
-            .post-followers { font-size: 0.5rem; padding: 1px 4px; }
+            .feed-col { max-height: none; border-right: none; }
+            #btnMenuMovil { display: flex !important; }
+            .search-area { max-width: 200px; }
         }
     </style>
 </head>
@@ -285,13 +353,13 @@
         <div class="logo">🔥 Anti<span>X</span><img src="HIy9szhW8AAGLJp.jpg" alt="logo"></div>
         <div class="search-area">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="searchInput" placeholder="Buscar...">
+            <input type="text" class="search-input" id="searchInput" placeholder="Buscar en todo Nostr...">
             <button class="search-clear" id="searchClearBtn" style="display:none;">✕</button>
         </div>
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
         <div class="topbar-right">
-            <button class="btn-outline btn-sm" id="btnRefresh" style="padding:5px 10px;">↺</button>
-            <button class="mobile-menu-btn btn-icon" id="btnMenuMovil" onclick="openMobileMenu()" style="padding:5px 10px;">⚙️</button>
+            <button class="btn btn-outline btn-sm" id="btnRefresh">↺ Refrescar</button>
+            <button class="btn btn-outline btn-sm" id="btnMenuMovil" onclick="abrirMenuMovil()">⚙️</button>
         </div>
     </header>
 
@@ -316,7 +384,7 @@
         <div class="composer" id="composer">
             <div class="composer-avatar" id="myAvatar"></div>
             <div class="composer-body">
-                <textarea id="contenido" rows="2" placeholder="¿Qué estás pensando?…" maxlength="280"></textarea>
+                <textarea id="contenido" rows="3" placeholder="¿Qué estás pensando?…" maxlength="280"></textarea>
                 <div class="media-preview-strip" id="mediaPreviewStrip"></div>
                 <div class="composer-toolbar">
                     <button class="toolbar-btn" id="btnAddImage">🖼️ Imagen<input type="file" id="fileImage" accept="image/*" multiple></button>
@@ -342,47 +410,13 @@
         </div>
         <div class="widget">
             <div class="widget-title">📤 Subida de medios</div>
-            <div class="info-note">Imágenes se comprimen.<br>Videos: pega URL externa</div>
+            <div class="info-note">Imágenes se comprimen y embeben.<br>Videos: pega URL de YouTube/catbox/nostr.build</div>
         </div>
         <div class="widget" id="widgetFollows" style="display:none">
             <div class="widget-title">👥 Siguiendo (<span id="followCount">0</span>)</div>
             <div id="followsList"></div>
         </div>
     </aside>
-</div>
-
-<!-- MENÚ MÓVIL COMPLETO (reemplaza la tuerca) -->
-<div class="modal-overlay" id="mobileMenuModal" onclick="closeMobileMenu(event)">
-    <div class="modal" style="width: 90%; max-width: 350px;">
-        <div class="modal-header">
-            <span>⚙️ Menú</span>
-            <button class="modal-close" onclick="closeMobileMenu()">✕</button>
-        </div>
-        <div class="modal-body" style="display: flex; flex-direction: column; gap: 8px;">
-            <!-- Estado de conexión -->
-            <div style="background: var(--bg); border-radius: 12px; padding: 12px; margin-bottom: 8px;">
-                <div style="font-size: 0.7rem; color: var(--muted); margin-bottom: 4px;">🔑 Tu cuenta</div>
-                <div id="mobileSideKey" style="font-family: monospace; font-size: 0.65rem; word-break: break-all; color: var(--text);">Sin conectar</div>
-            </div>
-            
-            <!-- Input de clave privada -->
-            <input class="auth-input" type="password" id="claveInputMovil" placeholder="Clave privada hex (vacío = nueva)" style="width:100%;">
-            <button class="btn btn-primary" id="btnConectarMovil" style="width:100%;">🔌 Conectar</button>
-            
-            <!-- Botones de navegación -->
-            <div style="height: 1px; background: var(--border); margin: 8px 0;"></div>
-            <button class="nav-btn" id="mobileNavGlobal" onclick="switchTabMobile('global')" style="width:100%;"><span class="icon">🌐</span> Global</button>
-            <button class="nav-btn" id="mobileNavSiguiendo" onclick="switchTabMobile('siguiendo')" style="width:100%;"><span class="icon">👥</span> Siguiendo</button>
-            <div style="height: 1px; background: var(--border); margin: 8px 0;"></div>
-            <button class="nav-btn" onclick="openProfileModal(); closeMobileMenu();" style="width:100%;"><span class="icon">✏️</span> Editar perfil</button>
-            <button class="nav-btn" onclick="logout(); closeMobileMenu();" style="width:100%; color: var(--danger);"><span class="icon">🚪</span> Desconectar</button>
-            <div style="height: 1px; background: var(--border); margin: 8px 0;"></div>
-            <div class="info-note" style="margin-top: 4px; text-align: center;">
-                🔍 Búsqueda global NIP-50<br>
-                📸 Sube fotos de perfil
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Modal Editar Perfil -->
@@ -399,12 +433,12 @@
                     📷 Subir foto
                     <input type="file" id="profilePictureFile" accept="image/jpeg,image/png,image/webp,image/gif">
                 </label>
-                <button class="btn btn-outline btn-sm" id="clearProfilePic" style="padding:6px;">🗑️</button>
+                <button class="btn btn-outline btn-sm" id="clearProfilePic" style="padding:8px;">🗑️</button>
             </div>
             <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Nombre</label>
             <input type="text" class="profile-input" id="profileName" placeholder="Tu nombre" maxlength="50">
             <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Biografía</label>
-            <textarea id="profileBio" rows="2" class="profile-input" placeholder="Cuéntanos sobre ti..." maxlength="200" style="resize:vertical;"></textarea>
+            <textarea id="profileBio" rows="3" class="profile-input" placeholder="Cuéntanos sobre ti..." maxlength="200" style="resize:vertical;"></textarea>
             <button class="btn btn-primary" style="width:100%; margin-top:8px;" id="btnSaveProfile">Guardar perfil</button>
         </div>
     </div>
@@ -412,6 +446,10 @@
 
 <div class="modal-overlay" id="likesModal" onclick="closeLikesModal(event)">
     <div class="modal"><div class="modal-header"><span id="modalTitle">❤️ Likes</span><button class="modal-close" onclick="closeLikesModal()">✕</button></div><div class="modal-body" id="modalBody"></div></div>
+</div>
+
+<div class="modal-overlay" id="modalMovil" onclick="cerrarMenuMovil(event)">
+    <div class="modal" style="width:90%;max-width:340px;"><div class="modal-header"><span>⚙️ Cuenta</span><button class="modal-close" onclick="cerrarMenuMovil()">✕</button></div><div class="modal-body" style="padding:14px"><input class="auth-input" id="claveInputMovil" placeholder="Clave privada hex"><button class="btn btn-primary" id="btnConectarMovil">Conectar</button></div></div>
 </div>
 
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightboxImg" src=""></div>
@@ -435,14 +473,14 @@ let pendingMedia = [];
 let isSearchMode = false;
 let currentSearchQuery = '';
 let tempProfilePicture = null;
-let followersCount = new Map();
-let loadingFollowers = new Set();
+let followersCount = new Map();     // pk → número (0 si no hay)
+let loadingFollowers = new Set();    // pk en proceso
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
 
 // ============================================================
-//  PERSISTENCIA DE CLAVE
+//  PERSISTENCIA DE CLAVE (localStorage)
 // ============================================================
 function savePrivateKey(key) {
     if (key) localStorage.setItem('antix_privkey', key);
@@ -451,7 +489,7 @@ function savePrivateKey(key) {
 function loadSavedPrivateKey() { return localStorage.getItem('antix_privkey'); }
 
 function logout() {
-    if (confirm('¿Seguro que quieres desconectar?')) {
+    if (confirm('¿Seguro que quieres desconectar? La clave se borrará de este navegador.')) {
         localStorage.removeItem('antix_privkey');
         privKey = ''; pubKey = '';
         follows.clear(); profiles.clear(); feedPosts.clear();
@@ -459,7 +497,6 @@ function logout() {
         pendingMedia = []; isSearchMode = false;
         document.getElementById('topPubkey').style.display = 'none';
         document.getElementById('sideKey').textContent = 'Sin conectar';
-        document.getElementById('mobileSideKey').textContent = 'Sin conectar';
         document.getElementById('composer').style.display = 'none';
         document.getElementById('claveInput').value = '';
         document.getElementById('claveInputMovil').value = '';
@@ -476,8 +513,8 @@ function logout() {
 const $ = id => document.getElementById(id);
 
 function setStatus(msg, type='') {
-    const el = $('statusBar');
-    if (el) { el.innerHTML = msg; el.className = 'status-bar ' + type; }
+    $('statusBar').innerHTML = msg;
+    $('statusBar').className = 'status-bar ' + type;
 }
 
 function avClass(pk) { return 'av' + (parseInt(pk.slice(0,4),16) % 6); }
@@ -509,75 +546,98 @@ const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
 
 // ============================================================
-//  MENÚ MÓVIL
-// ============================================================
-function openMobileMenu() {
-    $('mobileMenuModal').classList.add('open');
-    // Actualizar estado en el menú móvil
-    $('mobileSideKey').textContent = pubKey || 'Sin conectar';
-}
-function closeMobileMenu(e) {
-    if (!e || e.target === $('mobileMenuModal')) $('mobileMenuModal').classList.remove('open');
-}
-function switchTabMobile(tab) {
-    switchTab(tab);
-    closeMobileMenu();
-}
-
-// ============================================================
-//  SEGUIDORES
+//  SEGUIDORES - FUNCIÓN CORREGIDA Y FUNCIONAL
 // ============================================================
 async function loadFollowersForPubkeys(pubkeys) {
     const missing = pubkeys.filter(pk => !followersCount.has(pk) && !loadingFollowers.has(pk));
     if (!missing.length) return;
     
+    // Inicializar con 0 mientras se cargan
     for (const pk of missing) {
         loadingFollowers.add(pk);
         followersCount.set(pk, 0);
     }
-    renderFeed();
+    renderFeed(); // Mostrar 0 temporalmente
     
+    // Consultar cada pubkey individualmente
     for (const targetPk of missing) {
         let maxCount = 0;
+        
+        // Probar cada relay
         for (const url of RELAYS) {
             try {
                 const ws = await openRelay(url, 3000);
                 const subId = 'followers_' + Date.now() + '_' + Math.random();
-                ws.send(JSON.stringify(['REQ', subId, { kinds: [3], '#p': [targetPk], limit: 200 }]));
+                const filter = {
+                    kinds: [3],
+                    '#p': [targetPk],
+                    limit: 500
+                };
+                
+                ws.send(JSON.stringify(['REQ', subId, filter]));
                 
                 let relayCount = 0;
                 await new Promise((resolve) => {
-                    const timeout = setTimeout(() => { ws.close(); resolve(); }, 3000);
+                    const timeout = setTimeout(() => { 
+                        ws.close(); 
+                        resolve(); 
+                    }, 4000);
+                    
                     ws.onmessage = (e) => {
                         try {
                             const msg = JSON.parse(e.data);
-                            if (msg[0] === 'EVENT' && msg[2]) relayCount++;
-                            if (msg[0] === 'EOSE') { clearTimeout(timeout); ws.close(); resolve(); }
+                            if (msg[0] === 'EVENT' && msg[2]) {
+                                relayCount++;
+                            }
+                            if (msg[0] === 'EOSE') {
+                                clearTimeout(timeout);
+                                ws.close();
+                                resolve();
+                            }
                         } catch(err) {}
                     };
-                    ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
+                    ws.onerror = () => {
+                        clearTimeout(timeout);
+                        ws.close();
+                        resolve();
+                    };
                 });
+                
                 maxCount = Math.max(maxCount, relayCount);
             } catch(e) {}
         }
+        
         followersCount.set(targetPk, maxCount);
         loadingFollowers.delete(targetPk);
     }
-    renderFeed();
+    
+    renderFeed(); // Actualizar con los números reales
 }
 
 // ============================================================
 //  SUBIR FOTO DE PERFIL
 // ============================================================
 async function uploadProfilePicture(file) {
-    if (!file || !file.type.startsWith('image/')) return null;
-    if (file.size > 2 * 1024 * 1024) { alert('Máx 2MB'); return null; }
+    if (!file) return null;
+    if (!file.type.startsWith('image/')) {
+        alert('Solo se permiten imágenes');
+        return null;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+        alert('La imagen es muy grande (máx 2MB).');
+        return null;
+    }
+    
     setStatus('<span class="spinner"></span> Procesando foto...');
     try {
         const compressed = await compressProfileImage(file, 300, 300);
         setStatus('✅ Foto lista', 'ok');
         return compressed;
-    } catch(err) { alert('Error'); setStatus('❌ Error', 'err'); return null; }
+    } catch (err) {
+        alert('Error al procesar la imagen');
+        setStatus('❌ Error', 'err');
+        return null;
+    }
 }
 
 function compressProfileImage(file, maxWidth, maxHeight) {
@@ -588,25 +648,38 @@ function compressProfileImage(file, maxWidth, maxHeight) {
             URL.revokeObjectURL(objUrl);
             let { width: w, height: h } = img;
             if (w > maxWidth || h > maxHeight) {
-                if (w >= h) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-                else { w = Math.round(w * maxHeight / h); h = maxHeight; }
+                if (w >= h) {
+                    h = Math.round(h * maxWidth / w);
+                    w = maxWidth;
+                } else {
+                    w = Math.round(w * maxHeight / h);
+                    h = maxHeight;
+                }
             }
             const canvas = document.createElement('canvas');
-            canvas.width = w; canvas.height = h;
+            canvas.width = w;
+            canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.9));
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            resolve(dataUrl);
         };
-        img.onerror = reject;
+        img.onerror = () => {
+            URL.revokeObjectURL(objUrl);
+            reject(new Error('No se pudo cargar la imagen'));
+        };
         img.src = objUrl;
     });
 }
 
 // ============================================================
-//  PERFIL
+//  PERFIL - PUBLICAR EVENTO KIND 0
 // ============================================================
 async function saveProfile(name, bio, pictureDataUrl) {
-    if (!privKey) { alert('Conecta tu cuenta'); return; }
+    if (!privKey) {
+        alert('Primero conecta tu cuenta');
+        return;
+    }
     const profile = {};
     if (name) profile.name = name;
     if (bio) profile.about = bio;
@@ -614,27 +687,40 @@ async function saveProfile(name, bio, pictureDataUrl) {
     
     const content = JSON.stringify(profile);
     const nt = window.NostrTools;
-    const ev = nt.finishEvent({ kind: 0, created_at: Math.floor(Date.now()/1000), tags: [], content: content }, privKey);
+    const ev = nt.finishEvent({
+        kind: 0,
+        created_at: Math.floor(Date.now()/1000),
+        tags: [],
+        content: content
+    }, privKey);
     
-    setStatus('<span class="spinner"></span> Guardando...');
+    setStatus('<span class="spinner"></span> Guardando perfil...');
     const ok = await publishEvent(ev);
     if (ok > 0) {
         profiles.set(pubKey, profile);
         setStatus('✅ Perfil guardado', 'ok');
         closeProfileModal();
+        
         const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
         await loadProfiles(authors);
+        
         renderFeed();
         updateMyAvatar();
         tempProfilePicture = null;
-    } else { setStatus('❌ Error', 'err'); }
+    } else {
+        setStatus('❌ Error al guardar perfil', 'err');
+    }
 }
 
 function openProfileModal() {
-    if (!pubKey) { alert('Conecta tu cuenta'); return; }
+    if (!pubKey) {
+        alert('Primero conecta tu cuenta');
+        return;
+    }
     const myProfile = profiles.get(pubKey) || {};
     $('profileName').value = myProfile.name || '';
     $('profileBio').value = myProfile.about || '';
+    
     const preview = $('profilePreview');
     if (myProfile.picture) {
         preview.style.background = `url(${myProfile.picture}) center/cover no-repeat`;
@@ -645,11 +731,17 @@ function openProfileModal() {
         preview.className = 'profile-preview ' + avClass(pubKey);
         preview.textContent = avInitials(pubKey);
     }
+    
     tempProfilePicture = null;
     $('profileModal').classList.add('open');
 }
 
-function closeProfileModal(e) { if (!e || e.target === $('profileModal')) $('profileModal').classList.remove('open'); }
+function closeProfileModal(e) {
+    if (!e || e.target === $('profileModal')) {
+        $('profileModal').classList.remove('open');
+        tempProfilePicture = null;
+    }
+}
 
 function updateMyAvatar() {
     const myProfile = profiles.get(pubKey);
@@ -702,13 +794,13 @@ $('btnSaveProfile').onclick = () => {
 };
 
 // ============================================================
-//  BÚSQUEDA GLOBAL
+//  BÚSQUEDA GLOBAL NIP-50
 // ============================================================
 async function searchGlobalNostr(query) {
     if (!query.trim()) { exitSearchMode(); return; }
     isSearchMode = true;
     currentSearchQuery = query;
-    setStatus(`🔍 Buscando "${query}"...`, '');
+    setStatus(`🔍 Buscando "${query}" en toda la red Nostr...`, '');
     $('feed').innerHTML = `<div class="empty-state"><span class="spinner"></span><br>Buscando...</div>`;
     feedPosts.clear();
     const searchFilter = { kinds: [1], search: query, limit: 100 };
@@ -728,7 +820,7 @@ async function searchGlobalNostr(query) {
                             if (!feedPosts.has(ev.id)) {
                                 feedPosts.set(ev.id, ev);
                                 totalFound++;
-                                setStatus(`🔍 ${totalFound} resultados...`, '');
+                                setStatus(`🔍 Encontrados ${totalFound} resultados...`, '');
                             }
                         }
                         if (msg[0] === 'EOSE') { clearTimeout(timeout); ws.close(); resolve(); }
@@ -739,8 +831,8 @@ async function searchGlobalNostr(query) {
         } catch(e) {}
     }));
     if (feedPosts.size === 0) {
-        setStatus(`🔍 No hay resultados`, 'err');
-        $('feed').innerHTML = `<div class="empty-state">😔 No hay posts para "${esc(query)}"</div>`;
+        setStatus(`🔍 No se encontraron resultados`, 'err');
+        $('feed').innerHTML = `<div class="empty-state">😔 No hay posts que coincidan con "${esc(query)}"</div>`;
         return;
     }
     setStatus(`✅ ${feedPosts.size} resultados`, 'ok');
@@ -809,7 +901,7 @@ async function publishEvent(event) {
 }
 
 // ============================================================
-//  MEDIA
+//  MEDIA (COMPRESIÓN Y SUBIDA)
 // ============================================================
 const MAX_IMG_BYTES = 800 * 1024;
 const MAX_DIM = 1200;
@@ -818,7 +910,7 @@ function fileToDataURL(file) {
     return new Promise((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => resolve(r.result);
-        r.onerror = () => reject();
+        r.onerror = () => reject(new Error('No se pudo leer el archivo'));
         r.readAsDataURL(file);
     });
 }
@@ -847,7 +939,7 @@ function compressImage(file, maxDim, maxBytes) {
             };
             tryEncode();
         };
-        img.onerror = reject;
+        img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('No se pudo cargar la imagen')); };
         img.src = objUrl;
     });
 }
@@ -861,7 +953,9 @@ async function uploadMedia(file) {
                 fd.append('fileToUpload', file);
                 const res = await fetch('https://nostr.build/api/v2/upload/files', { method:'POST', body:fd, mode:'cors' });
                 const json = await res.json();
-                return json?.data?.[0]?.url;
+                const url = json?.data?.[0]?.url;
+                if (!url) throw new Error();
+                return url;
             },
             async () => {
                 const fd = new FormData();
@@ -869,14 +963,14 @@ async function uploadMedia(file) {
                 fd.append('fileToUpload', file);
                 const res = await fetch('https://catbox.moe/user.php', { method:'POST', body:fd, mode:'cors' });
                 const text = await res.text();
-                if (text.startsWith('https://')) return text.trim();
-                throw new Error();
+                if (!text.startsWith('https://')) throw new Error();
+                return text.trim();
             }
         ];
         for (const service of services) {
             try {
                 const url = await service();
-                if (url) return { dataUrl: url, isExternal: true };
+                return { dataUrl: url, isExternal: true };
             } catch(e) { continue; }
         }
         throw new Error('VIDEO_CORS');
@@ -898,6 +992,12 @@ function updatePublishBtn() {
     const allUploaded = pendingMedia.length === 0 || pendingMedia.every(m => m.remoteUrl && !m.error);
     const anyUploading = pendingMedia.some(m => m.uploading);
     $('btnPublicar').disabled = (!text && pendingMedia.length === 0) || anyUploading || !allUploaded;
+}
+
+function setUploadProgress(msg, type='') {
+    const el = $('uploadProgress');
+    el.textContent = msg;
+    el.className = 'upload-progress ' + type;
 }
 
 function renderMediaPreviews() {
@@ -942,19 +1042,21 @@ function removeMedia(index) {
     URL.revokeObjectURL(pendingMedia[index]?.localUrl);
     pendingMedia.splice(index, 1);
     renderMediaPreviews();
+    if (!pendingMedia.length) setUploadProgress('');
 }
 
 async function handleFiles(files) {
     for (const file of files) {
         const isVideo = file.type.startsWith('video/');
         if (!isVideo && file.size > 10 * 1024 * 1024) {
-            alert('"' + file.name + '" es demasiado grande (max 10MB)');
+            alert('"' + file.name + '" es demasiado grande. Max ~10 MB.');
             continue;
         }
         const localUrl = URL.createObjectURL(file);
         const entry = { localUrl, remoteUrl: null, type: isVideo ? 'video' : 'image', uploading: true, error: false };
         pendingMedia.push(entry);
         renderMediaPreviews();
+        setUploadProgress(isVideo ? 'Subiendo video...' : 'Procesando imagen...', 'uploading');
         try {
             const result = await uploadMedia(file);
             entry.remoteUrl = result.dataUrl;
@@ -962,9 +1064,7 @@ async function handleFiles(files) {
         } catch (err) {
             entry.error = true;
             entry.uploading = false;
-            if (err.message === 'VIDEO_CORS') {
-                alert('Sube el video a catbox.moe o nostr.build y pega la URL');
-            }
+            setUploadProgress('Error', 'error');
         }
         renderMediaPreviews();
     }
@@ -976,16 +1076,14 @@ $('fileImage').onchange = e => { handleFiles([...e.target.files]); e.target.valu
 $('fileVideo').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
 
 const composerEl = $('composer');
-if (composerEl) {
-    composerEl.addEventListener('dragover', e => { e.preventDefault(); composerEl.style.outline = '2px dashed var(--accent)'; });
-    composerEl.addEventListener('dragleave', () => { composerEl.style.outline = ''; });
-    composerEl.addEventListener('drop', e => {
-        e.preventDefault();
-        composerEl.style.outline = '';
-        const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
-        if (files.length) handleFiles(files);
-    });
-}
+composerEl.addEventListener('dragover', e => { e.preventDefault(); composerEl.style.outline = '2px dashed var(--accent)'; });
+composerEl.addEventListener('dragleave', () => { composerEl.style.outline = ''; });
+composerEl.addEventListener('drop', e => {
+    e.preventDefault();
+    composerEl.style.outline = '';
+    const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+    if (files.length) handleFiles(files);
+});
 
 document.addEventListener('paste', e => {
     if (!privKey) return;
@@ -1280,6 +1378,7 @@ async function loadFeed() {
         loadReposts(postIds)
     ]);
     
+    // Cargar seguidores en segundo plano
     loadFollowersForPubkeys(authors);
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
@@ -1313,7 +1412,7 @@ async function conectar(clave) {
             $('claveInput').value = privKey;
             $('claveInputMovil').value = privKey;
             savePrivateKey(privKey);
-            alert('✅ CUENTA CREADA\n\nGuarda esta clave:\n' + privKey);
+            alert('✅ CUENTA CREADA\n\nGuarda esta clave:\n' + privKey + '\n\nLa clave se ha guardado automáticamente.');
             setStatus('✅ Cuenta nueva', 'ok');
         }
         const short = pubKey.slice(0,10)+'…';
@@ -1326,7 +1425,6 @@ async function conectar(clave) {
             });
         };
         $('sideKey').textContent = pubKey;
-        $('mobileSideKey').textContent = pubKey;
         $('composer').style.display = 'flex';
         
         await loadFollows();
@@ -1344,7 +1442,7 @@ async function conectar(clave) {
 }
 
 $('btnConectar').onclick = async () => { $('btnConectar').disabled = true; await conectar($('claveInput').value.trim()); $('btnConectar').disabled = false; };
-$('btnConectarMovil').onclick = async () => { $('btnConectarMovil').disabled = true; await conectar($('claveInputMovil').value.trim()); $('btnConectarMovil').disabled = false; closeMobileMenu(); };
+$('btnConectarMovil').onclick = async () => { $('btnConectarMovil').disabled = true; cerrarMenuMovil(); await conectar($('claveInputMovil').value.trim()); $('btnConectarMovil').disabled = false; };
 $('btnRefresh').onclick = () => isSearchMode ? exitSearchMode() : loadFeed();
 
 $('contenido').oninput = function() {
@@ -1370,6 +1468,7 @@ $('btnPublicar').onclick = async () => {
         pendingMedia.forEach(m => URL.revokeObjectURL(m.localUrl));
         pendingMedia = [];
         renderMediaPreviews();
+        setUploadProgress('');
         if (!isSearchMode) {
             feedPosts.set(ev.id, ev);
             renderFeed();
@@ -1379,7 +1478,10 @@ $('btnPublicar').onclick = async () => {
     $('btnPublicar').disabled = false;
 };
 
-document.addEventListener('keydown', e => { if (e.key==='Escape') { closeLightbox(); closeLikesModal(); closeProfileModal(); closeMobileMenu(); if (isSearchMode) exitSearchMode(); } });
+function abrirMenuMovil() { $('modalMovil').classList.add('open'); }
+function cerrarMenuMovil(e) { if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open'); }
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); closeProfileModal(); if (isSearchMode) exitSearchMode(); } });
 
 let searchTimeout;
 $('searchInput').addEventListener('input', () => {
