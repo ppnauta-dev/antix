@@ -477,6 +477,186 @@
         .url-preview-image img:not([src]) {
             display: none;
         }        
+        /* Botón de responder */
+        .action-btn.reply-btn:hover { color: var(--accent); }
+        
+        /* Hilos de respuestas */
+        .reply-thread {
+            margin-top: 12px;
+            margin-left: 20px;
+            padding-left: 12px;
+            border-left: 2px solid var(--border);
+        }
+        
+        .reply-item {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .reply-item:hover {
+            background: rgba(255,255,255,0.04);
+        }
+        
+        .reply-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .reply-name {
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .reply-name:hover { color: var(--accent); }
+        
+        .reply-pubkey {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            color: var(--muted);
+        }
+        
+        .reply-time {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            color: var(--muted);
+            margin-left: auto;
+        }
+        
+        .reply-content {
+            font-size: 0.8rem;
+            line-height: 1.45;
+            word-break: break-word;
+            white-space: pre-wrap;
+            margin-bottom: 8px;
+        }
+        
+        .reply-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .reply-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.65rem;
+            color: var(--muted);
+            padding: 2px 6px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .reply-action-btn:hover { background: rgba(255,255,255,0.05); }
+        .reply-action-btn.liked { color: var(--like); }
+        
+        /* Formulario de respuesta */
+        .reply-form {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        
+        .reply-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: #000;
+            background-size: cover !important;
+            background-position: center !important;
+        }
+        
+        .reply-input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .reply-input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-family: var(--sans);
+            font-size: 0.8rem;
+            color: var(--text);
+            resize: none;
+            outline: none;
+            width: 100%;
+        }
+        
+        .reply-input:focus {
+            border-color: var(--accent);
+        }
+        
+        .reply-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+        
+        .btn-reply {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: var(--muted);
+        }
+        
+        .btn-reply:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn-reply-submit {
+            background: var(--accent);
+            border: none;
+            color: #000;
+        }
+        
+        .btn-reply-submit:hover {
+            background: #33ddff;
+        }
+        
+        .btn-reply-submit:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        
+        /* Ver respuestas */
+        .view-replies-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 0.65rem;
+            cursor: pointer;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 16px;
+        }
+        
+        .view-replies-btn:hover {
+            background: rgba(0,212,255,0.1);
+        }        
     </style>
 </head>
 <body>
@@ -631,10 +811,241 @@ let currentSearchQuery = '';
 let tempProfilePicture = null;
 let followersCount = new Map();
 let loadingFollowers = new Set();
-
+// Estado para respuestas
+let replies = new Map();        // postId -> array de respuestas
+let replyLikes = new Map();     // replyId -> Set de usuarios que dieron like
+let myReplyLikes = new Set();   // replies que me gustan
+let expandedReplies = new Set(); // posts con respuestas expandidas
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
+// ============================================================
+//  SISTEMA DE RESPUESTAS (REPLIES)
+// ============================================================
 
+// Cargar respuestas de posts específicos
+async function loadReplies(postIds) {
+    if (!postIds.length) return;
+    
+    const filter = { kinds: [1], '#e': postIds, limit: 500 };
+    
+    await Promise.all(RELAYS.map(url =>
+        queryRelay(url, [filter], ev => {
+            if (ev.kind !== 1) return;
+            
+            // Buscar tag 'e' que indica a qué post responde
+            const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
+            if (!eTag) return;
+            
+            const parentId = eTag[1];
+            if (!replies.has(parentId)) replies.set(parentId, []);
+            
+            // Evitar duplicados
+            const existing = replies.get(parentId).find(r => r.id === ev.id);
+            if (!existing) {
+                replies.get(parentId).push(ev);
+            }
+        }, 6000)
+    ));
+}
+
+// Publicar una respuesta
+async function postReply(parentId, content) {
+    if (!privKey) {
+        alert('Conecta tu cuenta para responder');
+        return false;
+    }
+    
+    if (!content.trim()) return false;
+    
+    const nt = window.NostrTools;
+    const tags = [
+        ['e', parentId, '', 'reply'],
+        ['p', feedPosts.get(parentId)?.pubkey || '']
+    ];
+    
+    const ev = nt.finishEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now()/1000),
+        tags: tags,
+        content: content.trim()
+    }, privKey);
+    
+    setStatus('<span class="spinner"></span> Publicando respuesta...');
+    const ok = await publishEvent(ev);
+    
+    if (ok > 0) {
+        // Agregar a la lista local
+        if (!replies.has(parentId)) replies.set(parentId, []);
+        replies.get(parentId).push(ev);
+        
+        // Ordenar por tiempo
+        replies.get(parentId).sort((a,b) => a.created_at - b.created_at);
+        
+        setStatus('✅ Respuesta publicada', 'ok');
+        renderFeed(); // Re-renderizar para mostrar la nueva respuesta
+        return true;
+    } else {
+        setStatus('❌ Error al publicar respuesta', 'err');
+        return false;
+    }
+}
+
+// Dar like a una respuesta
+async function likeReply(postId, replyId, replyPubkey) {
+    if (!privKey || myReplyLikes.has(replyId)) return;
+    
+    const nt = window.NostrTools;
+    const tags = [
+        ['e', replyId],
+        ['p', replyPubkey]
+    ];
+    
+    const ev = nt.finishEvent({
+        kind: 7,
+        created_at: Math.floor(Date.now()/1000),
+        tags: tags,
+        content: '+'
+    }, privKey);
+    
+    myReplyLikes.add(replyId);
+    if (!replyLikes.has(replyId)) replyLikes.set(replyId, new Set());
+    replyLikes.get(replyId).add(pubKey);
+    
+    await publishEvent(ev);
+    renderFeed();
+}
+
+// Cargar likes de respuestas
+async function loadReplyLikes(replyIds) {
+    if (!replyIds.length) return;
+    
+    const filter = { kinds: [7], '#e': replyIds, limit: 500 };
+    
+    await Promise.all(RELAYS.map(url =>
+        queryRelay(url, [filter], ev => {
+            if (ev.kind !== 7) return;
+            const eTag = ev.tags.find(t => t[0] === 'e');
+            if (!eTag) return;
+            const replyId = eTag[1];
+            if (!replyLikes.has(replyId)) replyLikes.set(replyId, new Set());
+            replyLikes.get(replyId).add(ev.pubkey);
+            if (pubKey && ev.pubkey === pubKey) myReplyLikes.add(replyId);
+        }, 5000)
+    ));
+}
+
+// Alternar expansión de respuestas
+function toggleReplies(postId) {
+    if (expandedReplies.has(postId)) {
+        expandedReplies.delete(postId);
+    } else {
+        expandedReplies.add(postId);
+    }
+    renderFeed();
+}
+
+// Mostrar formulario de respuesta
+function showReplyForm(postId) {
+    const formId = `reply-form-${postId}`;
+    const form = document.getElementById(formId);
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        if (form.style.display === 'flex') {
+            form.querySelector('textarea')?.focus();
+        }
+    }
+}
+
+// HTML para las respuestas de un post
+function renderReplies(postId) {
+    const postReplies = replies.get(postId) || [];
+    if (!postReplies.length && !expandedReplies.has(postId)) return '';
+    
+    const isExpanded = expandedReplies.has(postId);
+    const visibleReplies = isExpanded ? postReplies : postReplies.slice(0, 2);
+    const hasMore = postReplies.length > 2 && !isExpanded;
+    
+    let html = `<div class="reply-thread">`;
+    
+    visibleReplies.forEach(reply => {
+        const replyProfile = profiles.get(reply.pubkey) || {};
+        const replyName = esc(displayName(reply.pubkey));
+        const replyInitials = avInitials(reply.pubkey);
+        const replyAc = avClass(reply.pubkey);
+        const replyTime = timeAgo(reply.created_at);
+        const replyContent = esc(stripMediaUrls(reply.content));
+        const likeCount = replyLikes.get(reply.id)?.size || 0;
+        const isLiked = myReplyLikes.has(reply.id);
+        
+        const avatarStyle = replyProfile.picture 
+            ? `style="background: url(${replyProfile.picture}) center/cover no-repeat; background-size: cover;"`
+            : `class="reply-avatar ${replyAc}"`;
+        const avatarContent = replyProfile.picture ? '' : replyInitials;
+        
+        html += `
+            <div class="reply-item" data-reply-id="${reply.id}">
+                <div class="reply-header">
+                    <div ${avatarStyle} style="width:24px;height:24px;font-size:0.5rem;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;">${avatarContent}</div>
+                    <span class="reply-name">${replyName}</span>
+                    <span class="reply-pubkey">${reply.pubkey.slice(0,8)}…</span>
+                    <span class="reply-time">${replyTime}</span>
+                </div>
+                <div class="reply-content">${replyContent}</div>
+                <div class="reply-actions">
+                    <button class="reply-action-btn ${isLiked ? 'liked' : ''}" onclick="likeReply('${postId}', '${reply.id}', '${reply.pubkey}')">
+                        <span>${isLiked ? '❤️' : '🤍'}</span>
+                        <span>${likeCount || ''}</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (hasMore) {
+        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')">Ver las ${postReplies.length - 2} respuestas restantes ↓</button>`;
+    } else if (isExpanded && postReplies.length > 2) {
+        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')">Mostrar menos ↑</button>`;
+    }
+    
+    // Formulario para responder
+    const myProfile = profiles.get(pubKey) || {};
+    const myAvatarStyle = myProfile.picture 
+        ? `style="background: url(${myProfile.picture}) center/cover no-repeat; background-size: cover;"`
+        : `class="reply-avatar ${avClass(pubKey)}"`;
+    const myAvatarContent = myProfile.picture ? '' : (pubKey ? pubKey.slice(0,2).toUpperCase() : '');
+    
+    html += `
+        <div id="reply-form-${postId}" style="display: none; margin-top: 12px;" class="reply-form">
+            <div ${myAvatarStyle} style="width:28px;height:28px;font-size:0.55rem;display:flex;align-items:center;justify-content:center;border-radius:50%;">${myAvatarContent}</div>
+            <div class="reply-input-wrapper">
+                <textarea class="reply-input" rows="2" placeholder="Escribe tu respuesta..." maxlength="500"></textarea>
+                <div class="reply-buttons">
+                    <button class="btn-reply" onclick="showReplyForm('${postId}')">Cancelar</button>
+                    <button class="btn-reply btn-reply-submit" onclick="submitReply('${postId}')">Responder</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    html += `</div>`;
+    return html;
+}
+
+// Enviar respuesta
+async function submitReply(postId) {
+    const formId = `reply-form-${postId}`;
+    const textarea = document.querySelector(`#reply-form-${postId} textarea`);
+    if (!textarea) return;
+    
+    const content = textarea.value.trim();
+    if (!content) return;
+    
+    const success = await postReply(postId, content);
+    if (success) {
+        textarea.value = '';
+        showReplyForm(postId);
+    }
+}
 // ============================================================
 //  PERSISTENCIA DE CLAVE (localStorage)
 // ============================================================
@@ -1625,7 +2036,13 @@ function buildActions(post) {
     const reposted = myReposts.has(id);
     const likeCount = likes.get(id)?.size || 0;
     const repostCount = reposts.get(id)?.size || 0;
+    const replyCount = replies.get(id)?.length || 0;
+    
     return `
+        <button class="action-btn reply-btn" onclick="showReplyForm('${id}')">
+            <span class="action-icon">💬</span>
+            <span class="action-count">${replyCount || ''}</span>
+        </button>
         <button class="action-btn like-btn ${liked?'liked':''}" onclick="likePost('${id}')">
             <span class="action-icon">${liked?'❤️':'🤍'}</span>
             <span class="action-count">${likeCount || ''}</span>
@@ -1679,7 +2096,16 @@ function renderPost(post, isRepostOf) {
             });
         }, 100);
     }
+    // En renderPost(), después de ${mediaHtml} y antes de ${urlPreviewHtml}
+    const repliesHtml = pubKey ? renderReplies(id) : '';
     
+    // Y luego, después de .post-actions, añade el botón de responder
+    const replyButton = privKey ? `
+        <button class="action-btn reply-btn" onclick="showReplyForm('${id}')">
+            <span class="action-icon">💬</span>
+            <span class="action-count">${(replies.get(id) || []).length || ''}</span>
+        </button>
+    ` : '';    
     return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
         ${avatarHtml}
         <div class="post-body">
@@ -1760,14 +2186,19 @@ async function loadFeed() {
         loadProfiles(authors),
         loadLikes(postIds),
         loadReposts(postIds),
-        loadFollowersBatch(authors)   // ← agregar esta línea
+        loadReplies(postIds)  // 🔥 Cargar respuestas
     ]);
+    
+    // Cargar likes de respuestas
+    const allReplyIds = [...replies.values()].flat().map(r => r.id);
+    if (allReplyIds.length) {
+        await loadReplyLikes(allReplyIds);
+    }
     
     loadFollowersForPubkeys(authors);
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
- 
 }
 
 function switchTab(tab) {
