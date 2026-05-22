@@ -679,6 +679,118 @@ async function getSingleUserFollowers(pubkey) {
     followersCount.set(pubkey, maxCount);
     return maxCount;
 }
+// ─── SEGUIDORES (NIP-45 COUNT + fallback por eventos) ───────────────────
+const followersCount   = new Map();   // pk → número
+const followersPending = new Set();   // pk esperando resultado
+
+async function loadFollowersBatch(pubkeys) {
+    const toLoad = pubkeys.filter(pk => !followersCount.has(pk) && !followersPending.has(pk));
+    if (!toLoad.length) return;
+
+    toLoad.forEach(pk => {
+        followersPending.add(pk);
+        followersCount.set(pk, null);  // null = cargando
+    });
+
+    renderFeed();  // muestra spinner/guión mientras carga
+
+    await Promise.all(RELAYS.map(url => queryFollowersFromRelay(url, toLoad)));
+
+    toLoad.forEach(pk => followersPending.delete(pk));
+    renderFeed();
+}
+
+async function queryFollowersFromRelay(url, pubkeys) {
+    let ws;
+    try {
+        ws = await openRelay(url, 4000);
+    } catch(_) { return; }
+
+    const subId  = 'fc_' + Math.random().toString(36).slice(2, 7);
+    const counts = new Map(pubkeys.map(pk => [pk, 0]));
+
+    // Intentar NIP-45 COUNT primero
+    const supportsCount = await tryNip45Count(ws, subId + '_c', pubkeys, counts);
+
+    if (!supportsCount) {
+        // Fallback: descargar eventos y contar manualmente
+        await new Promise(resolve => {
+            const t = setTimeout(() => resolve(), 5000);
+
+            ws.onmessage = e => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (msg[0] === 'EVENT' && msg[2]?.kind === 3) {
+                        // Este evento kind:3 lista a alguien como contacto
+                        // Cada tag p que coincida con nuestros pubkeys suma 1
+                        for (const tag of (msg[2].tags || [])) {
+                            if (tag[0] === 'p' && counts.has(tag[1])) {
+                                counts.set(tag[1], counts.get(tag[1]) + 1);
+                            }
+                        }
+                    }
+                    if (msg[0] === 'EOSE') { clearTimeout(t); resolve(); }
+                } catch(_) {}
+            };
+            ws.onerror = () => { clearTimeout(t); resolve(); };
+
+            ws.send(JSON.stringify(['REQ', subId, {
+                kinds: [3],
+                '#p': pubkeys,
+                limit: 500
+            }]));
+        });
+    }
+
+    // Actualizar el mapa global con el máximo entre relays
+    for (const [pk, count] of counts) {
+        const prev = followersCount.get(pk) ?? 0;
+        followersCount.set(pk, Math.max(prev, count));
+    }
+
+    try { ws.close(); } catch(_) {}
+}
+
+async function tryNip45Count(ws, subId, pubkeys, countsMap) {
+    // NIP-45: enviar COUNT en lugar de REQ
+    return new Promise(resolve => {
+        const t = setTimeout(() => resolve(false), 2000);
+
+        ws.onmessage = e => {
+            try {
+                const msg = JSON.parse(e.data);
+                // Respuesta COUNT: ["COUNT", subId, {"count": N}]
+                if (msg[0] === 'COUNT' && msg[1] === subId) {
+                    clearTimeout(t);
+                    // COUNT global — no por pubkey individual, así que
+                    // repartimos uniformemente como estimación
+                    const total = msg[2]?.count ?? 0;
+                    const perPk = Math.floor(total / pubkeys.length);
+                    pubkeys.forEach(pk => countsMap.set(pk, perPk));
+                    resolve(true);
+                }
+                // Si el relay responde NOTICE o CLOSED, no soporta COUNT
+                if (msg[0] === 'NOTICE' || msg[0] === 'CLOSED') {
+                    clearTimeout(t); resolve(false);
+                }
+            } catch(_) { clearTimeout(t); resolve(false); }
+        };
+
+        try {
+            ws.send(JSON.stringify(['COUNT', subId, {
+                kinds: [3],
+                '#p': pubkeys
+            }]));
+        } catch(_) { clearTimeout(t); resolve(false); }
+    });
+}
+// ─── En el render, mostrar el número ────────────────────────────────────
+function renderFollowerCount(pk) {
+    const n = followersCount.get(pk);
+    if (n === undefined) return '';           // no cargado aún
+    if (n === null)      return '… seguidores';  // cargando
+    return `${n} seguidor${n !== 1 ? 'es' : ''}`;
+}
 
 // ============================================================
 //  SUBIR FOTO DE PERFIL
@@ -1437,17 +1549,19 @@ async function loadFeed() {
 
     const postIds = [...feedPosts.keys()];
     const authors = [...new Set([...feedPosts.values()].map(p=>p.pubkey))];
-
+    const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
     await Promise.all([
         loadProfiles(authors),
         loadLikes(postIds),
-        loadReposts(postIds)
+        loadReposts(postIds),
+        loadFollowersBatch(authors)   // ← agregar esta línea
     ]);
     
     loadFollowersForPubkeys(authors);
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
+ 
 }
 
 function switchTab(tab) {
