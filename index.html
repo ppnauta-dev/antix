@@ -717,21 +717,27 @@ async function queryFollowersFromRelay(url, pubkeys) {
         await new Promise(resolve => {
             const t = setTimeout(() => resolve(), 5000);
 
-            ws.onmessage = e => {
-                try {
-                    const msg = JSON.parse(e.data);
-                    if (msg[0] === 'EVENT' && msg[2]?.kind === 3) {
-                        // Este evento kind:3 lista a alguien como contacto
-                        // Cada tag p que coincida con nuestros pubkeys suma 1
-                        for (const tag of (msg[2].tags || [])) {
-                            if (tag[0] === 'p' && counts.has(tag[1])) {
-                                counts.set(tag[1], counts.get(tag[1]) + 1);
-                            }
+        ws.onmessage = e => {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg[0] === 'EVENT' && msg[2]?.kind === 3) {
+                    // Un kind:3 = una persona que sigue a alguien
+                    // Sus tags 'p' son a quienes sigue
+                    const followedPks = new Set(
+                        (msg[2].tags || [])
+                            .filter(tag => tag[0] === 'p')
+                            .map(tag => tag[1])
+                    );
+                    // Sumar 1 a cada pubkey nuestra que aparece en su lista
+                    for (const pk of pubkeys) {
+                        if (followedPks.has(pk)) {
+                            counts.set(pk, (counts.get(pk) ?? 0) + 1);
                         }
                     }
-                    if (msg[0] === 'EOSE') { clearTimeout(t); resolve(); }
-                } catch(_) {}
-            };
+                }
+                if (msg[0] === 'EOSE') { clearTimeout(t); resolve(); }
+            } catch(_) {}
+        };
             ws.onerror = () => { clearTimeout(t); resolve(); };
 
             ws.send(JSON.stringify(['REQ', subId, {
@@ -752,37 +758,41 @@ async function queryFollowersFromRelay(url, pubkeys) {
 }
 
 async function tryNip45Count(ws, subId, pubkeys, countsMap) {
-    // NIP-45: enviar COUNT en lugar de REQ
-    return new Promise(resolve => {
-        const t = setTimeout(() => resolve(false), 2000);
+    // Una promesa por pubkey, todas en paralelo sobre el mismo ws
+    const promises = pubkeys.map(pk => new Promise(resolve => {
+        const cid = subId + '_' + pk.slice(0, 8);
+        const t = setTimeout(() => resolve(false), 2500);
 
-        ws.onmessage = e => {
+        const originalHandler = ws.onmessage;
+        const listener = e => {
             try {
                 const msg = JSON.parse(e.data);
-                // Respuesta COUNT: ["COUNT", subId, {"count": N}]
-                if (msg[0] === 'COUNT' && msg[1] === subId) {
+                if (msg[0] === 'COUNT' && msg[1] === cid) {
                     clearTimeout(t);
-                    // COUNT global — no por pubkey individual, así que
-                    // repartimos uniformemente como estimación
-                    const total = msg[2]?.count ?? 0;
-                    const perPk = Math.floor(total / pubkeys.length);
-                    pubkeys.forEach(pk => countsMap.set(pk, perPk));
+                    countsMap.set(pk, msg[2]?.count ?? 0);
+                    ws.removeEventListener('message', listener);
                     resolve(true);
                 }
-                // Si el relay responde NOTICE o CLOSED, no soporta COUNT
-                if (msg[0] === 'NOTICE' || msg[0] === 'CLOSED') {
-                    clearTimeout(t); resolve(false);
+                if ((msg[0] === 'NOTICE' || msg[0] === 'CLOSED') && msg[1] === cid) {
+                    clearTimeout(t);
+                    ws.removeEventListener('message', listener);
+                    resolve(false);
                 }
             } catch(_) { clearTimeout(t); resolve(false); }
         };
 
+        ws.addEventListener('message', listener);
+
         try {
-            ws.send(JSON.stringify(['COUNT', subId, {
+            ws.send(JSON.stringify(['COUNT', cid, {
                 kinds: [3],
-                '#p': pubkeys
+                '#p': [pk]        // ← una pubkey por COUNT
             }]));
         } catch(_) { clearTimeout(t); resolve(false); }
-    });
+    }));
+
+    const results = await Promise.all(promises);
+    return results.some(r => r); // true si al menos uno funcionó
 }
 // ─── En el render, mostrar el número ────────────────────────────────────
 function renderFollowerCount(pk) {
