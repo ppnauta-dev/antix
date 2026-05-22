@@ -454,6 +454,29 @@
             color: var(--accent);
             margin-top: 6px;
         }        
+        .url-preview-image {
+            width: 100%;
+            max-height: 200px;
+            overflow: hidden;
+            background: #0a0f14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .url-preview-image img {
+            width: 100%;
+            height: auto;
+            max-height: 200px;
+            object-fit: contain;  /* Cambiado de 'cover' a 'contain' para Blogger */
+            background: #0a0f14;
+        }
+        
+        /* Si la imagen falla, mostrar un placeholder */
+        .url-preview-image img[src=""],
+        .url-preview-image img:not([src]) {
+            display: none;
+        }        
     </style>
 </head>
 <body>
@@ -1869,6 +1892,86 @@ async function autoConnect() {
         loadFeed();
     }
 }
+// Extraer imagen de un post de Blogger
+function extractBloggerImage(html, url) {
+    // Método 1: Buscar en el contenido del post
+    const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/gi;
+    let match;
+    let firstImage = null;
+    
+    while ((match = imgRegex.exec(html)) !== null) {
+        const src = match[1];
+        // Excluir iconos, logos y cosas pequeñas
+        if (!src.includes('icon') && !src.includes('logo') && !src.includes('spacer') && !src.includes('1x1')) {
+            // Convertir URL a absoluta si es necesario
+            let fullUrl = src;
+            if (src.startsWith('//')) {
+                fullUrl = 'https:' + src;
+            } else if (src.startsWith('/')) {
+                const baseUrl = new URL(url);
+                fullUrl = baseUrl.origin + src;
+            }
+            firstImage = fullUrl;
+            break;
+        }
+    }
+    
+    // Método 2: Buscar en meta tags específicos de Blogger
+    if (!firstImage) {
+        const metaImage = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i);
+        if (metaImage) firstImage = metaImage[1];
+    }
+    
+    // Método 3: Buscar en schema.org
+    if (!firstImage) {
+        const schemaImage = html.match(/<meta[^>]+itemprop="image"[^>]+content="([^"]+)"/i);
+        if (schemaImage) firstImage = schemaImage[1];
+    }
+    
+    return firstImage;
+}
+
+// Extraer título de Blogger (limpia el "Blogger: " del título)
+function extractBloggerTitle(html, url) {
+    // Título del artículo
+    let title = '';
+    
+    // Buscar en meta tags
+    const ogTitle = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i);
+    if (ogTitle) title = ogTitle[1];
+    
+    // Buscar en title
+    if (!title) {
+        const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+        if (titleMatch) title = titleMatch[1];
+    }
+    
+    // Limpiar título (quitar "Blogger: " si existe)
+    title = title.replace(/^(Blogger:\s*)/i, '');
+    title = title.replace(/\s*\|\s*Blogger$/i, '');
+    
+    return title || new URL(url).hostname;
+}
+
+// Extraer descripción de Blogger
+function extractBloggerDescription(html) {
+    let description = '';
+    
+    // Buscar meta description
+    const metaDesc = html.match(/<meta[^>]+name="description"[^>]+content="([^"]+)"/i);
+    if (metaDesc) description = metaDesc[1];
+    
+    // Buscar og:description
+    if (!description) {
+        const ogDesc = html.match(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i);
+        if (ogDesc) description = ogDesc[1];
+    }
+    
+    // Limpiar HTML entities
+    description = description.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    
+    return description.length > 200 ? description.substring(0, 197) + '...' : description;
+}    
 // ============================================================
 //  EXTRACCIÓN DE URLs Y VISTA PREVIA
 // ============================================================
@@ -1895,60 +1998,117 @@ function extractFirstUrl(text) {
 // Obtener metadatos de una URL (via cors-anywhere o proxy)
 async function fetchUrlMetadata(url) {
     try {
-        // Opción 1: Usar un servicio CORS proxy (temporal)
-        // Para producción, deberías tener un backend propio
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        console.log('🌐 Fetching:', url);
         
-        const response = await fetch(proxyUrl, {
-            headers: { 'Accept': 'text/html' }
-        });
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
         
         if (!response.ok) throw new Error('No se pudo cargar');
         
         const html = await response.text();
         
-        // Parsear metadatos
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
+        // Detectar si es Blogger
+        const isBlogger = url.includes('blogspot.com') || html.includes('blogger') || html.includes('blogspot');
         
-        // Buscar metadatos (Open Graph, Twitter Cards, o estándar)
-        const getMetaContent = (selector) => {
-            const meta = doc.querySelector(selector);
-            return meta ? meta.getAttribute('content') || meta.getAttribute('value') : null;
-        };
+        let title, description, image, siteName;
         
-        const title = getMetaContent('meta[property="og:title"]') ||
-                     getMetaContent('meta[name="twitter:title"]') ||
-                     doc.querySelector('title')?.textContent ||
-                     new URL(url).hostname;
+        if (isBlogger) {
+            // Usar funciones específicas para Blogger
+            title = extractBloggerTitle(html, url);
+            description = extractBloggerDescription(html);
+            image = extractBloggerImage(html, url);
+            siteName = html.match(/<meta[^>]+property="og:site_name"[^>]+content="([^"]+)"/i)?.[1] || 'Blogger';
+            
+            console.log('📝 Blogger detectado:', { title, hasImage: !!image });
+        } else {
+            // Sitio normal
+            const getMeta = (pattern) => {
+                const match = html.match(pattern);
+                return match ? match[1] : null;
+            };
+            
+            title = getMeta(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/i) ||
+                    getMeta(/<title>([^<]+)<\/title>/i) ||
+                    new URL(url).hostname;
+            
+            description = getMeta(/<meta[^>]+property="og:description"[^>]+content="([^"]+)"/i) ||
+                         getMeta(/<meta[^>]+name="description"[^>]+content="([^"]+)"/i) ||
+                         '';
+            
+            image = getMeta(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/i) ||
+                    getMeta(/<meta[^>]+name="twitter:image"[^>]+content="([^"]+)"/i) ||
+                    null;
+            
+            siteName = getMeta(/<meta[^>]+property="og:site_name"[^>]+content="([^"]+)"/i) ||
+                      new URL(url).hostname.replace('www.', '');
+        }
         
-        const description = getMetaContent('meta[property="og:description"]') ||
-                           getMetaContent('meta[name="twitter:description"]') ||
-                           getMetaContent('meta[name="description"]') ||
-                           '';
+        // Limpiar título
+        title = title?.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&') || new URL(url).hostname;
         
-        const image = getMetaContent('meta[property="og:image"]') ||
-                     getMetaContent('meta[name="twitter:image"]') ||
-                     null;
-        
-        const siteName = getMetaContent('meta[property="og:site_name"]') ||
-                        new URL(url).hostname.replace('www.', '');
+        console.log('✅ Metadata final:', { title, description: description?.substring(0, 50), image: image?.substring(0, 50), siteName });
         
         return { title, description, image, siteName, url };
         
     } catch (error) {
-        console.error('Error fetching metadata:', error);
-        // Fallback: mostrar solo la URL
+        console.error('❌ Error fetching metadata:', error);
         return {
             title: new URL(url).hostname,
             description: '',
             image: null,
-            siteName: new URL(url).hostname,
+            siteName: new URL(url).hostname.replace('www.', ''),
             url: url
         };
     }
 }
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 días
+const urlMetadataMemoryCache = new Map();
 
+async function getUrlMetadataWithCache(url) {
+    // 1. Revisar caché en memoria
+    if (urlMetadataMemoryCache.has(url)) {
+        const cached = urlMetadataMemoryCache.get(url);
+        if (Date.now() - cached.timestamp < CACHE_DURATION) {
+            console.log(`📦 Cache (memoria) para: ${url.substring(0, 50)}...`);
+            return cached.data;
+        }
+    }
+    
+    // 2. Revisar localStorage
+    const cacheKey = `url_cache_${btoa(encodeURIComponent(url)).substring(0, 50)}`;
+    const cachedRaw = localStorage.getItem(cacheKey);
+    if (cachedRaw) {
+        try {
+            const cached = JSON.parse(cachedRaw);
+            if (Date.now() - cached.timestamp < CACHE_DURATION) {
+                console.log(`💾 Cache (localStorage) para: ${url.substring(0, 50)}...`);
+                urlMetadataMemoryCache.set(url, cached);
+                return cached.data;
+            }
+        } catch(e) {}
+    }
+    
+    // 3. Fetch nuevo
+    console.log(`🌐 Fetching: ${url.substring(0, 50)}...`);
+    const metadata = await fetchUrlMetadata(url);
+    
+    // Verificar si la imagen se encontró
+    if (metadata.image) {
+        console.log(`🖼️ Imagen encontrada: ${metadata.image.substring(0, 80)}...`);
+    } else {
+        console.log(`⚠️ No se encontró imagen para: ${url}`);
+    }
+    
+    // 4. Guardar en caché
+    const cacheEntry = {
+        data: metadata,
+        timestamp: Date.now()
+    };
+    urlMetadataMemoryCache.set(url, cacheEntry);
+    localStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
+    
+    return metadata;
+}
 // Cache de metadatos de URLs
 const urlMetadataCache = new Map();
 
