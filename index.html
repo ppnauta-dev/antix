@@ -683,8 +683,26 @@
         <div class="side-key" id="sideKey">Sin conectar</div>
         <button class="nav-btn" id="btnEditProfile" onclick="openProfileModal()" style="margin-top:8px;"><span class="icon">✏️</span> Editar perfil</button>
         <button class="nav-btn" id="btnLogout" onclick="logout()" style="margin-top:4px; color: var(--danger);"><span class="icon">🚪</span> Desconectar</button>
+        <button class="nav-btn" id="btnMyYoutube" onclick="showYoutubeChannel()">
+        <span class="icon">🎬</span> Mi Canal YouTube
+</button>
     </aside>
     <!-- MENÚ MÓVIL COMPLETO -->
+    <!-- Modal Lista de YouTube -->
+<div class="modal-overlay" id="youtubeModal" onclick="closeYoutubeModal(event)">
+    <div class="modal" style="width: 90%; max-width: 600px; max-height: 80vh;">
+        <div class="modal-header">
+            <span id="youtubeModalTitle">🎬 Mi Canal</span>
+            <button class="modal-close" onclick="closeYoutubeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="youtubeModalBody">
+            <div style="text-align: center; padding: 20px;">
+                <div class="spinner"></div>
+                <p>Cargando videos...</p>
+            </div>
+        </div>
+    </div>
+</div>
     <div class="modal-overlay" id="mobileMenuModal" onclick="closeMobileMenu(event)">
         <div class="modal" style="width: 90%; max-width: 350px;">
             <div class="modal-header">
@@ -2509,6 +2527,208 @@ function extractBloggerDescription(html) {
     return description.length > 200 ? description.substring(0, 197) + '...' : description;
 }    
 // ============================================================
+//  LISTA DE VIDEOS DE YOUTUBE
+// ============================================================
+
+// Configuración
+let youtubeChannelId = '';
+let youtubeChannelHandle = '';
+let youtubeApiKey = ''; // Necesitas una API key de Google (gratis)
+
+// Guardar canal
+function saveYoutubeChannelData(channelId, handle) {
+    youtubeChannelId = channelId;
+    youtubeChannelHandle = handle;
+    localStorage.setItem('antix_youtube_channel_id', channelId);
+    localStorage.setItem('antix_youtube_channel_handle', handle);
+}
+
+function loadYoutubeChannelData() {
+    youtubeChannelId = localStorage.getItem('antix_youtube_channel_id') || '';
+    youtubeChannelHandle = localStorage.getItem('antix_youtube_channel_handle') || '';
+}
+
+// Configurar API key (el usuario puede poner la suya)
+function setupYoutubeApiKey() {
+    const savedKey = localStorage.getItem('antix_youtube_api_key');
+    if (savedKey) {
+        youtubeApiKey = savedKey;
+    } else {
+        // Pedir API key al usuario
+        const key = prompt('🔑 Para ver videos de YouTube, necesitas una API key de Google (gratuita).\n\n1. Ve a console.cloud.google.com\n2. Crea un proyecto\n3. Habilita YouTube Data API v3\n4. Crea una credencial (API key)\n\nPega tu API key:');
+        if (key) {
+            youtubeApiKey = key;
+            localStorage.setItem('antix_youtube_api_key', key);
+        }
+    }
+}
+
+// Obtener ID del canal a partir del handle (@usuario)
+async function getChannelIdFromHandle(handle) {
+    if (!youtubeApiKey) return null;
+    
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${handle.replace('@', '')}&key=${youtubeApiKey}`);
+        const data = await response.json();
+        if (data.items && data.items[0]) {
+            return data.items[0].id;
+        }
+    } catch (error) {
+        console.error('Error obteniendo channel ID:', error);
+    }
+    return null;
+}
+
+// Obtener videos del canal
+async function getChannelVideos(channelId) {
+    if (!youtubeApiKey || !channelId) return [];
+    
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=20&order=date&type=video&key=${youtubeApiKey}`);
+        const data = await response.json();
+        
+        return data.items.map(item => ({
+            id: item.id.videoId,
+            title: item.snippet.title,
+            thumbnail: item.snippet.thumbnails.medium.url,
+            publishedAt: item.snippet.publishedAt,
+            channelTitle: item.snippet.channelTitle
+        }));
+    } catch (error) {
+        console.error('Error obteniendo videos:', error);
+        return [];
+    }
+}
+
+// Configurar canal en el perfil
+function setupYoutubeChannelInProfile() {
+    const profileModalBody = document.querySelector('#profileModal .modal-body');
+    if (profileModalBody && !document.getElementById('youtubeHandleInput')) {
+        const saveBtn = document.getElementById('btnSaveProfile');
+        if (saveBtn) {
+            const youtubeHtml = `
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">🎬 Canal de YouTube (handle)</label>
+                    <input type="text" class="profile-input" id="youtubeHandleInput" placeholder="@tucanal" value="${youtubeChannelHandle}">
+                    <label style="font-size:0.6rem; color:var(--muted);">Ej: @AntiXClient o AntiXClient</label>
+                </div>
+            `;
+            saveBtn.insertAdjacentHTML('beforebegin', youtubeHtml);
+        }
+    }
+}
+
+// Guardar handle del canal desde perfil
+async function saveYoutubeHandleFromProfile() {
+    const input = document.getElementById('youtubeHandleInput');
+    if (input) {
+        const handle = input.value.trim();
+        if (handle) {
+            const channelId = await getChannelIdFromHandle(handle);
+            if (channelId) {
+                saveYoutubeChannelData(channelId, handle);
+                setStatus('✅ Canal de YouTube vinculado', 'ok');
+            } else {
+                setStatus('❌ No se encontró el canal', 'err');
+            }
+        }
+    }
+}
+
+// Mostrar lista de videos del canal
+async function showYoutubeChannel() {
+    if (!youtubeChannelId && !youtubeChannelHandle) {
+        alert('Primero configura tu canal de YouTube en Editar perfil');
+        return;
+    }
+    
+    if (!youtubeApiKey) {
+        setupYoutubeApiKey();
+        if (!youtubeApiKey) return;
+    }
+    
+    const modal = document.getElementById('youtubeModal');
+    const title = document.getElementById('youtubeModalTitle');
+    const body = document.getElementById('youtubeModalBody');
+    
+    title.textContent = `🎬 ${youtubeChannelHandle || 'Mi Canal'}`;
+    body.innerHTML = `<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>Cargando videos...</p></div>`;
+    modal.classList.add('open');
+    
+    // Obtener channel ID si solo tenemos handle
+    let channelId = youtubeChannelId;
+    if (!channelId && youtubeChannelHandle) {
+        channelId = await getChannelIdFromHandle(youtubeChannelHandle);
+        if (channelId) saveYoutubeChannelData(channelId, youtubeChannelHandle);
+    }
+    
+    if (!channelId) {
+        body.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--danger);">❌ No se pudo encontrar el canal</div>`;
+        return;
+    }
+    
+    const videos = await getChannelVideos(channelId);
+    
+    if (videos.length === 0) {
+        body.innerHTML = `<div style="text-align: center; padding: 20px;">📭 No se encontraron videos en este canal</div>`;
+        return;
+    }
+    
+    // Mostrar lista de videos
+    let videosHtml = `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+    
+    videos.forEach(video => {
+        const date = new Date(video.publishedAt).toLocaleDateString();
+        videosHtml += `
+            <div class="youtube-video-item" onclick="shareYoutubeVideo('${video.id}', '${video.title.replace(/'/g, "\\'")}')" style="display: flex; gap: 12px; padding: 8px; border-radius: 10px; cursor: pointer; transition: background 0.2s;">
+                <img src="${video.thumbnail}" style="width: 120px; height: 68px; object-fit: cover; border-radius: 8px;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">${esc(video.title)}</div>
+                    <div style="font-size: 0.65rem; color: var(--muted);">${date}</div>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); shareYoutubeVideo('${video.id}', '${video.title.replace(/'/g, "\\'")}')" style="padding: 4px 12px;">Compartir</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    videosHtml += `</div>`;
+    body.innerHTML = videosHtml;
+}
+
+// Compartir un video seleccionado
+function shareYoutubeVideo(videoId, videoTitle) {
+    const videoUrl = `https://youtu.be/${videoId}`;
+    let postText = `🎬 ${videoTitle}\n\n${videoUrl}`;
+    
+    if (youtubeChannelHandle) {
+        postText += `\n\n📺 Más videos: https://youtube.com/${youtubeChannelHandle}`;
+    }
+    
+    const textarea = document.getElementById('contenido');
+    const currentText = textarea.value.trim();
+    
+    if (currentText) {
+        textarea.value = currentText + '\n\n' + postText;
+    } else {
+        textarea.value = postText;
+    }
+    
+    textarea.focus();
+    closeYoutubeModal();
+    setStatus('✅ Video listo para publicar', 'ok');
+}
+
+function closeYoutubeModal(e) {
+    if (!e || e.target === document.getElementById('youtubeModal')) {
+        document.getElementById('youtubeModal').classList.remove('open');
+    }
+}
+
+// Inicializar
+loadYoutubeChannelData();
+// ============================================================
 //  EXTRACCIÓN DE URLs Y VISTA PREVIA
 // ============================================================
 
@@ -2685,6 +2905,19 @@ function logoutMobile() {
     logout();
     closeMobileMenu();
 }
+// Modificar saveProfile original
+const originalSaveProfile = window.saveProfile;
+if (originalSaveProfile) {
+    window.saveProfile = async function(name, bio, pictureDataUrl) {
+        await saveYoutubeHandleFromProfile();
+        await originalSaveProfile(name, bio, pictureDataUrl);
+    };
+}
+
+// Inicializar todo
+setTimeout(() => {
+    setupYoutubeChannelInProfile();
+}, 1000);    
 autoConnect();
 </script>
 </body>
