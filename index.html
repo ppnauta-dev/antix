@@ -945,14 +945,50 @@ function toggleReplies(postId) {
 }
 
 // Mostrar formulario de respuesta
+// Mostrar/ocultar el formulario de respuesta
 function showReplyForm(postId) {
-    const formId = `reply-form-${postId}`;
-    const form = document.getElementById(formId);
-    if (form) {
-        form.style.display = form.style.display === 'none' ? 'flex' : 'none';
-        if (form.style.display === 'flex') {
-            form.querySelector('textarea')?.focus();
+    // Buscar si ya existe el formulario
+    let formContainer = document.getElementById(`reply-form-container-${postId}`);
+    
+    if (formContainer) {
+        // Si existe, alternar visibilidad
+        formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
+        if (formContainer.style.display === 'block') {
+            const textarea = document.getElementById(`reply-text-${postId}`);
+            if (textarea) textarea.focus();
         }
+        return;
+    }
+    
+    // Crear el formulario
+    const postElement = document.querySelector(`.post[data-post-id="${postId}"] .post-body`);
+    if (!postElement) return;
+    
+    const myProfile = profiles.get(pubKey) || {};
+    const myAvatarStyle = myProfile.picture 
+        ? `style="background: url(${myProfile.picture}) center/cover no-repeat; background-size: cover;"`
+        : `class="reply-avatar ${avClass(pubKey)}"`;
+    const myAvatarContent = myProfile.picture ? '' : (pubKey ? pubKey.slice(0,2).toUpperCase() : '');
+    
+    const replyFormHtml = `
+        <div id="reply-form-container-${postId}" class="reply-form-container" style="margin-top: 12px;">
+            <div class="reply-form" style="display: flex; gap: 8px;">
+                <div ${myAvatarStyle} style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background-size: cover;">${myAvatarContent}</div>
+                <div style="flex: 1;">
+                    <textarea id="reply-text-${postId}" class="reply-input" rows="2" placeholder="Escribe tu respuesta..." maxlength="500" style="width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 8px 12px; color: var(--text); resize: none; font-family: var(--sans); font-size: 0.8rem;"></textarea>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                        <button class="btn-reply" onclick="cancelReply('${postId}')" style="background: none; border: 1px solid var(--border); border-radius: 16px; padding: 4px 12px; cursor: pointer; color: var(--muted);">Cancelar</button>
+                        <button class="btn-reply btn-reply-submit" onclick="submitReply('${postId}')" style="background: var(--accent); border: none; border-radius: 16px; padding: 4px 12px; cursor: pointer; color: #000; font-weight: 600;">Responder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insertar después de .post-actions
+    const actionsDiv = postElement.querySelector('.post-actions');
+    if (actionsDiv) {
+        actionsDiv.insertAdjacentHTML('afterend', replyFormHtml);
     }
 }
 
