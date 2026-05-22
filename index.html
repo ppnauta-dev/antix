@@ -584,7 +584,12 @@ async function saveProfile(name, bio, pictureDataUrl) {
         profiles.set(pubKey, profile);
         setStatus('✅ Perfil guardado', 'ok');
         closeProfileModal();
-        renderFeed();
+        
+        // 🔥 RECARGAR TODOS LOS PERFILES DE LOS POSTS EXISTENTES
+        const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
+        await loadProfiles(authors);
+        
+        renderFeed();  // Re-renderizar todos los posts
         updateMyAvatar();
         tempProfilePicture = null;
     } else {
@@ -1174,6 +1179,9 @@ function buildActions(post) {
     `;
 }
 
+// ============================================================
+// FUNCIÓN RENDERPOST CORREGIDA - AHORA SÍ MUESTRA LA FOTO DE PERFIL
+// ============================================================
 function renderPost(post, isRepostOf) {
     const id = post.id;
     const p = profiles.get(post.pubkey) || {};
@@ -1181,14 +1189,27 @@ function renderPost(post, isRepostOf) {
     const initials = avInitials(post.pubkey);
     const name = esc(displayName(post.pubkey));
     const ago = timeAgo(post.created_at);
-    const avatarStyle = p.picture ? `style="background: url(${p.picture}) center/cover no-repeat; background-size: cover;"` : `class="post-avatar ${ac}"`;
-    const avatarContent = p.picture ? '' : initials;
+    
+    // 🔥 CORRECCIÓN AQUÍ: Asegurar que la foto de perfil se muestre correctamente
+    let avatarHtml = '';
+    if (p.picture && p.picture.startsWith('data:image')) {
+        // Foto subida desde PC (dataURL)
+        avatarHtml = `<div class="post-avatar" style="background: url(${p.picture}) center/cover no-repeat; background-size: cover; width: 34px; height: 34px; border-radius: 50%;"></div>`;
+    } else if (p.picture && p.picture.startsWith('http')) {
+        // Foto desde URL externa
+        avatarHtml = `<div class="post-avatar" style="background: url(${p.picture}) center/cover no-repeat; background-size: cover; width: 34px; height: 34px; border-radius: 50%;"></div>`;
+    } else {
+        // Sin foto, usar iniciales con gradiente
+        avatarHtml = `<div class="post-avatar ${ac}" style="display: flex; align-items: center; justify-content: center;">${initials}</div>`;
+    }
+    
     const { images, videos, youtubes } = extractMediaUrls(post.content);
     const textContent = esc(stripMediaUrls(post.content));
     const mediaHtml = buildMediaHtml(images, videos, youtubes);
     const repostLabel = isRepostOf ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
+    
     return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
-        <div ${avatarStyle}>${avatarContent}</div>
+        ${avatarHtml}
         <div class="post-body">
             ${repostLabel}
             <div class="post-meta">
