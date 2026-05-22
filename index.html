@@ -379,6 +379,80 @@
             .topbar-right .btn-outline { padding: 4px 8px; font-size: 0.65rem; }
             .post { padding: 10px 12px; gap: 8px; }
             .post-followers { font-size: 0.5rem; padding: 1px 4px; }
+        }       
+        /* Vista previa de URLs - Estilo tarjeta */
+        .url-preview {
+            margin-top: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--surface);
+            transition: all 0.2s;
+            max-width: 500px;
+        }
+        
+        .url-preview:hover {
+            background: var(--bg);
+            border-color: var(--accent);
+        }
+        
+        .url-preview a {
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .url-preview-image {
+            width: 100%;
+            max-height: 200px;
+            overflow: hidden;
+            background: var(--bg);
+        }
+        
+        .url-preview-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .url-preview-content {
+            padding: 12px;
+        }
+        
+        .url-preview-url {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+            word-break: break-all;
+        }
+        
+        .url-preview-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text);
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .url-preview-description {
+            font-size: 0.75rem;
+            color: var(--muted);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .url-preview-site {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--accent);
+            margin-top: 6px;
         }        
     </style>
 </head>
@@ -1564,6 +1638,25 @@ function renderPost(post, isRepostOf) {
     const repostLabel = isRepostOf ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
     const followersTooltip = followerCount > 0 ? `${followerCount} seguidor${followerCount !== 1 ? 'es' : ''}` : 'Sin seguidores aún';
     
+    // 🔥 VISTA PREVIA DE URL
+    const previewUrl = extractFirstUrl(post.content);
+    let urlPreviewHtml = '';
+    
+    if (previewUrl && !isRepostOf && !images.length && !videos.length && !youtubes.length) {
+        // Si no hay medios, mostrar preview de URL
+        urlPreviewHtml = `<div class="url-preview-container" data-url="${esc(previewUrl)}" data-post-id="${id}"><div class="url-preview" style="padding:12px;text-align:center;"><span class="spinner"></span> Cargando vista previa...</div></div>`;
+        
+        // Cargar asincrónicamente
+        setTimeout(() => {
+            getUrlMetadata(previewUrl).then(metadata => {
+                const container = document.querySelector(`.url-preview-container[data-post-id="${id}"]`);
+                if (container && metadata) {
+                    container.innerHTML = buildUrlPreviewHtml(metadata);
+                }
+            });
+        }, 100);
+    }
+    
     return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
         ${avatarHtml}
         <div class="post-body">
@@ -1578,11 +1671,32 @@ function renderPost(post, isRepostOf) {
             </div>
             <div class="post-content">${textContent}</div>
             ${mediaHtml}
+            ${urlPreviewHtml}
             <div class="post-actions">${buildActions(post)}</div>
         </div>
     </div>`;
 }
-
+function buildUrlPreviewHtml(metadata) {
+    if (!metadata) return '';
+    
+    return `
+        <div class="url-preview">
+            <a href="${esc(metadata.url)}" target="_blank" rel="noopener noreferrer">
+                ${metadata.image ? `
+                    <div class="url-preview-image">
+                        <img src="${esc(metadata.image)}" alt="" loading="lazy">
+                    </div>
+                ` : ''}
+                <div class="url-preview-content">
+                    <div class="url-preview-url">${esc(metadata.url)}</div>
+                    <div class="url-preview-title">${esc(metadata.title || metadata.siteName)}</div>
+                    ${metadata.description ? `<div class="url-preview-description">${esc(metadata.description.substring(0, 150))}${metadata.description.length > 150 ? '…' : ''}</div>` : ''}
+                    <div class="url-preview-site">${esc(metadata.siteName)}</div>
+                </div>
+            </a>
+        </div>
+    `;
+}
 function renderFeed() {
     let posts = [...feedPosts.values()];
     if (!isSearchMode && currentTab === 'siguiendo') {
@@ -1754,6 +1868,98 @@ async function autoConnect() {
     } else {
         loadFeed();
     }
+}
+// ============================================================
+//  EXTRACCIÓN DE URLs Y VISTA PREVIA
+// ============================================================
+
+// Extrae la primera URL de un texto (excluyendo imágenes y videos ya procesados)
+function extractFirstUrl(text) {
+    // URLs comunes (http/https)
+    const urlRegex = /https?:\/\/[^\s<>"']+(?![^<]*>)/gi;
+    const matches = [...text.matchAll(urlRegex)];
+    
+    for (const match of matches) {
+        const url = match[0];
+        // Excluir URLs de imágenes y videos
+        if (!url.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg|mp4|webm|ogg|mov)(\?|$)/i)) {
+            // Excluir URLs de YouTube (ya tienen embed)
+            if (!url.match(/(youtube\.com|youtu\.be)/i)) {
+                return url;
+            }
+        }
+    }
+    return null;
+}
+
+// Obtener metadatos de una URL (via cors-anywhere o proxy)
+async function fetchUrlMetadata(url) {
+    try {
+        // Opción 1: Usar un servicio CORS proxy (temporal)
+        // Para producción, deberías tener un backend propio
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        
+        const response = await fetch(proxyUrl, {
+            headers: { 'Accept': 'text/html' }
+        });
+        
+        if (!response.ok) throw new Error('No se pudo cargar');
+        
+        const html = await response.text();
+        
+        // Parsear metadatos
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Buscar metadatos (Open Graph, Twitter Cards, o estándar)
+        const getMetaContent = (selector) => {
+            const meta = doc.querySelector(selector);
+            return meta ? meta.getAttribute('content') || meta.getAttribute('value') : null;
+        };
+        
+        const title = getMetaContent('meta[property="og:title"]') ||
+                     getMetaContent('meta[name="twitter:title"]') ||
+                     doc.querySelector('title')?.textContent ||
+                     new URL(url).hostname;
+        
+        const description = getMetaContent('meta[property="og:description"]') ||
+                           getMetaContent('meta[name="twitter:description"]') ||
+                           getMetaContent('meta[name="description"]') ||
+                           '';
+        
+        const image = getMetaContent('meta[property="og:image"]') ||
+                     getMetaContent('meta[name="twitter:image"]') ||
+                     null;
+        
+        const siteName = getMetaContent('meta[property="og:site_name"]') ||
+                        new URL(url).hostname.replace('www.', '');
+        
+        return { title, description, image, siteName, url };
+        
+    } catch (error) {
+        console.error('Error fetching metadata:', error);
+        // Fallback: mostrar solo la URL
+        return {
+            title: new URL(url).hostname,
+            description: '',
+            image: null,
+            siteName: new URL(url).hostname,
+            url: url
+        };
+    }
+}
+
+// Cache de metadatos de URLs
+const urlMetadataCache = new Map();
+
+async function getUrlMetadata(url) {
+    if (urlMetadataCache.has(url)) {
+        return urlMetadataCache.get(url);
+    }
+    
+    const metadata = await fetchUrlMetadata(url);
+    urlMetadataCache.set(url, metadata);
+    return metadata;
 }
 // ============================================================
 //  FUNCIONES PARA MÓVIL
