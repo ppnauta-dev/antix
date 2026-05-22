@@ -2226,7 +2226,6 @@ async function loadFeed() {
         loadFollowersBatch(authors)   // ← agregar esta línea
     ]);
     
-    loadFollowersForPubkeys(authors);
     
     // Cargar likes de respuestas
     const allReplyIds = [...replies.values()].flat().map(r => r.id);
@@ -2234,7 +2233,9 @@ async function loadFeed() {
         await loadReplyLikes(allReplyIds);
     }
     
-    loadFollowersForPubkeys(authors);
+    // ✅ AQUÍ DEBE ESTAR EL AWAIT
+    setStatus('<span class="spinner"></span> Cargando seguidores...');
+    await loadFollowersForPubkeys(authors);
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
