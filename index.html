@@ -1549,7 +1549,7 @@ async function loadFeed() {
 
     const postIds = [...feedPosts.keys()];
     const authors = [...new Set([...feedPosts.values()].map(p=>p.pubkey))];
-    const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
+
     await Promise.all([
         loadProfiles(authors),
         loadLikes(postIds),
