@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#080b0f">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>AntiX · Búsqueda Global</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -343,13 +344,12 @@
 
         /* MÓVIL - MEJORAS DE USABILIDAD */
         #btnMenuMovil { display: none; }
-        .mobile-menu-btn { display: none; }
 
         @media (max-width: 860px) {
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
             .feed-col { border-right: none; height: 100vh; }
-            #btnMenuMovil, .mobile-menu-btn { display: flex !important; }
+            #btnMenuMovil { display: flex !important; }
             .search-area { max-width: 180px; }
             .topbar { padding: 0 12px; gap: 8px; }
             .logo { font-size: 0.85rem; }
@@ -638,79 +638,111 @@ const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)
 // ============================================================
 //  SEGUIDORES (FOLLOWERS COUNT) - VERSIÓN COMPLETA
 // ============================================================
+// ============================================================
+//  SEGUIDORES - VERSIÓN CORREGIDA
+// ============================================================
+const followersPending = new Set();
+
 async function loadFollowersForPubkeys(pubkeys) {
-    const missing = pubkeys.filter(pk => !followersCount.has(pk) && !loadingFollowers.has(pk));
-    if (!missing.length) return;
-    
-    for (const pk of missing) {
-        loadingFollowers.add(pk);
+    const toLoad = pubkeys.filter(pk => !followersCount.has(pk) && !followersPending.has(pk));
+    if (!toLoad.length) return;
+
+    toLoad.forEach(pk => {
+        followersPending.add(pk);
         followersCount.set(pk, 0);
-    }
-    renderFeed();
-    
-    for (const targetPk of missing) {
-        let maxCount = 0;
-        for (const url of RELAYS) {
-            try {
-                const ws = await openRelay(url, 3000);
-                const subId = 'followers_' + Date.now() + '_' + Math.random();
-                ws.send(JSON.stringify(['REQ', subId, { kinds: [3], '#p': [targetPk], limit: 200 }]));
-                
-                let relayCount = 0;
-                await new Promise((resolve) => {
-                    const timeout = setTimeout(() => { ws.close(); resolve(); }, 4000);
-                    ws.onmessage = (e) => {
-                        try {
-                            const msg = JSON.parse(e.data);
-                            if (msg[0] === 'EVENT' && msg[2]) relayCount++;
-                            if (msg[0] === 'EOSE') { clearTimeout(timeout); ws.close(); resolve(); }
-                        } catch(err) {}
-                    };
-                    ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
-                });
-                maxCount = Math.max(maxCount, relayCount);
-            } catch(e) {}
-        }
-        followersCount.set(targetPk, maxCount);
-        loadingFollowers.delete(targetPk);
-    }
-    renderFeed();
-}
-
-// ============================================================
-//  SUBIR FOTO DE PERFIL
-// ============================================================
-async function uploadProfilePicture(file) {
-    if (!file || !file.type.startsWith('image/')) return null;
-    if (file.size > 2 * 1024 * 1024) { alert('Máx 2MB'); return null; }
-    setStatus('<span class="spinner"></span> Procesando foto...');
-    try {
-        const compressed = await compressProfileImage(file, 300, 300);
-        setStatus('✅ Foto lista', 'ok');
-        return compressed;
-    } catch(err) { alert('Error'); setStatus('❌ Error', 'err'); return null; }
-}
-
-function compressProfileImage(file, maxWidth, maxHeight) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const objUrl = URL.createObjectURL(file);
-        img.onload = () => {
-            URL.revokeObjectURL(objUrl);
-            let { width: w, height: h } = img;
-            if (w > maxWidth || h > maxHeight) {
-                if (w >= h) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-                else { w = Math.round(w * maxHeight / h); h = maxHeight; }
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = w; canvas.height = h;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.9));
-        };
-        img.onerror = reject;
-        img.src = objUrl;
     });
+    renderFeed();
+
+    await Promise.all(RELAYS.map(url => queryFollowersFromRelay(url, toLoad)));
+
+    toLoad.forEach(pk => followersPending.delete(pk));
+    renderFeed();
+}
+
+async function queryFollowersFromRelay(url, pubkeys) {
+    let ws;
+    try { ws = await openRelay(url, 4000); } catch(_) { return; }
+
+    const subId  = 'fc_' + Math.random().toString(36).slice(2, 7);
+    const counts = new Map(pubkeys.map(pk => [pk, 0]));
+
+    // Intentar NIP-45 COUNT (una query por pubkey)
+    const supported = await tryNip45Count(ws, subId, pubkeys, counts);
+
+    if (!supported) {
+        // Fallback: descargar eventos kind:3 y contar manualmente
+        await new Promise(resolve => {
+            const t = setTimeout(() => resolve(), 5000);
+            ws.onmessage = e => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    if (msg[0] === 'EVENT' && msg[2]?.kind === 3) {
+                        // Convertir tags en Set para garantizar máximo +1 por evento
+                        const followedPks = new Set(
+                            (msg[2].tags || [])
+                                .filter(tag => tag[0] === 'p')
+                                .map(tag => tag[1])
+                        );
+                        for (const pk of pubkeys) {
+                            if (followedPks.has(pk)) {
+                                counts.set(pk, (counts.get(pk) ?? 0) + 1);
+                            }
+                        }
+                    }
+                    if (msg[0] === 'EOSE') { clearTimeout(t); resolve(); }
+                } catch(_) {}
+            };
+            ws.onerror = () => { clearTimeout(t); resolve(); };
+            ws.send(JSON.stringify(['REQ', subId + '_fb', {
+                kinds: [3],
+                '#p': pubkeys,
+                limit: 500
+            }]));
+        });
+    }
+
+    // Guardar el máximo entre relays
+    for (const [pk, count] of counts) {
+        const prev = followersCount.get(pk) ?? 0;
+        followersCount.set(pk, Math.max(prev, count));
+    }
+
+    try { ws.close(); } catch(_) {}
+}
+
+async function tryNip45Count(ws, subId, pubkeys, countsMap) {
+    // Una query COUNT por pubkey en paralelo sobre el mismo WebSocket
+    const results = await Promise.all(pubkeys.map(pk => new Promise(resolve => {
+        const cid = subId + '_' + pk.slice(0, 8);
+        const t = setTimeout(() => {
+            ws.removeEventListener('message', listener);
+            resolve(false);
+        }, 2500);
+
+        const listener = e => {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg[0] === 'COUNT' && msg[1] === cid) {
+                    clearTimeout(t);
+                    ws.removeEventListener('message', listener);
+                    countsMap.set(pk, msg[2]?.count ?? 0);
+                    resolve(true);
+                }
+                if ((msg[0] === 'NOTICE' || msg[0] === 'CLOSED') && msg[1] === cid) {
+                    clearTimeout(t);
+                    ws.removeEventListener('message', listener);
+                    resolve(false);
+                }
+            } catch(_) { clearTimeout(t); resolve(false); }
+        };
+
+        ws.addEventListener('message', listener);
+        try {
+            ws.send(JSON.stringify(['COUNT', cid, { kinds: [3], '#p': [pk] }]));
+        } catch(_) { clearTimeout(t); resolve(false); }
+    })));
+
+    return results.some(r => r);
 }
 
 // ============================================================
@@ -1128,7 +1160,10 @@ async function loadProfiles(pubkeys) {
         }
     }, 4000)));
 }
-
+// ============================================================
+//  SEGUIDORES - VERSIÓN CORREGIDA
+// ============================================================
+const followersPending = new Set();
 async function loadFollows() {
     if (!pubKey) return;
     follows.clear();
