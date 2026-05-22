@@ -340,6 +340,11 @@
             #btnMenuMovil { display: flex !important; }
             .search-area { max-width: 200px; }
         }
+        .post-followers.loading {
+            opacity: 0.5;
+            background: rgba(0,230,118,0.05);
+            cursor: wait;
+        }        
     </style>
 </head>
 <body>
@@ -560,64 +565,119 @@ const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)
 // ============================================================
 //  SEGUIDORES (FOLLOWERS COUNT)
 // ============================================================
+// ============================================================
+//  SEGUIDORES - VERSIÓN CORREGIDA Y RÁPIDA
+// ============================================================
+
+// Función mejorada para cargar seguidores
 async function loadFollowersForPubkeys(pubkeys) {
     const missing = pubkeys.filter(pk => !followersCount.has(pk) && !loadingFollowers.has(pk));
     if (!missing.length) return;
     
+    // Inicializar con 0 mientras se cargan
     for (const pk of missing) {
         loadingFollowers.add(pk);
         followersCount.set(pk, 0);
     }
+    renderFeed(); // Mostrar 0 temporalmente
     
-    const batchSize = 5;
-    for (let i = 0; i < missing.length; i += batchSize) {
-        const batch = missing.slice(i, i + batchSize);
+    // Consultar cada pubkey individualmente
+    for (const targetPk of missing) {
+        let maxCount = 0;
         
-        await Promise.all(batch.map(async (targetPk) => {
-            let count = 0;
-            const filter = {
-                kinds: [3],
-                '#p': [targetPk],
-                limit: 500
-            };
-            
-            const results = await Promise.all(RELAYS.map(async url => {
+        // Probar cada relay
+        for (const url of RELAYS) {
+            try {
+                const ws = await openRelay(url, 3000);
+                const subId = 'followers_' + Date.now() + '_' + Math.random();
+                const filter = {
+                    kinds: [3],
+                    '#p': [targetPk],
+                    limit: 200
+                };
+                
+                ws.send(JSON.stringify(['REQ', subId, filter]));
+                
                 let relayCount = 0;
-                try {
-                    const ws = await openRelay(url, 5000);
-                    const subId = 'followers_' + Date.now() + '_' + Math.random();
-                    ws.send(JSON.stringify(['REQ', subId, filter]));
+                await new Promise((resolve) => {
+                    const timeout = setTimeout(() => { 
+                        ws.close(); 
+                        resolve(); 
+                    }, 3000);
                     
-                    await new Promise((resolve) => {
-                        const timeout = setTimeout(() => { ws.close(); resolve(); }, 5000);
-                        ws.onmessage = (e) => {
-                            try {
-                                const msg = JSON.parse(e.data);
-                                if (msg[0] === 'EVENT' && msg[2]) {
-                                    relayCount++;
-                                }
-                                if (msg[0] === 'EOSE') {
-                                    clearTimeout(timeout);
-                                    ws.close();
-                                    resolve();
-                                }
-                            } catch(err) {}
-                        };
-                        ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
-                    });
-                } catch(e) {}
-                return relayCount;
-            }));
-            
-            count = results.reduce((a, b) => Math.max(a, b), 0);
-            followersCount.set(targetPk, count);
-            loadingFollowers.delete(targetPk);
-        }));
+                    ws.onmessage = (e) => {
+                        try {
+                            const msg = JSON.parse(e.data);
+                            if (msg[0] === 'EVENT' && msg[2]) {
+                                relayCount++;
+                            }
+                            if (msg[0] === 'EOSE') {
+                                clearTimeout(timeout);
+                                ws.close();
+                                resolve();
+                            }
+                        } catch(err) {}
+                    };
+                    ws.onerror = () => {
+                        clearTimeout(timeout);
+                        ws.close();
+                        resolve();
+                    };
+                });
+                
+                maxCount = Math.max(maxCount, relayCount);
+            } catch(e) {}
+        }
         
-        await new Promise(r => setTimeout(r, 100));
+        followersCount.set(targetPk, maxCount);
+        loadingFollowers.delete(targetPk);
     }
     
-    renderFeed();
+    renderFeed(); // Actualizar con los números reales
+}
+
+// También añadir una función para obtener seguidores de un solo usuario (más rápido)
+async function getSingleUserFollowers(pubkey) {
+    if (followersCount.has(pubkey)) return followersCount.get(pubkey);
+    
+    let maxCount = 0;
+    for (const url of RELAYS) {
+        try {
+            const ws = await openRelay(url, 3000);
+            const subId = 'followers_' + Date.now();
+            const filter = {
+                kinds: [3],
+                '#p': [pubkey],
+                limit: 100
+            };
+            
+            ws.send(JSON.stringify(['REQ', subId, filter]));
+            
+            let relayCount = 0;
+            await new Promise((resolve) => {
+                const timeout = setTimeout(() => { ws.close(); resolve(); }, 3000);
+                ws.onmessage = (e) => {
+                    try {
+                        const msg = JSON.parse(e.data);
+                        if (msg[0] === 'EVENT' && msg[2]) {
+                            relayCount++;
+                        }
+                        if (msg[0] === 'EOSE') {
+                            clearTimeout(timeout);
+                            ws.close();
+                            resolve();
+                        }
+                    } catch(err) {}
+                };
+                ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
+            });
+            
+            maxCount = Math.max(maxCount, relayCount);
+        } catch(e) {}
+    }
+    
+    followersCount.set(pubkey, maxCount);
+    return maxCount;
 }
 
 // ============================================================
