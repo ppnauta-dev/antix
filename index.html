@@ -680,7 +680,7 @@ async function getSingleUserFollowers(pubkey) {
     return maxCount;
 }
 // ─── SEGUIDORES (NIP-45 COUNT + fallback por eventos) ───────────────────
-const followersCount   = new Map();   // pk → número
+//const followersCount   = new Map();   // pk → número
 const followersPending = new Set();   // pk esperando resultado
 
 async function loadFollowersBatch(pubkeys) {
