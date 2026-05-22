@@ -816,7 +816,14 @@ let replies = new Map();        // postId -> array de respuestas
 let replyLikes = new Map();     // replyId -> Set de usuarios que dieron like
 let myReplyLikes = new Set();   // replies que me gustan
 let expandedReplies = new Set(); // posts con respuestas expandidas
-const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
+    'wss://relay.damus.io',
+    'wss://nos.lol',
+    'wss://relay.nostr.band',
+    'wss://relay.primal.net',        // ✅ Muy confiable
+    'wss://purplepag.es',             // ✅ Bueno para seguidores
+    'wss://relay.nostr.info',         // ✅ Estable
+    'wss://offchain.purplepag.es',    // ✅ Alternativo
+    'wss://relay.snort.social'        // ✅ Popular
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
 // ============================================================
 //  SISTEMA DE RESPUESTAS (REPLIES)
