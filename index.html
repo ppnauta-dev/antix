@@ -2151,10 +2151,8 @@ function renderPost(post, isRepostOf) {
     let urlPreviewHtml = '';
     
     if (previewUrl && !isRepostOf && !images.length && !videos.length && !youtubes.length) {
-        // Si no hay medios, mostrar preview de URL
         urlPreviewHtml = `<div class="url-preview-container" data-url="${esc(previewUrl)}" data-post-id="${id}"><div class="url-preview" style="padding:12px;text-align:center;"><span class="spinner"></span> Cargando vista previa...</div></div>`;
         
-        // Cargar asincrónicamente
         setTimeout(() => {
             getUrlMetadata(previewUrl).then(metadata => {
                 const container = document.querySelector(`.url-preview-container[data-post-id="${id}"]`);
@@ -2164,16 +2162,7 @@ function renderPost(post, isRepostOf) {
             });
         }, 100);
     }
-    // En renderPost(), después de ${mediaHtml} y antes de ${urlPreviewHtml}
-    const repliesHtml = pubKey ? renderReplies(id) : '';
     
-    // Y luego, después de .post-actions, añade el botón de responder
-    const replyButton = privKey ? `
-        <button class="action-btn reply-btn" onclick="showReplyForm('${id}')">
-            <span class="action-icon">💬</span>
-            <span class="action-count">${(replies.get(id) || []).length || ''}</span>
-        </button>
-    ` : '';    
     return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
         ${avatarHtml}
         <div class="post-body">
@@ -2190,6 +2179,7 @@ function renderPost(post, isRepostOf) {
             ${mediaHtml}
             ${urlPreviewHtml}
             <div class="post-actions">${buildActions(post)}</div>
+            ${renderReplies(id)}
         </div>
     </div>`;
 }
