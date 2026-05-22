@@ -995,13 +995,17 @@ function showReplyForm(postId) {
 // HTML para las respuestas de un post
 function renderReplies(postId) {
     const postReplies = replies.get(postId) || [];
-    if (!postReplies.length && !expandedReplies.has(postId)) return '';
     
-    const isExpanded = expandedReplies.has(postId);
+    console.log(`💬 renderReplies para ${postId}: ${postReplies.length} respuestas`);
+    
+    if (!postReplies.length) return '';
+    
+    if (typeof window.expandedReplies === 'undefined') window.expandedReplies = new Set();
+    const isExpanded = window.expandedReplies.has(postId);
     const visibleReplies = isExpanded ? postReplies : postReplies.slice(0, 2);
     const hasMore = postReplies.length > 2 && !isExpanded;
     
-    let html = `<div class="reply-thread">`;
+    let html = `<div class="reply-thread" style="margin-top: 12px; margin-left: 20px; padding-left: 12px; border-left: 2px solid var(--border);">`;
     
     visibleReplies.forEach(reply => {
         const replyProfile = profiles.get(reply.pubkey) || {};
@@ -1009,9 +1013,14 @@ function renderReplies(postId) {
         const replyInitials = avInitials(reply.pubkey);
         const replyAc = avClass(reply.pubkey);
         const replyTime = timeAgo(reply.created_at);
-        const replyContent = esc(stripMediaUrls(reply.content));
-        const likeCount = replyLikes.get(reply.id)?.size || 0;
-        const isLiked = myReplyLikes.has(reply.id);
+        
+        // Limpiar el contenido de la respuesta (sin URLs de medios)
+        let replyContent = reply.content || '';
+        replyContent = replyContent.replace(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g, '');
+        replyContent = esc(replyContent.trim());
+        
+        const likeCount = (window.replyLikes?.get(reply.id)?.size) || 0;
+        const isLiked = window.myReplyLikes?.has(reply.id) || false;
         
         const avatarStyle = replyProfile.picture 
             ? `style="background: url(${replyProfile.picture}) center/cover no-repeat; background-size: cover;"`
@@ -1019,16 +1028,16 @@ function renderReplies(postId) {
         const avatarContent = replyProfile.picture ? '' : replyInitials;
         
         html += `
-            <div class="reply-item" data-reply-id="${reply.id}">
-                <div class="reply-header">
-                    <div ${avatarStyle} style="width:24px;height:24px;font-size:0.5rem;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;">${avatarContent}</div>
-                    <span class="reply-name">${replyName}</span>
-                    <span class="reply-pubkey">${reply.pubkey.slice(0,8)}…</span>
-                    <span class="reply-time">${replyTime}</span>
+            <div class="reply-item" data-reply-id="${reply.id}" style="margin-top: 12px; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 10px;">
+                <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                    <div ${avatarStyle} style="width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; background-size: cover;">${avatarContent}</div>
+                    <span style="font-weight: 600; font-size: 0.75rem;">${replyName}</span>
+                    <span style="font-family: monospace; font-size: 0.55rem; color: var(--muted);">${reply.pubkey.slice(0,8)}…</span>
+                    <span style="font-family: monospace; font-size: 0.55rem; color: var(--muted); margin-left: auto;">${replyTime}</span>
                 </div>
-                <div class="reply-content">${replyContent}</div>
-                <div class="reply-actions">
-                    <button class="reply-action-btn ${isLiked ? 'liked' : ''}" onclick="likeReply('${postId}', '${reply.id}', '${reply.pubkey}')">
+                <div style="font-size: 0.8rem; line-height: 1.45; margin-bottom: 6px; word-break: break-word;">${replyContent}</div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="reply-action-btn" onclick="likeReply('${postId}', '${reply.id}', '${reply.pubkey}')" style="background: none; border: none; cursor: pointer; font-size: 0.65rem; color: var(--muted); display: flex; align-items: center; gap: 4px;">
                         <span>${isLiked ? '❤️' : '🤍'}</span>
                         <span>${likeCount || ''}</span>
                     </button>
@@ -1038,30 +1047,10 @@ function renderReplies(postId) {
     });
     
     if (hasMore) {
-        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')">Ver las ${postReplies.length - 2} respuestas restantes ↓</button>`;
+        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')" style="background: none; border: none; color: var(--accent); font-size: 0.65rem; cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 16px;">Ver las ${postReplies.length - 2} respuestas restantes ↓</button>`;
     } else if (isExpanded && postReplies.length > 2) {
-        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')">Mostrar menos ↑</button>`;
+        html += `<button class="view-replies-btn" onclick="toggleReplies('${postId}')" style="background: none; border: none; color: var(--accent); font-size: 0.65rem; cursor: pointer; margin-top: 8px; padding: 4px 8px; border-radius: 16px;">Mostrar menos ↑</button>`;
     }
-    
-    // Formulario para responder
-    const myProfile = profiles.get(pubKey) || {};
-    const myAvatarStyle = myProfile.picture 
-        ? `style="background: url(${myProfile.picture}) center/cover no-repeat; background-size: cover;"`
-        : `class="reply-avatar ${avClass(pubKey)}"`;
-    const myAvatarContent = myProfile.picture ? '' : (pubKey ? pubKey.slice(0,2).toUpperCase() : '');
-    
-    html += `
-        <div id="reply-form-${postId}" style="display: none; margin-top: 12px;" class="reply-form">
-            <div ${myAvatarStyle} style="width:28px;height:28px;font-size:0.55rem;display:flex;align-items:center;justify-content:center;border-radius:50%;">${myAvatarContent}</div>
-            <div class="reply-input-wrapper">
-                <textarea class="reply-input" rows="2" placeholder="Escribe tu respuesta..." maxlength="500"></textarea>
-                <div class="reply-buttons">
-                    <button class="btn-reply" onclick="showReplyForm('${postId}')">Cancelar</button>
-                    <button class="btn-reply btn-reply-submit" onclick="submitReply('${postId}')">Responder</button>
-                </div>
-            </div>
-        </div>
-    `;
     
     html += `</div>`;
     return html;
