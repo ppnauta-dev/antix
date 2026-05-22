@@ -1755,7 +1755,34 @@ async function autoConnect() {
         loadFeed();
     }
 }
+// ============================================================
+//  FUNCIONES PARA MÓVIL
+// ============================================================
+function openMobileMenu() {
+    document.getElementById('mobileSideKey').textContent = pubKey || 'Sin conectar';
+    document.getElementById('mobileMenuModal').classList.add('open');
+}
 
+function closeMobileMenu(e) {
+    if (!e || e.target === document.getElementById('mobileMenuModal')) {
+        document.getElementById('mobileMenuModal').classList.remove('open');
+    }
+}
+
+function switchTabMobile(tab) {
+    switchTab(tab);
+    closeMobileMenu();
+}
+
+function openProfileModalMobile() {
+    openProfileModal();
+    closeMobileMenu();
+}
+
+function logoutMobile() {
+    logout();
+    closeMobileMenu();
+}
 autoConnect();
 </script>
 </body>
