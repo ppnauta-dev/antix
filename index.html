@@ -169,8 +169,29 @@
         .post-body { flex: 1; min-width: 0; }
         .repost-label { font-family: var(--mono); font-size: 0.62rem; color: var(--repost); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
         .post-meta { display: flex; align-items: baseline; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
+        .post-name-info {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
         .post-name { font-weight: 600; font-size: 0.86rem; cursor: pointer; }
         .post-name:hover { color: var(--accent); }
+        .post-followers {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--green);
+            background: rgba(0,230,118,0.1);
+            padding: 2px 6px;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .post-followers:hover {
+            background: rgba(0,230,118,0.2);
+            transform: scale(1.02);
+        }
         .post-pubkey { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
         .post-time { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); margin-left: auto; }
         .post-content { font-size: 0.88rem; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
@@ -447,6 +468,8 @@ let pendingMedia = [];
 let isSearchMode = false;
 let currentSearchQuery = '';
 let tempProfilePicture = null;
+let followersCount = new Map();
+let loadingFollowers = new Set();
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
@@ -524,10 +547,78 @@ function timeAgo(ts) {
 function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+function formatNumber(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
 
 const IMAGE_RE = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
 const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
+
+// ============================================================
+//  SEGUIDORES (FOLLOWERS COUNT)
+// ============================================================
+async function loadFollowersForPubkeys(pubkeys) {
+    const missing = pubkeys.filter(pk => !followersCount.has(pk) && !loadingFollowers.has(pk));
+    if (!missing.length) return;
+    
+    for (const pk of missing) {
+        loadingFollowers.add(pk);
+        followersCount.set(pk, 0);
+    }
+    
+    const batchSize = 5;
+    for (let i = 0; i < missing.length; i += batchSize) {
+        const batch = missing.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (targetPk) => {
+            let count = 0;
+            const filter = {
+                kinds: [3],
+                '#p': [targetPk],
+                limit: 500
+            };
+            
+            const results = await Promise.all(RELAYS.map(async url => {
+                let relayCount = 0;
+                try {
+                    const ws = await openRelay(url, 5000);
+                    const subId = 'followers_' + Date.now() + '_' + Math.random();
+                    ws.send(JSON.stringify(['REQ', subId, filter]));
+                    
+                    await new Promise((resolve) => {
+                        const timeout = setTimeout(() => { ws.close(); resolve(); }, 5000);
+                        ws.onmessage = (e) => {
+                            try {
+                                const msg = JSON.parse(e.data);
+                                if (msg[0] === 'EVENT' && msg[2]) {
+                                    relayCount++;
+                                }
+                                if (msg[0] === 'EOSE') {
+                                    clearTimeout(timeout);
+                                    ws.close();
+                                    resolve();
+                                }
+                            } catch(err) {}
+                        };
+                        ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
+                    });
+                } catch(e) {}
+                return relayCount;
+            }));
+            
+            count = results.reduce((a, b) => Math.max(a, b), 0);
+            followersCount.set(targetPk, count);
+            loadingFollowers.delete(targetPk);
+        }));
+        
+        await new Promise(r => setTimeout(r, 100));
+    }
+    
+    renderFeed();
+}
 
 // ============================================================
 //  SUBIR FOTO DE PERFIL
@@ -616,7 +707,6 @@ async function saveProfile(name, bio, pictureDataUrl) {
         setStatus('✅ Perfil guardado', 'ok');
         closeProfileModal();
         
-        // Recargar todos los perfiles de los posts existentes
         const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
         await loadProfiles(authors);
         
@@ -755,6 +845,7 @@ async function searchGlobalNostr(query) {
     const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
     const postIds = [...feedPosts.keys()];
     await Promise.all([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
+    loadFollowersForPubkeys(authors);
     renderFeed();
 }
 
@@ -1217,6 +1308,7 @@ function renderPost(post, isRepostOf) {
     const initials = avInitials(post.pubkey);
     const name = esc(displayName(post.pubkey));
     const ago = timeAgo(post.created_at);
+    const followerCount = followersCount.get(post.pubkey) || 0;
     
     let avatarHtml = '';
     if (p.picture) {
@@ -1229,13 +1321,17 @@ function renderPost(post, isRepostOf) {
     const textContent = esc(stripMediaUrls(post.content));
     const mediaHtml = buildMediaHtml(images, videos, youtubes);
     const repostLabel = isRepostOf ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
+    const followersTooltip = followerCount > 0 ? `${followerCount} seguidor${followerCount !== 1 ? 'es' : ''}` : 'Sin seguidores aún';
     
     return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
         ${avatarHtml}
         <div class="post-body">
             ${repostLabel}
             <div class="post-meta">
-                <span class="post-name">${name}</span>
+                <div class="post-name-info">
+                    <span class="post-name">${name}</span>
+                    ${followerCount > 0 ? `<span class="post-followers" title="${followersTooltip}">👥 ${formatNumber(followerCount)}</span>` : ''}
+                </div>
                 <span class="post-pubkey">${post.pubkey.slice(0,8)}…</span>
                 <span class="post-time">${ago}</span>
             </div>
@@ -1287,7 +1383,9 @@ async function loadFeed() {
         loadLikes(postIds),
         loadReposts(postIds)
     ]);
-
+    
+    loadFollowersForPubkeys(authors);
+    
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
 }
@@ -1404,7 +1502,6 @@ $('searchInput').addEventListener('input', () => {
 });
 $('searchClearBtn').addEventListener('click', () => { $('searchInput').value = ''; $('searchClearBtn').style.display = 'none'; exitSearchMode(); });
 
-// Auto-conectar al cargar
 async function autoConnect() {
     const savedKey = loadSavedPrivateKey();
     if (savedKey) {
