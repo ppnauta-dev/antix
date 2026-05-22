@@ -34,7 +34,6 @@
             margin: 0 auto;
         }
 
-        /* Topbar */
         .topbar {
             grid-column: 1/-1;
             background: var(--surface);
@@ -47,64 +46,26 @@
         .logo span { color: var(--accent2); }
         .logo img { height: 34px; width: 34px; border-radius: 50%; object-fit: cover; }
 
-        /* BARRA DE BÚSQUEDA NUEVA */
-        .search-area { 
-            flex: 1; 
-            max-width: 360px; 
-            position: relative;
-            margin-left: 16px;
-        }
+        .search-area { flex: 1; max-width: 360px; position: relative; margin-left: 16px; }
         .search-input {
-            width: 100%;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 40px;
-            padding: 8px 12px 8px 38px;
-            font-family: var(--sans);
-            font-size: 0.85rem;
-            color: var(--text);
-            outline: none;
-            transition: all 0.2s;
+            width: 100%; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 40px; padding: 8px 12px 8px 38px;
+            font-family: var(--sans); font-size: 0.85rem; color: var(--text);
+            outline: none; transition: all 0.2s;
         }
-        .search-input:focus {
-            border-color: var(--accent);
-            background: #0a1117;
-        }
-        .search-icon {
-            position: absolute;
-            left: 14px;
-            top: 9px;
-            color: var(--muted);
-            font-size: 0.9rem;
-            pointer-events: none;
-        }
-        .search-clear {
-            position: absolute;
-            right: 10px;
-            top: 7px;
-            background: none;
-            border: none;
-            color: var(--muted);
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: none;
-            border-radius: 20px;
-            padding: 2px 6px;
-        }
-        .search-clear:hover {
-            color: var(--text);
-            background: var(--border);
-        }
+        .search-input:focus { border-color: var(--accent); background: #0a1117; }
+        .search-icon { position: absolute; left: 14px; top: 9px; color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+        .search-clear { position: absolute; right: 10px; top: 7px; background: none; border: none; color: var(--muted); font-size: 0.9rem; cursor: pointer; display: none; border-radius: 20px; padding: 2px 6px; }
+        .search-clear:hover { color: var(--text); background: var(--border); }
 
         .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
         .pubkey-badge {
             font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
             background: var(--bg); border: 1px solid var(--border);
-            padding: 4px 10px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+            padding: 4px 10px; border-radius: 20px; cursor: pointer;
         }
         .pubkey-badge:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* Sidebar izquierda */
         .sidebar-left {
             border-right: 1px solid var(--border);
             padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
@@ -114,7 +75,7 @@
             font-family: var(--sans); font-size: 0.88rem; font-weight: 500;
             padding: 9px 12px; border-radius: 8px; cursor: pointer;
             text-align: left; display: flex; align-items: center; gap: 10px;
-            transition: all 0.15s; width: 100%;
+            width: 100%;
         }
         .nav-btn:hover { background: var(--border); color: var(--text); }
         .nav-btn.active { background: rgba(0,212,255,0.1); color: var(--accent); }
@@ -123,14 +84,10 @@
             margin: 10px 0; padding: 10px 12px 4px;
             border-top: 1px solid var(--border);
             font-family: var(--mono); font-size: 0.62rem;
-            color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--muted); text-transform: uppercase;
         }
-        .side-key {
-            font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
-            padding: 4px 12px; word-break: break-all; line-height: 1.5;
-        }
+        .side-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); padding: 4px 12px; word-break: break-all; }
 
-        /* Feed */
         .feed-col {
             border-right: 1px solid var(--border);
             display: flex; flex-direction: column;
@@ -145,237 +102,129 @@
         .feed-tab {
             background: none; border: 1px solid transparent; color: var(--muted);
             font-family: var(--mono); font-size: 0.68rem; padding: 5px 12px;
-            border-radius: 20px; cursor: pointer; transition: all 0.15s;
+            border-radius: 20px; cursor: pointer;
         }
         .feed-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
-        .feed-tab:hover:not(.active) { border-color: var(--border); color: var(--text); }
 
         .search-badge {
-            background: rgba(0,212,255,0.15);
-            border: 1px solid var(--accent);
-            border-radius: 20px;
-            padding: 4px 12px;
-            font-family: var(--mono);
-            font-size: 0.68rem;
-            color: var(--accent);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            background: rgba(0,212,255,0.15); border: 1px solid var(--accent);
+            border-radius: 20px; padding: 4px 12px;
+            font-family: var(--mono); font-size: 0.68rem;
+            color: var(--accent); display: inline-flex; align-items: center; gap: 8px;
         }
-        .search-badge button {
-            background: none;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
+        .search-badge button { background: none; border: none; color: var(--accent); cursor: pointer; }
 
-        /* Composer */
         .composer {
             padding: 14px 18px; border-bottom: 1px solid var(--border);
             display: none; gap: 12px;
         }
-        .composer-avatar {
-            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000;
-        }
+        .composer-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; cursor: pointer; }
         .composer-body { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        textarea {
-            background: transparent; border: none; color: var(--text);
-            font-family: var(--sans); font-size: 0.92rem; resize: none; outline: none;
-            width: 100%; min-height: 56px;
-        }
+        textarea { background: transparent; border: none; color: var(--text); font-family: var(--sans); font-size: 0.92rem; resize: none; outline: none; width: 100%; min-height: 56px; }
         textarea::placeholder { color: var(--muted); }
-
-        /* Media preview strip */
         .media-preview-strip { display: flex; gap: 8px; flex-wrap: wrap; }
-        .media-thumb {
-            position: relative; width: 80px; height: 80px;
-            border-radius: 8px; overflow: hidden;
-            border: 1px solid var(--border); flex-shrink: 0;
-        }
-        .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .media-thumb .remove-media {
-            position: absolute; top: 3px; right: 3px;
-            background: rgba(0,0,0,0.75); border: none; border-radius: 50%;
-            color: #fff; font-size: 0.65rem; width: 18px; height: 18px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;
-        }
+        .media-thumb { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex-shrink: 0; }
+        .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; }
+        .media-thumb .remove-media { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.75); border: none; border-radius: 50%; color: #fff; font-size: 0.65rem; width: 18px; height: 18px; cursor: pointer; }
         .media-thumb .remove-media:hover { background: var(--danger); }
-        .media-thumb .upload-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.55);
-            display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px;
-        }
+        .media-thumb .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px; }
         .media-thumb .upload-overlay .spinner { border-top-color: var(--accent); }
         .media-thumb .upload-overlay span { font-family: var(--mono); font-size: 0.55rem; color: #fff; }
         .media-thumb.done .upload-overlay { display: none; }
         .media-thumb.error { border-color: var(--danger); }
-        .media-thumb.error .upload-overlay { background: rgba(255,69,96,0.4); }
-
-        /* Toolbar del composer */
-        .composer-toolbar {
-            display: flex; align-items: center; gap: 6px; padding-top: 4px;
-            border-top: 1px solid var(--border);
-        }
-        .toolbar-btn {
-            background: none; border: 1px solid var(--border); border-radius: 8px;
-            color: var(--muted); cursor: pointer; padding: 5px 10px;
-            font-size: 0.8rem; display: flex; align-items: center; gap: 5px;
-            transition: all 0.15s; font-family: var(--sans);
-        }
+        .composer-toolbar { display: flex; align-items: center; gap: 6px; padding-top: 4px; border-top: 1px solid var(--border); }
+        .toolbar-btn { background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; padding: 5px 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
         .toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .toolbar-btn:disabled { opacity: 0.4; cursor: default; border-color: var(--border); color: var(--muted); }
+        .toolbar-btn:disabled { opacity: 0.4; cursor: default; }
         .toolbar-btn input[type=file] { display: none; }
         .upload-progress { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); flex: 1; text-align: right; }
         .upload-progress.uploading { color: var(--accent); }
         .upload-progress.error { color: var(--danger); }
-
         .composer-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
         .char-count { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
         .char-count.warn { color: #ff9800; }
         .char-count.over { color: var(--danger); }
-
-        /* Botones */
-        .btn {
-            font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
-            padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer; transition: all 0.15s;
-        }
+        .btn { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; padding: 7px 16px; border-radius: 20px; border: none; cursor: pointer; }
         .btn-primary { background: var(--accent); color: #000; }
         .btn-primary:hover { background: #33ddff; transform: translateY(-1px); }
-        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; transform: none; }
+        .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
         .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
         .btn-sm { font-size: 0.72rem; padding: 5px 12px; }
-
-        /* Status */
-        .status-bar {
-            padding: 7px 18px; font-family: var(--mono); font-size: 0.68rem;
-            color: var(--muted); border-bottom: 1px solid var(--border);
-            min-height: 32px; display: flex; align-items: center; gap: 7px;
-        }
-        .status-bar.ok  { color: var(--green); }
+        .status-bar { padding: 7px 18px; font-family: var(--mono); font-size: 0.68rem; color: var(--muted); border-bottom: 1px solid var(--border); min-height: 32px; display: flex; align-items: center; gap: 7px; }
+        .status-bar.ok { color: var(--green); }
         .status-bar.err { color: var(--danger); }
-        .spinner {
-            display: inline-block; width: 9px; height: 9px;
-            border: 2px solid var(--border); border-top-color: var(--accent);
-            border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
-        }
+        .spinner { display: inline-block; width: 9px; height: 9px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Posts */
-        .post {
-            padding: 14px 18px; border-bottom: 1px solid var(--border);
-            display: flex; gap: 11px; transition: background 0.1s; animation: fadeIn 0.25s ease;
-        }
+        .post { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 11px; transition: background 0.1s; animation: fadeIn 0.25s ease; }
         .post:hover { background: rgba(255,255,255,0.015); }
         .post.is-repost { border-left: 2px solid var(--repost); padding-left: 16px; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; } }
-
-        .post-avatar {
-            width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; cursor: pointer;
-        }
-        .post-body { flex: 1; min-width: 0; }
-        .repost-label { font-family: var(--mono); font-size: 0.62rem; color: var(--repost); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+        .post-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; cursor: pointer; }
+        .post-body { flex: 1; }
+        .repost-label { font-family: var(--mono); font-size: 0.62rem; color: var(--repost); margin-bottom: 6px; }
         .post-meta { display: flex; align-items: baseline; gap: 7px; margin-bottom: 4px; flex-wrap: wrap; }
         .post-name { font-weight: 600; font-size: 0.86rem; cursor: pointer; }
         .post-name:hover { color: var(--accent); }
         .post-pubkey { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
         .post-time { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); margin-left: auto; }
         .post-content { font-size: 0.88rem; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
-
-        /* Media en post */
         .post-media { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .post-media img {
-            max-width: 100%; max-height: 400px; object-fit: contain;
-            border-radius: 10px; border: 1px solid var(--border);
-            display: block; cursor: pointer; transition: opacity 0.15s;
-        }
+        .post-media img { max-width: 100%; max-height: 400px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; }
         .post-media img:hover { opacity: 0.9; }
-        .post-media video {
-            max-width: 100%; max-height: 360px;
-            border-radius: 10px; border: 1px solid var(--border);
-            display: block; background: #000;
-        }
+        .post-media video { max-width: 100%; max-height: 360px; border-radius: 10px; border: 1px solid var(--border); background: #000; }
         .media-grid { display: grid; gap: 4px; border-radius: 10px; overflow: hidden; }
         .media-grid.count-2 { grid-template-columns: 1fr 1fr; }
         .media-grid.count-3 { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
         .media-grid.count-3 .media-grid-item:first-child { grid-column: 1/-1; }
         .media-grid.count-4 { grid-template-columns: 1fr 1fr; }
         .media-grid-item { overflow: hidden; max-height: 220px; }
-        .media-grid-item img, .media-grid-item video { width: 100%; height: 100%; object-fit: cover; border-radius: 0; border: none; max-height: none; }
+        .media-grid-item img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
 
-        /* Lightbox */
-        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; align-items: center; justify-content: center; }
-        .lightbox.open { display: flex; }
-        .lightbox img { max-width: 92vw; max-height: 92vh; object-fit: contain; border-radius: 6px; }
-        .lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7; }
-        .lightbox-close:hover { opacity: 1; }
-
-        /* Acciones */
         .post-actions { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
-        .action-btn {
-            background: none; border: none; cursor: pointer;
-            display: flex; align-items: center; gap: 5px;
-            font-family: var(--sans); font-size: 0.72rem; color: var(--muted);
-            padding: 5px 10px; border-radius: 20px; transition: all 0.15s;
-        }
+        .action-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 5px; font-family: var(--sans); font-size: 0.72rem; color: var(--muted); padding: 5px 10px; border-radius: 20px; }
         .action-btn:hover { background: rgba(255,255,255,0.05); }
-        .action-btn.like-btn:hover  { color: var(--like); }
-        .action-btn.like-btn.liked  { color: var(--like); }
+        .action-btn.like-btn:hover { color: var(--like); }
+        .action-btn.like-btn.liked { color: var(--like); }
         .action-btn.like-btn.liked .action-icon { transform: scale(1.2); }
-        .action-btn.repost-btn:hover  { color: var(--repost); }
+        .action-btn.repost-btn:hover { color: var(--repost); }
         .action-btn.repost-btn.reposted { color: var(--repost); }
-        .action-btn.follow-btn:hover  { color: var(--accent); }
+        .action-btn.follow-btn:hover { color: var(--accent); }
         .action-btn.follow-btn.following { color: var(--green); }
-        .action-btn.follow-btn.following:hover { color: var(--danger); }
-        .action-icon { font-size: 0.9rem; transition: transform 0.15s; }
-        .action-count { font-family: var(--mono); font-size: 0.65rem; min-width: 12px; }
+        .action-icon { font-size: 0.9rem; }
+        .action-count { font-family: var(--mono); font-size: 0.65rem; }
 
-        /* Modal */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 340px; max-height: 480px; display: flex; flex-direction: column; overflow: hidden; }
-        .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 0.75rem; color: var(--text); }
-        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; line-height: 1; }
-        .modal-close:hover { color: var(--text); }
-        .modal-body { overflow-y: auto; padding: 8px 0; }
-        .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; transition: background 0.1s; }
-        .modal-user:hover { background: rgba(255,255,255,0.03); }
-        .modal-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; flex-shrink: 0; }
-        .modal-name { font-size: 0.82rem; font-weight: 600; }
-        .modal-key { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); }
+        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 380px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); }
+        .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+        .modal-body { overflow-y: auto; padding: 16px; }
+        .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; }
+        .modal-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; }
 
-        /* Sidebar derecha */
         .sidebar-right { padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); display: flex; flex-direction: column; gap: 14px; }
         .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
-        .widget-title { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
-        .auth-input {
-            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-family: var(--mono); font-size: 0.7rem;
-            padding: 9px 11px; width: 100%; outline: none; transition: border-color 0.2s; margin-bottom: 7px;
-        }
+        .widget-title { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+        .auth-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 0.7rem; padding: 9px 11px; width: 100%; outline: none; margin-bottom: 7px; }
         .auth-input:focus { border-color: var(--accent); }
-        .auth-input::placeholder { color: var(--muted); }
+        .profile-input { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 0.8rem; padding: 8px 11px; width: 100%; outline: none; margin-bottom: 10px; }
+        .profile-input:focus { border-color: var(--accent); }
         .info-note { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .info-note a { color: var(--accent); text-decoration: none; }
-        .info-note a:hover { text-decoration: underline; }
-
         .follow-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
         .follow-item:last-child { border-bottom: none; }
         .follow-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.55rem; font-weight: 600; color: #000; }
-        .follow-info { flex: 1; min-width: 0; }
+        .follow-info { flex: 1; }
         .follow-name { font-size: 0.78rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .follow-key { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
-        .unfollow-btn { background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
-        .unfollow-btn:hover { border-color: var(--danger); color: var(--danger); }
-
-        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; font-family: var(--mono); line-height: 1.7; }
-
-        /* Avatar gradients */
+        .unfollow-btn { background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 0.62rem; padding: 3px 7px; cursor: pointer; }
+        .empty-state { padding: 36px 18px; text-align: center; color: var(--muted); font-size: 0.82rem; font-family: var(--mono); }
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 300; align-items: center; justify-content: center; }
+        .lightbox.open { display: flex; }
+        .lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 6px; }
+        .lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        
         .av0 { background: linear-gradient(135deg,#00d4ff,#0066ff); }
         .av1 { background: linear-gradient(135deg,#ff3cac,#ff6b35); }
         .av2 { background: linear-gradient(135deg,#00e676,#00bcd4); }
@@ -383,9 +232,7 @@
         .av4 { background: linear-gradient(135deg,#e040fb,#7c4dff); }
         .av5 { background: linear-gradient(135deg,#ff4560,#ff9800); }
 
-        /* Botón móvil oculto por defecto */
         #btnMenuMovil { display: none; }
-
         @media (max-width: 860px) {
             .app { grid-template-columns: 1fr; }
             .sidebar-left, .sidebar-right { display: none; }
@@ -397,21 +244,13 @@
 </head>
 <body>
 <div class="app">
-
-    <!-- Topbar -->
     <header class="topbar">
-        <div class="logo">
-            🔥 Anti<span>X</span>
-            <img src="HIy9szhW8AAGLJp.jpg" style="height:34px;width:34px;border-radius:50%;object-fit:cover;">
-        </div>
-
-        <!-- BARRA DE BÚSQUEDA GLOBAL -->
+        <div class="logo">🔥 Anti<span>X</span><img src="HIy9szhW8AAGLJp.jpg" alt="logo"></div>
         <div class="search-area">
             <span class="search-icon">🔍</span>
             <input type="text" class="search-input" id="searchInput" placeholder="Buscar en todo Nostr...">
             <button class="search-clear" id="searchClearBtn" style="display:none;">✕</button>
         </div>
-
         <div id="topPubkey" class="pubkey-badge" style="display:none">—</div>
         <div class="topbar-right">
             <button class="btn btn-outline btn-sm" id="btnRefresh">↺ Refrescar</button>
@@ -419,48 +258,33 @@
         </div>
     </header>
 
-    <!-- Sidebar izquierda -->
     <aside class="sidebar-left">
-        <button class="nav-btn active" id="navGlobal" onclick="switchTab('global')">
-            <span class="icon">🌐</span> Global
-        </button>
-        <button class="nav-btn" id="navSiguiendo" onclick="switchTab('siguiendo')">
-            <span class="icon">👥</span> Siguiendo
-        </button>
+        <button class="nav-btn active" id="navGlobal" onclick="switchTab('global')"><span class="icon">🌐</span> Global</button>
+        <button class="nav-btn" id="navSiguiendo" onclick="switchTab('siguiendo')"><span class="icon">👥</span> Siguiendo</button>
         <div class="sidebar-divider">Tu cuenta</div>
         <div class="side-key" id="sideKey">Sin conectar</div>
+        <button class="nav-btn" id="btnEditProfile" onclick="openProfileModal()" style="margin-top:8px;"><span class="icon">✏️</span> Editar perfil</button>
     </aside>
 
-    <!-- Feed -->
     <main class="feed-col">
         <div class="feed-header">
             <div class="feed-tabs">
-                <button class="feed-tab active" id="tabGlobal"     onclick="switchTab('global')">Global</button>
-                <button class="feed-tab"         id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
+                <button class="feed-tab active" id="tabGlobal" onclick="switchTab('global')">Global</button>
+                <button class="feed-tab" id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
             </div>
-            <span id="postCount" style="font-family:var(--mono);font-size:0.62rem;color:var(--muted)"></span>
+            <span id="postCount"></span>
         </div>
 
-        <!-- Composer -->
         <div class="composer" id="composer">
             <div class="composer-avatar" id="myAvatar"></div>
             <div class="composer-body">
                 <textarea id="contenido" rows="3" placeholder="¿Qué estás pensando?…" maxlength="280"></textarea>
-
                 <div class="media-preview-strip" id="mediaPreviewStrip"></div>
-
                 <div class="composer-toolbar">
-                    <button class="toolbar-btn" id="btnAddImage" title="Añadir imagen (jpg, png, gif, webp)">
-                        🖼️ Imagen
-                        <input type="file" id="fileImage" accept="image/*" multiple>
-                    </button>
-                    <button class="toolbar-btn" id="btnAddVideo" title="Añadir video (mp4, webm, mov)">
-                        🎬 Video
-                        <input type="file" id="fileVideo" accept="video/*" multiple>
-                    </button>
+                    <button class="toolbar-btn" id="btnAddImage">🖼️ Imagen<input type="file" id="fileImage" accept="image/*" multiple></button>
+                    <button class="toolbar-btn" id="btnAddVideo">🎬 Video<input type="file" id="fileVideo" accept="video/*" multiple></button>
                     <span class="upload-progress" id="uploadProgress"></span>
                 </div>
-
                 <div class="composer-footer">
                     <span class="char-count" id="charCount">280</span>
                     <button class="btn btn-primary btn-sm" id="btnPublicar" disabled>Publicar</button>
@@ -472,23 +296,16 @@
         <div id="feed"></div>
     </main>
 
-    <!-- Sidebar derecha -->
     <aside class="sidebar-right">
         <div class="widget">
             <div class="widget-title">🔑 Cuenta</div>
             <input class="auth-input" type="password" id="claveInput" placeholder="Clave privada hex (vacío = nueva)">
             <button class="btn btn-primary" style="width:100%" id="btnConectar">Conectar</button>
         </div>
-
         <div class="widget">
             <div class="widget-title">📤 Subida de medios</div>
-            <div class="info-note">
-                <strong>Imágenes:</strong> se comprimen y embeben directamente en el post (sin servidor externo).<br><br>
-                <strong>Videos:</strong> pega una URL de <a href="https://youtube.com" target="_blank">YouTube</a>, <a href="https://catbox.moe" target="_blank">catbox.moe</a> o <a href="https://nostr.build" target="_blank">nostr.build</a> en el texto del post.<br><br>
-                Límite imágenes: ~10 MB por archivo.
-            </div>
+            <div class="info-note">Imágenes se comprimen y embeben.<br>Videos: pega URL de YouTube/catbox/nostr.build</div>
         </div>
-
         <div class="widget" id="widgetFollows" style="display:none">
             <div class="widget-title">👥 Siguiendo (<span id="followCount">0</span>)</div>
             <div id="followsList"></div>
@@ -496,56 +313,49 @@
     </aside>
 </div>
 
-<!-- Modal: quién dio like -->
-<div class="modal-overlay" id="likesModal" onclick="closeLikesModal(event)">
+<!-- Modal Editar Perfil -->
+<div class="modal-overlay" id="profileModal" onclick="closeProfileModal(event)">
     <div class="modal">
         <div class="modal-header">
-            <span id="modalTitle">❤️ Likes</span>
-            <button class="modal-close" onclick="closeLikesModal()">✕</button>
+            <span>✏️ Editar perfil</span>
+            <button class="modal-close" onclick="closeProfileModal()">✕</button>
         </div>
-        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-body">
+            <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Nombre</label>
+            <input type="text" class="profile-input" id="profileName" placeholder="Tu nombre" maxlength="50">
+            <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Biografía</label>
+            <textarea id="profileBio" rows="3" class="profile-input" placeholder="Cuéntanos sobre ti..." maxlength="200" style="resize:vertical;"></textarea>
+            <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Foto de perfil (URL)</label>
+            <input type="text" class="profile-input" id="profilePicture" placeholder="https://...">
+            <button class="btn btn-primary" style="width:100%; margin-top:8px;" id="btnSaveProfile">Guardar perfil</button>
+        </div>
     </div>
 </div>
 
-<!-- Modal móvil -->
+<div class="modal-overlay" id="likesModal" onclick="closeLikesModal(event)">
+    <div class="modal"><div class="modal-header"><span id="modalTitle">❤️ Likes</span><button class="modal-close" onclick="closeLikesModal()">✕</button></div><div class="modal-body" id="modalBody"></div></div>
+</div>
+
 <div class="modal-overlay" id="modalMovil" onclick="cerrarMenuMovil(event)">
-    <div class="modal" style="width:90%;max-width:340px;">
-        <div class="modal-header">
-            <span>⚙️ Cuenta</span>
-            <button class="modal-close" onclick="cerrarMenuMovil()">✕</button>
-        </div>
-        <div class="modal-body" style="padding:14px;display:flex;flex-direction:column;gap:10px;">
-            <input class="auth-input" type="password" id="claveInputMovil" placeholder="Clave privada hex (vacío = nueva)">
-            <button class="btn btn-primary" style="width:100%" id="btnConectarMovil">Conectar</button>
-            <div class="info-note" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)">
-                <strong>Imágenes:</strong> se comprimen y embeben en el post.<br><br>
-                <strong>Videos:</strong> pega una URL de YouTube, catbox.moe o nostr.build en el texto.<br><br>
-                Límite imágenes: ~10 MB.
-            </div>
-        </div>
-    </div>
+    <div class="modal" style="width:90%;max-width:340px;"><div class="modal-header"><span>⚙️ Cuenta</span><button class="modal-close" onclick="cerrarMenuMovil()">✕</button></div><div class="modal-body" style="padding:14px"><input class="auth-input" id="claveInputMovil" placeholder="Clave privada hex"><button class="btn btn-primary" id="btnConectarMovil">Conectar</button></div></div>
 </div>
 
-<!-- Lightbox -->
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-    <img id="lightboxImg" src="" alt="">
-</div>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightboxImg" src=""></div>
 
 <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.js"></script>
 <script>
 // ============================================================
 //  ESTADO GLOBAL
 // ============================================================
-let privKey    = '';
-let pubKey     = '';
-let follows    = new Set();
-let profiles   = new Map();
-let feedPosts  = new Map();
-let likes      = new Map();
-let myLikes    = new Set();
-let reposts    = new Map();
-let myReposts  = new Set();
+let privKey = '';
+let pubKey = '';
+let follows = new Set();
+let profiles = new Map();
+let feedPosts = new Map();
+let likes = new Map();
+let myLikes = new Set();
+let reposts = new Map();
+let myReposts = new Set();
 let currentTab = 'global';
 let pendingMedia = [];
 let isSearchMode = false;
@@ -576,8 +386,8 @@ function displayName(pk) {
 }
 function timeAgo(ts) {
     const d = Math.floor(Date.now()/1000) - ts;
-    if (d < 60)    return d+'s';
-    if (d < 3600)  return Math.floor(d/60)+'m';
+    if (d < 60) return d+'s';
+    if (d < 3600) return Math.floor(d/60)+'m';
     if (d < 86400) return Math.floor(d/3600)+'h';
     return Math.floor(d/86400)+'d';
 }
@@ -585,12 +395,83 @@ function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-const IMAGE_RE   = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
-const VIDEO_RE   = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
+const IMAGE_RE = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?\S*)?)/gi;
+const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
 
 // ============================================================
-//  BÚSQUEDA GLOBAL NIP-50 (como X)
+//  PERFIL - PUBLICAR EVENTO KIND 0
+// ============================================================
+async function saveProfile(name, bio, picture) {
+    if (!privKey) {
+        alert('Primero conecta tu cuenta');
+        return;
+    }
+    const profile = {};
+    if (name) profile.name = name;
+    if (bio) profile.about = bio;
+    if (picture) profile.picture = picture;
+    
+    const content = JSON.stringify(profile);
+    const nt = window.NostrTools;
+    const ev = nt.finishEvent({
+        kind: 0,
+        created_at: Math.floor(Date.now()/1000),
+        tags: [],
+        content: content
+    }, privKey);
+    
+    setStatus('<span class="spinner"></span> Guardando perfil...');
+    const ok = await publishEvent(ev);
+    if (ok > 0) {
+        profiles.set(pubKey, profile);
+        setStatus('✅ Perfil guardado', 'ok');
+        closeProfileModal();
+        renderFeed();
+        updateMyAvatar();
+    } else {
+        setStatus('❌ Error al guardar perfil', 'err');
+    }
+}
+
+function openProfileModal() {
+    if (!pubKey) {
+        alert('Primero conecta tu cuenta');
+        return;
+    }
+    const myProfile = profiles.get(pubKey) || {};
+    $('profileName').value = myProfile.name || '';
+    $('profileBio').value = myProfile.about || '';
+    $('profilePicture').value = myProfile.picture || '';
+    $('profileModal').classList.add('open');
+}
+
+function closeProfileModal(e) {
+    if (!e || e.target === $('profileModal')) $('profileModal').classList.remove('open');
+}
+
+function updateMyAvatar() {
+    const myProfile = profiles.get(pubKey);
+    if (myProfile?.picture) {
+        $('myAvatar').style.background = `url(${myProfile.picture}) center/cover`;
+        $('myAvatar').style.backgroundSize = 'cover';
+        $('myAvatar').textContent = '';
+    } else {
+        $('myAvatar').style.background = '';
+        $('myAvatar').className = 'composer-avatar ' + avClass(pubKey);
+        $('myAvatar').textContent = avInitials(pubKey);
+    }
+}
+
+$('btnSaveProfile').onclick = () => {
+    const name = $('profileName').value.trim();
+    const bio = $('profileBio').value.trim();
+    const picture = $('profilePicture').value.trim();
+    saveProfile(name, bio, picture);
+};
+
+// ============================================================
+//  BÚSQUEDA GLOBAL NIP-50
 // ============================================================
 async function searchGlobalNostr(query) {
     if (!query.trim()) {
@@ -692,7 +573,7 @@ function openRelay(url, timeout=5000) {
         try {
             const ws = new WebSocket(url);
             const t = setTimeout(() => reject(new Error('timeout')), timeout);
-            ws.onopen  = () => { clearTimeout(t); resolve(ws); };
+            ws.onopen = () => { clearTimeout(t); resolve(ws); };
             ws.onerror = () => { clearTimeout(t); reject(); };
         } catch(e) { reject(e); }
     });
@@ -734,15 +615,15 @@ async function publishEvent(event) {
 }
 
 // ============================================================
-//  PROCESAMIENTO LOCAL DE MEDIA
+//  PROCESAMIENTO LOCAL DE MEDIA (VERSIÓN COMPLETA)
 // ============================================================
 const MAX_IMG_BYTES = 800 * 1024;
-const MAX_DIM       = 1200;
+const MAX_DIM = 1200;
 
 function fileToDataURL(file) {
     return new Promise((resolve, reject) => {
         const r = new FileReader();
-        r.onload  = () => resolve(r.result);
+        r.onload = () => resolve(r.result);
         r.onerror = () => reject(new Error('No se pudo leer el archivo'));
         r.readAsDataURL(file);
     });
@@ -757,7 +638,7 @@ function compressImage(file, maxDim, maxBytes) {
             let { width: w, height: h } = img;
             if (w > maxDim || h > maxDim) {
                 if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
-                else        { w = Math.round(w * maxDim / h); h = maxDim; }
+                else { w = Math.round(w * maxDim / h); h = maxDim; }
             }
             const canvas = document.createElement('canvas');
             canvas.width = w; canvas.height = h;
@@ -945,7 +826,7 @@ async function handleFiles(files) {
         renderMediaPreviews();
         const stillUploading = pendingMedia.some(m => m.uploading);
         if (!stillUploading) {
-            const ok   = pendingMedia.filter(m => m.remoteUrl).length;
+            const ok = pendingMedia.filter(m => m.remoteUrl).length;
             const fail = pendingMedia.filter(m => m.error).length;
             if (fail === 0 && ok > 0) {
                 setUploadProgress('OK: ' + ok + (ok > 1 ? ' archivos listos' : ' archivo listo'), '');
@@ -961,8 +842,8 @@ async function handleFiles(files) {
 // Conectar inputs de archivo
 $('btnAddImage').onclick = () => $('fileImage').click();
 $('btnAddVideo').onclick = () => $('fileVideo').click();
-$('fileImage').onchange = e => { handleFiles([...e.target.files]); e.target.value=''; };
-$('fileVideo').onchange = e => { handleFiles([...e.target.files]); e.target.value=''; };
+$('fileImage').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
+$('fileVideo').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
 
 // Drag & drop
 const composerEl = $('composer');
@@ -1044,7 +925,7 @@ function renderFollowsList() {
     $('followCount').textContent = follows.size;
     $('widgetFollows').style.display = follows.size ? 'block' : 'none';
     $('followsList').innerHTML = [...follows].map(pk => {
-        const p  = profiles.get(pk);
+        const p = profiles.get(pk);
         const nm = p?.name ? esc(p.name) : pk.slice(0,10)+'…';
         return `<div class="follow-item">
             <div class="follow-avatar ${avClass(pk)}">${avInitials(pk)}</div>
@@ -1139,7 +1020,7 @@ function updatePostActions(postId) {
 // ============================================================
 async function showLikes(postId) {
     const modal = $('likesModal');
-    const body  = $('modalBody');
+    const body = $('modalBody');
     const title = $('modalTitle');
     const likers = [...(likes.get(postId) || [])];
     title.textContent = `❤️ ${likers.length} Like${likers.length!==1?'s':''}`;
@@ -1172,7 +1053,7 @@ function closeLightbox() {
     $('lightboxImg').src = '';
 }
 document.addEventListener('keydown', e => {
-    if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); if (isSearchMode) exitSearchMode(); }
+    if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); closeProfileModal(); if (isSearchMode) exitSearchMode(); }
 });
 
 // ============================================================
@@ -1180,10 +1061,10 @@ document.addEventListener('keydown', e => {
 // ============================================================
 function extractMediaUrls(text) {
     const dataImages = [...text.matchAll(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g)].map(m => m[1]);
-    const images     = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
-    const videos     = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
-    const youtubes   = [...text.matchAll(YOUTUBE_RE)].map(m => m[1]);
-    const videoSet   = new Set(videos);
+    const images = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
+    const videos = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
+    const youtubes = [...text.matchAll(YOUTUBE_RE)].map(m => m[1]);
+    const videoSet = new Set(videos);
     return {
         images: [...dataImages, ...images.filter(u => !videoSet.has(u))],
         videos,
@@ -1240,11 +1121,11 @@ function buildMediaHtml(images, videos, youtubes = []) {
 // ============================================================
 function buildActions(post) {
     const id = post.id;
-    const isMe        = post.pubkey === pubKey;
+    const isMe = post.pubkey === pubKey;
     const isFollowing = follows.has(post.pubkey);
-    const liked       = myLikes.has(id);
-    const reposted    = myReposts.has(id);
-    const likeCount   = likes.get(id)?.size || 0;
+    const liked = myLikes.has(id);
+    const reposted = myReposts.has(id);
+    const likeCount = likes.get(id)?.size || 0;
     const repostCount = reposts.get(id)?.size || 0;
 
     const likeBtn = `
@@ -1273,15 +1154,15 @@ function buildActions(post) {
 }
 
 function renderPost(post, isRepostOf) {
-    const id       = post.id;
-    const ac       = avClass(post.pubkey);
+    const id = post.id;
+    const ac = avClass(post.pubkey);
     const initials = avInitials(post.pubkey);
-    const name     = esc(displayName(post.pubkey));
-    const ago      = timeAgo(post.created_at);
+    const name = esc(displayName(post.pubkey));
+    const ago = timeAgo(post.created_at);
 
     const { images, videos, youtubes } = extractMediaUrls(post.content);
     const textContent = esc(stripMediaUrls(post.content));
-    const mediaHtml   = buildMediaHtml(images, videos, youtubes);
+    const mediaHtml = buildMediaHtml(images, videos, youtubes);
 
     const repostLabel = isRepostOf
         ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
@@ -1386,12 +1267,12 @@ async function conectar(clave) {
     try {
         if (clave) {
             privKey = clave;
-            pubKey  = nt.getPublicKey(privKey);
+            pubKey = nt.getPublicKey(privKey);
             setStatus('✅ Conectado','ok');
         } else {
             privKey = nt.generatePrivateKey();
-            pubKey  = nt.getPublicKey(privKey);
-            $('claveInput').value      = privKey;
+            pubKey = nt.getPublicKey(privKey);
+            $('claveInput').value = privKey;
             $('claveInputMovil').value = privKey;
             alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
             setStatus('✅ Cuenta nueva','ok');
@@ -1405,13 +1286,18 @@ async function conectar(clave) {
                 setTimeout(() => $('topPubkey').textContent = short, 1500);
             });
         };
-        $('sideKey').textContent    = pubKey;
+        $('sideKey').textContent = pubKey;
         $('composer').style.display = 'flex';
-        $('myAvatar').className     = 'composer-avatar ' + avClass(pubKey);
-        $('myAvatar').textContent   = pubKey.slice(0,2).toUpperCase();
-
+        
         await loadFollows();
         await loadFeed();
+        await loadProfiles([pubKey]);
+        updateMyAvatar();
+        
+        $('myAvatar').className = 'composer-avatar ' + avClass(pubKey);
+        if (!profiles.get(pubKey)?.picture) {
+            $('myAvatar').textContent = pubKey.slice(0,2).toUpperCase();
+        }
     } catch(err) {
         setStatus('❌ ' + err.message,'err');
     }
