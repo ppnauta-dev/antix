@@ -1068,18 +1068,56 @@ function renderReplies(postId) {
 }
 
 // Enviar respuesta
+// Enviar respuesta
 async function submitReply(postId) {
-    const formId = `reply-form-${postId}`;
-    const textarea = document.querySelector(`#reply-form-${postId} textarea`);
+    const textarea = document.getElementById(`reply-text-${postId}`);
     if (!textarea) return;
     
     const content = textarea.value.trim();
     if (!content) return;
     
-    const success = await postReply(postId, content);
-    if (success) {
+    if (!privKey) {
+        alert('Conecta tu cuenta para responder');
+        return;
+    }
+    
+    const nt = window.NostrTools;
+    const post = feedPosts.get(postId);
+    const tags = [
+        ['e', postId, '', 'reply'],
+        ['p', post?.pubkey || '']
+    ];
+    
+    const ev = nt.finishEvent({
+        kind: 1,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: tags,
+        content: content
+    }, privKey);
+    
+    setStatus('<span class="spinner"></span> Publicando respuesta...');
+    const ok = await publishEvent(ev);
+    
+    if (ok > 0) {
+        // Agregar a la lista local
+        if (!replies.has(postId)) replies.set(postId, []);
+        replies.get(postId).push(ev);
+        
         textarea.value = '';
-        showReplyForm(postId);
+        
+        // Ocultar formulario
+        const formContainer = document.getElementById(`reply-form-container-${postId}`);
+        if (formContainer) formContainer.style.display = 'none';
+        
+        setStatus('✅ Respuesta publicada', 'ok');
+        
+        // Recargar para mostrar la nueva respuesta
+        if (typeof loadReplies === 'function') {
+            await loadReplies([postId]);
+        }
+        renderFeed();
+    } else {
+        setStatus('❌ Error al publicar respuesta', 'err');
     }
 }
 // ============================================================
