@@ -1550,6 +1550,8 @@ function compressProfileImage(file, maxWidth, maxHeight) {
 //  PERFIL - PUBLICAR EVENTO KIND 0
 // ============================================================
 async function saveProfile(name, bio, pictureDataUrl) {
+    // ✅ AGREGAR ESTA LÍNEA
+    saveYoutubeChannelFromProfile();    
     if (!privKey) {
         alert('Primero conecta tu cuenta');
         return;
