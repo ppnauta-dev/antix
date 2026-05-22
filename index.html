@@ -125,7 +125,7 @@
         
         .media-preview-strip { display: flex; gap: 8px; flex-wrap: wrap; }
         .media-thumb { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex-shrink: 0; background: #0a0f14; }
-        .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
         .media-thumb .remove-media { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.75); border: none; border-radius: 50%; color: #fff; font-size: 0.65rem; width: 18px; height: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .media-thumb .remove-media:hover { background: var(--danger); }
         .media-thumb .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3px; z-index: 5; }
@@ -175,53 +175,45 @@
         .post-time { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); margin-left: auto; }
         .post-content { font-size: 0.88rem; line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
         
-        /* IMÁGENES CORREGIDAS - PROPORCIONES CORRECTAS */
         .post-media { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-        /* Imagen individual — se muestra en su tamaño natural, centrada */
         .post-media img {
-            max-width: 100%;
-            max-height: 480px;
-            width: auto;
+            width: 100%;
             height: auto;
-            object-fit: contain;
+            max-height: 500px;
+            object-fit: scale-down;
             border-radius: 12px;
             border: 1px solid var(--border);
             display: block;
             cursor: pointer;
-            margin: 0 auto;
             background: #0a0f14;
         }
         .post-media img:hover { opacity: 0.9; }
         .post-media video {
-            max-width: 100%;
-            max-height: 400px;
-            width: auto;
+            width: 100%;
             height: auto;
+            max-height: 400px;
             border-radius: 12px;
             border: 1px solid var(--border);
             display: block;
             background: #000;
         }
         .media-grid { display: grid; gap: 4px; border-radius: 10px; overflow: hidden; background: #0a0f14; }
-        .media-grid.count-2 { grid-template-columns: 1fr 1fr; }
-        .media-grid.count-3 { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
-        .media-grid.count-3 .media-grid-item:first-child { grid-column: 1/-1; }
-        .media-grid.count-4 { grid-template-columns: 1fr 1fr; }
-        .media-grid-item { 
-            overflow: hidden; 
-            min-height: 150px;
+        .media-grid.count-2 { grid-template-columns: repeat(2, 1fr); }
+        .media-grid.count-3 { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(150px, auto); }
+        .media-grid.count-3 .media-grid-item:first-child { grid-column: span 2; }
+        .media-grid.count-4 { grid-template-columns: repeat(2, 1fr); }
+        .media-grid-item {
+            overflow: hidden;
             background: #0a0f14;
             display: flex;
             align-items: center;
             justify-content: center;
+            min-height: 150px;
         }
-        .media-grid-item img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-            border-radius: 0; 
-            border: none; 
-            max-height: 250px;
+        .media-grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: scale-down;
             cursor: pointer;
         }
 
@@ -239,12 +231,57 @@
 
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
-        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 380px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 400px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
         .modal-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); }
         .modal-close { background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
         .modal-body { overflow-y: auto; padding: 16px; }
         .modal-user { display: flex; align-items: center; gap: 10px; padding: 10px 18px; }
         .modal-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.6rem; font-weight: 600; color: #000; background-size: cover !important; background-position: center !important; }
+
+        /* Estilos para subir foto de perfil */
+        .profile-picture-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .profile-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-size: cover !important;
+            background-position: center !important;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 1.5rem;
+            color: var(--muted);
+        }
+        .profile-upload-btn {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .profile-upload-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .profile-upload-btn input {
+            display: none;
+        }
 
         .sidebar-right { padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); display: flex; flex-direction: column; gap: 14px; }
         .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
@@ -356,7 +393,7 @@
     </aside>
 </div>
 
-<!-- Modal Editar Perfil -->
+<!-- Modal Editar Perfil CON SUBIDA DE ARCHIVO -->
 <div class="modal-overlay" id="profileModal" onclick="closeProfileModal(event)">
     <div class="modal">
         <div class="modal-header">
@@ -364,12 +401,18 @@
             <button class="modal-close" onclick="closeProfileModal()">✕</button>
         </div>
         <div class="modal-body">
+            <div class="profile-picture-area">
+                <div class="profile-preview" id="profilePreview"></div>
+                <label class="profile-upload-btn">
+                    📷 Subir foto
+                    <input type="file" id="profilePictureFile" accept="image/jpeg,image/png,image/webp,image/gif">
+                </label>
+                <button class="btn btn-outline btn-sm" id="clearProfilePic" style="padding:8px;">🗑️</button>
+            </div>
             <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Nombre</label>
             <input type="text" class="profile-input" id="profileName" placeholder="Tu nombre" maxlength="50">
             <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Biografía</label>
             <textarea id="profileBio" rows="3" class="profile-input" placeholder="Cuéntanos sobre ti..." maxlength="200" style="resize:vertical;"></textarea>
-            <label style="font-size:0.7rem; color:var(--muted); margin-bottom:4px; display:block;">Foto de perfil (URL)</label>
-            <input type="text" class="profile-input" id="profilePicture" placeholder="https://...">
             <button class="btn btn-primary" style="width:100%; margin-top:8px;" id="btnSaveProfile">Guardar perfil</button>
         </div>
     </div>
@@ -403,6 +446,7 @@ let currentTab = 'global';
 let pendingMedia = [];
 let isSearchMode = false;
 let currentSearchQuery = '';
+let tempProfilePicture = null; // Para preview temporal
 
 const RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
@@ -443,9 +487,79 @@ const VIDEO_RE = /(https?:\/\/\S+\.(?:mp4|webm|ogg|mov|mkv)(?:\?\S*)?)/gi;
 const YOUTUBE_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
 
 // ============================================================
+//  SUBIR FOTO DE PERFIL (comprime como las imágenes normales)
+// ============================================================
+async function uploadProfilePicture(file) {
+    if (!file) return null;
+    
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+        alert('Solo se permiten imágenes');
+        return null;
+    }
+    
+    // Validar tamaño (max 2MB para foto de perfil)
+    if (file.size > 2 * 1024 * 1024) {
+        alert('La imagen es muy grande (máx 2MB). Por favor comprime la imagen.');
+        return null;
+    }
+    
+    setStatus('<span class="spinner"></span> Procesando foto de perfil...');
+    
+    try {
+        // Comprimir imagen (max 300x300 para perfil)
+        const compressed = await compressProfileImage(file, 300, 300);
+        setStatus('✅ Foto lista', 'ok');
+        return compressed;
+    } catch (err) {
+        console.error('Error al procesar imagen:', err);
+        alert('Error al procesar la imagen');
+        setStatus('❌ Error al procesar', 'err');
+        return null;
+    }
+}
+
+function compressProfileImage(file, maxWidth, maxHeight) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objUrl = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(objUrl);
+            let { width: w, height: h } = img;
+            
+            // Redimensionar si es necesario
+            if (w > maxWidth || h > maxHeight) {
+                if (w >= h) {
+                    h = Math.round(h * maxWidth / w);
+                    w = maxWidth;
+                } else {
+                    w = Math.round(w * maxHeight / h);
+                    h = maxHeight;
+                }
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            
+            // Calidad alta para perfil
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            resolve(dataUrl);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(objUrl);
+            reject(new Error('No se pudo cargar la imagen'));
+        };
+        img.src = objUrl;
+    });
+}
+
+// ============================================================
 //  PERFIL - PUBLICAR EVENTO KIND 0
 // ============================================================
-async function saveProfile(name, bio, picture) {
+async function saveProfile(name, bio, pictureDataUrl) {
     if (!privKey) {
         alert('Primero conecta tu cuenta');
         return;
@@ -453,7 +567,7 @@ async function saveProfile(name, bio, picture) {
     const profile = {};
     if (name) profile.name = name;
     if (bio) profile.about = bio;
-    if (picture) profile.picture = picture;
+    if (pictureDataUrl) profile.picture = pictureDataUrl;
     
     const content = JSON.stringify(profile);
     const nt = window.NostrTools;
@@ -472,6 +586,7 @@ async function saveProfile(name, bio, picture) {
         closeProfileModal();
         renderFeed();
         updateMyAvatar();
+        tempProfilePicture = null;
     } else {
         setStatus('❌ Error al guardar perfil', 'err');
     }
@@ -485,12 +600,28 @@ function openProfileModal() {
     const myProfile = profiles.get(pubKey) || {};
     $('profileName').value = myProfile.name || '';
     $('profileBio').value = myProfile.about || '';
-    $('profilePicture').value = myProfile.picture || '';
+    
+    // Mostrar preview actual
+    const preview = $('profilePreview');
+    if (myProfile.picture) {
+        preview.style.background = `url(${myProfile.picture}) center/cover no-repeat`;
+        preview.style.backgroundSize = 'cover';
+        preview.textContent = '';
+    } else {
+        preview.style.background = '';
+        preview.className = 'profile-preview ' + avClass(pubKey);
+        preview.textContent = avInitials(pubKey);
+    }
+    
+    tempProfilePicture = null;
     $('profileModal').classList.add('open');
 }
 
 function closeProfileModal(e) {
-    if (!e || e.target === $('profileModal')) $('profileModal').classList.remove('open');
+    if (!e || e.target === $('profileModal')) {
+        $('profileModal').classList.remove('open');
+        tempProfilePicture = null;
+    }
 }
 
 function updateMyAvatar() {
@@ -506,50 +637,64 @@ function updateMyAvatar() {
     }
 }
 
+// Manejar subida de foto de perfil
+$('profilePictureFile').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const dataUrl = await uploadProfilePicture(file);
+    if (dataUrl) {
+        tempProfilePicture = dataUrl;
+        const preview = $('profilePreview');
+        preview.style.background = `url(${dataUrl}) center/cover no-repeat`;
+        preview.style.backgroundSize = 'cover';
+        preview.textContent = '';
+        preview.className = 'profile-preview';
+    }
+    e.target.value = '';
+};
+
+$('clearProfilePic').onclick = () => {
+    tempProfilePicture = null;
+    const myProfile = profiles.get(pubKey) || {};
+    const preview = $('profilePreview');
+    if (myProfile.picture) {
+        preview.style.background = `url(${myProfile.picture}) center/cover no-repeat`;
+        preview.style.backgroundSize = 'cover';
+        preview.textContent = '';
+    } else {
+        preview.style.background = '';
+        preview.className = 'profile-preview ' + avClass(pubKey);
+        preview.textContent = avInitials(pubKey);
+    }
+};
+
 $('btnSaveProfile').onclick = () => {
     const name = $('profileName').value.trim();
     const bio = $('profileBio').value.trim();
-    const picture = $('profilePicture').value.trim();
+    const picture = tempProfilePicture || profiles.get(pubKey)?.picture || '';
     saveProfile(name, bio, picture);
 };
 
 // ============================================================
-//  BÚSQUEDA GLOBAL NIP-50
+//  RESTO DEL CÓDIGO (búsqueda, media, etc.)
 // ============================================================
 async function searchGlobalNostr(query) {
-    if (!query.trim()) {
-        exitSearchMode();
-        return;
-    }
-    
+    if (!query.trim()) { exitSearchMode(); return; }
     isSearchMode = true;
     currentSearchQuery = query;
     setStatus(`🔍 Buscando "${query}" en toda la red Nostr...`, '');
-    $('feed').innerHTML = `<div class="empty-state"><span class="spinner"></span><br>Buscando en relays que soportan NIP-50...<br>Esto puede tomar unos segundos</div>`;
-    
+    $('feed').innerHTML = `<div class="empty-state"><span class="spinner"></span><br>Buscando...</div>`;
     feedPosts.clear();
-    
-    const searchFilter = {
-        kinds: [1],
-        search: query,
-        limit: 100
-    };
-    
+    const searchFilter = { kinds: [1], search: query, limit: 100 };
     let totalFound = 0;
-    
     await Promise.all(SEARCH_RELAYS.map(async url => {
         try {
             const ws = await openRelay(url, 5000);
-            const subId = 'search_' + Date.now() + '_' + Math.random();
-            
+            const subId = 'search_' + Date.now();
             ws.send(JSON.stringify(['REQ', subId, searchFilter]));
-            
             await new Promise((resolve) => {
-                const timeout = setTimeout(() => {
-                    ws.close();
-                    resolve();
-                }, 8000);
-                
+                const timeout = setTimeout(() => { ws.close(); resolve(); }, 8000);
                 ws.onmessage = (e) => {
                     try {
                         const msg = JSON.parse(e.data);
@@ -558,45 +703,25 @@ async function searchGlobalNostr(query) {
                             if (!feedPosts.has(ev.id)) {
                                 feedPosts.set(ev.id, ev);
                                 totalFound++;
-                                setStatus(`🔍 Encontrados ${totalFound} resultados para "${query}"...`, '');
+                                setStatus(`🔍 Encontrados ${totalFound} resultados...`, '');
                             }
                         }
-                        if (msg[0] === 'EOSE') {
-                            clearTimeout(timeout);
-                            ws.close();
-                            resolve();
-                        }
+                        if (msg[0] === 'EOSE') { clearTimeout(timeout); ws.close(); resolve(); }
                     } catch(err) {}
                 };
-                
-                ws.onerror = () => {
-                    clearTimeout(timeout);
-                    ws.close();
-                    resolve();
-                };
+                ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
             });
-        } catch(e) {
-            console.log(`Relay ${url} no soporta búsqueda o falló:`, e);
-        }
+        } catch(e) {}
     }));
-    
     if (feedPosts.size === 0) {
-        setStatus(`🔍 No se encontraron resultados para "${query}"`, 'err');
-        $('feed').innerHTML = `<div class="empty-state">😔 No hay posts que coincidan con "${esc(query)}"<br><br>Intenta con otras palabras clave</div>`;
+        setStatus(`🔍 No se encontraron resultados`, 'err');
+        $('feed').innerHTML = `<div class="empty-state">😔 No hay posts que coincidan con "${esc(query)}"</div>`;
         return;
     }
-    
-    setStatus(`✅ ${feedPosts.size} resultados encontrados`, 'ok');
-    
+    setStatus(`✅ ${feedPosts.size} resultados`, 'ok');
     const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
     const postIds = [...feedPosts.keys()];
-    
-    await Promise.all([
-        loadProfiles(authors),
-        loadLikes(postIds),
-        loadReposts(postIds)
-    ]);
-    
+    await Promise.all([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
     renderFeed();
 }
 
@@ -608,9 +733,6 @@ function exitSearchMode() {
     loadFeed();
 }
 
-// ============================================================
-//  RELAY HELPERS
-// ============================================================
 function openRelay(url, timeout=5000) {
     return new Promise((resolve, reject) => {
         try {
@@ -658,7 +780,7 @@ async function publishEvent(event) {
 }
 
 // ============================================================
-//  PROCESAMIENTO LOCAL DE MEDIA
+//  MEDIA (COMPRESIÓN Y SUBIDA)
 // ============================================================
 const MAX_IMG_BYTES = 800 * 1024;
 const MAX_DIM = 1200;
@@ -691,12 +813,8 @@ function compressImage(file, maxDim, maxBytes) {
             const tryEncode = () => {
                 const dataUrl = canvas.toDataURL('image/jpeg', quality);
                 const bytes = Math.round((dataUrl.length - 'data:image/jpeg;base64,'.length) * 3/4);
-                if (bytes <= maxBytes || quality <= 0.3) {
-                    resolve(dataUrl);
-                } else {
-                    quality = Math.max(0.3, quality - 0.12);
-                    tryEncode();
-                }
+                if (bytes <= maxBytes || quality <= 0.3) resolve(dataUrl);
+                else { quality = Math.max(0.3, quality - 0.12); tryEncode(); }
             };
             tryEncode();
         };
@@ -707,7 +825,6 @@ function compressImage(file, maxDim, maxBytes) {
 
 async function uploadMedia(file) {
     const isVideo = file.type.startsWith('video/');
-
     if (isVideo) {
         const services = [
             async () => {
@@ -716,7 +833,7 @@ async function uploadMedia(file) {
                 const res = await fetch('https://nostr.build/api/v2/upload/files', { method:'POST', body:fd, mode:'cors' });
                 const json = await res.json();
                 const url = json?.data?.[0]?.url;
-                if (!url) throw new Error('sin url');
+                if (!url) throw new Error();
                 return url;
             },
             async () => {
@@ -725,47 +842,30 @@ async function uploadMedia(file) {
                 fd.append('fileToUpload', file);
                 const res = await fetch('https://catbox.moe/user.php', { method:'POST', body:fd, mode:'cors' });
                 const text = await res.text();
-                if (!text.startsWith('https://')) throw new Error('sin url');
-                return text.trim();
-            },
-            async () => {
-                const fd = new FormData();
-                fd.append('file', file);
-                const res = await fetch('https://0x0.st', { method:'POST', body:fd, mode:'cors' });
-                const text = await res.text();
-                if (!text.startsWith('https://')) throw new Error('sin url');
+                if (!text.startsWith('https://')) throw new Error();
                 return text.trim();
             }
         ];
-
         for (const service of services) {
             try {
                 const url = await service();
                 return { dataUrl: url, isExternal: true };
-            } catch(e) {
-                continue;
-            }
+            } catch(e) { continue; }
         }
-
-        throw new Error('VIDEO_CORS: No se pudo subir automáticamente. Sube el video a catbox.moe o nostr.build y pega la URL en el texto.');
-    }
-
-    let dataUrl;
-    if (file.size > MAX_IMG_BYTES || file.type === 'image/bmp') {
-        dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
+        throw new Error('VIDEO_CORS');
     } else {
-        dataUrl = await fileToDataURL(file);
-        const bytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3/4);
-        if (bytes > MAX_IMG_BYTES) {
+        let dataUrl;
+        if (file.size > MAX_IMG_BYTES || file.type === 'image/bmp') {
             dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
+        } else {
+            dataUrl = await fileToDataURL(file);
+            const bytes = Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 3/4);
+            if (bytes > MAX_IMG_BYTES) dataUrl = await compressImage(file, MAX_DIM, MAX_IMG_BYTES);
         }
+        return { dataUrl, isExternal: false };
     }
-    return { dataUrl, isExternal: false };
 }
 
-// ============================================================
-//  GESTIÓN DE MEDIA PENDIENTE
-// ============================================================
 function updatePublishBtn() {
     const text = $('contenido').value.trim();
     const allUploaded = pendingMedia.length === 0 || pendingMedia.every(m => m.remoteUrl && !m.error);
@@ -785,7 +885,6 @@ function renderMediaPreviews() {
     pendingMedia.forEach((m, i) => {
         const thumb = document.createElement('div');
         thumb.className = 'media-thumb' + (m.remoteUrl ? ' done' : '') + (m.error ? ' error' : '');
-
         if (m.type === 'video') {
             const vid = document.createElement('video');
             vid.src = m.localUrl;
@@ -796,7 +895,6 @@ function renderMediaPreviews() {
             img.src = m.localUrl;
             thumb.appendChild(img);
         }
-
         if (!m.remoteUrl && !m.error) {
             const ov = document.createElement('div');
             ov.className = 'upload-overlay';
@@ -806,16 +904,14 @@ function renderMediaPreviews() {
         if (m.error) {
             const ov = document.createElement('div');
             ov.className = 'upload-overlay';
-            ov.innerHTML = `<span style="color:var(--danger);font-size:1rem;">⚠️</span><span style="color:var(--danger)">error</span>`;
+            ov.innerHTML = `<span>⚠️ error</span>`;
             thumb.appendChild(ov);
         }
-
         const rm = document.createElement('button');
         rm.className = 'remove-media';
         rm.innerHTML = '✕';
         rm.onclick = () => removeMedia(i);
         thumb.appendChild(rm);
-
         strip.appendChild(thumb);
     });
     updatePublishBtn();
@@ -831,22 +927,15 @@ function removeMedia(index) {
 async function handleFiles(files) {
     for (const file of files) {
         const isVideo = file.type.startsWith('video/');
-
         if (!isVideo && file.size > 10 * 1024 * 1024) {
-            alert('"' + file.name + '" es demasiado grande. Max ~10 MB para imágenes embebidas.');
+            alert('"' + file.name + '" es demasiado grande. Max ~10 MB.');
             continue;
         }
-        if (isVideo && file.size > 200 * 1024 * 1024) {
-            alert('"' + file.name + '" supera 200 MB.');
-            continue;
-        }
-
         const localUrl = URL.createObjectURL(file);
         const entry = { localUrl, remoteUrl: null, type: isVideo ? 'video' : 'image', uploading: true, error: false };
         pendingMedia.push(entry);
         renderMediaPreviews();
-        setUploadProgress(isVideo ? 'Intentando subir video...' : 'Procesando imagen...', 'uploading');
-
+        setUploadProgress(isVideo ? 'Subiendo video...' : 'Procesando imagen...', 'uploading');
         try {
             const result = await uploadMedia(file);
             entry.remoteUrl = result.dataUrl;
@@ -854,28 +943,9 @@ async function handleFiles(files) {
         } catch (err) {
             entry.error = true;
             entry.uploading = false;
-            console.error('Media error:', err.message);
-            if (err.message.startsWith('VIDEO_CORS:')) {
-                setUploadProgress('Video: sube a catbox.moe o nostr.build y pega la URL en el texto', 'error');
-                alert('No se pudo subir el video automáticamente.\n\nSube el video a catbox.moe o nostr.build y pega la URL directamente en el texto del post.');
-            } else {
-                setUploadProgress('Error: ' + err.message, 'error');
-            }
+            setUploadProgress('Error', 'error');
         }
-
         renderMediaPreviews();
-        const stillUploading = pendingMedia.some(m => m.uploading);
-        if (!stillUploading) {
-            const ok = pendingMedia.filter(m => m.remoteUrl).length;
-            const fail = pendingMedia.filter(m => m.error).length;
-            if (fail === 0 && ok > 0) {
-                setUploadProgress('OK: ' + ok + (ok > 1 ? ' archivos listos' : ' archivo listo'), '');
-            } else if (fail > 0 && ok > 0) {
-                setUploadProgress(ok + ' ok, ' + fail + ' con error', 'error');
-            } else if (fail > 0) {
-                setUploadProgress('', '');
-            }
-        }
     }
 }
 
@@ -910,32 +980,25 @@ document.addEventListener('paste', e => {
 async function loadProfiles(pubkeys) {
     const missing = [...new Set(pubkeys)].filter(pk => !profiles.has(pk));
     if (!missing.length) return;
-    const filter = { kinds:[0], authors: missing, limit: missing.length };
-    await Promise.all(RELAYS.map(url =>
-        queryRelay(url, [filter], ev => {
-            if (ev.kind===0 && !profiles.has(ev.pubkey)) {
-                try { profiles.set(ev.pubkey, JSON.parse(ev.content)); } catch(_) {}
-            }
-        }, 4000)
-    ));
+    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[0], authors: missing }], ev => {
+        if (ev.kind===0 && !profiles.has(ev.pubkey)) {
+            try { profiles.set(ev.pubkey, JSON.parse(ev.content)); } catch(_) {}
+        }
+    }, 4000)));
 }
 
 async function loadFollows() {
     if (!pubKey) return;
-    await Promise.all(RELAYS.map(url =>
-        queryRelay(url, [{ kinds:[3], authors:[pubKey], limit:1 }], ev => {
-            if (ev.kind===3 && ev.pubkey===pubKey)
-                ev.tags.filter(t=>t[0]==='p').forEach(t=>follows.add(t[1]));
-        }, 4000)
-    ));
+    follows.clear();
+    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[3], authors:[pubKey] }], ev => {
+        if (ev.kind===3 && ev.pubkey===pubKey) ev.tags.filter(t=>t[0]==='p').forEach(t=>follows.add(t[1]));
+    }, 4000)));
     renderFollowsList();
 }
 
 async function publishFollows() {
-    const ev = window.NostrTools.finishEvent({
-        kind:3, created_at: Math.floor(Date.now()/1000),
-        tags: [...follows].map(pk=>['p',pk]), content:''
-    }, privKey);
+    const nt = window.NostrTools;
+    const ev = nt.finishEvent({ kind:3, created_at: Math.floor(Date.now()/1000), tags: [...follows].map(pk=>['p',pk]), content: '' }, privKey);
     await publishEvent(ev);
 }
 
@@ -961,8 +1024,10 @@ function renderFollowsList() {
     $('followsList').innerHTML = [...follows].map(pk => {
         const p = profiles.get(pk);
         const nm = p?.name ? esc(p.name) : pk.slice(0,10)+'…';
+        const avatarStyle = p?.picture ? `style="background: url(${p.picture}) center/cover no-repeat; background-size: cover;"` : `class="follow-avatar ${avClass(pk)}"`;
+        const avatarContent = p?.picture ? '' : avInitials(pk);
         return `<div class="follow-item">
-            <div class="follow-avatar ${avClass(pk)}">${avInitials(pk)}</div>
+            <div ${avatarStyle}>${avatarContent}</div>
             <div class="follow-info">
                 <div class="follow-name">${nm}</div>
                 <div class="follow-key">${pk.slice(0,10)}…</div>
@@ -974,34 +1039,30 @@ function renderFollowsList() {
 
 async function loadLikes(postIds) {
     if (!postIds.length) return;
-    const filter = { kinds:[7], '#e': postIds, limit: 500 };
-    await Promise.all(RELAYS.map(url =>
-        queryRelay(url, [filter], ev => {
-            if (ev.kind!==7) return;
-            const eTag = ev.tags.find(t=>t[0]==='e');
-            if (!eTag) return;
+    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[7], '#e': postIds, limit: 500 }], ev => {
+        if (ev.kind!==7) return;
+        const eTag = ev.tags.find(t=>t[0]==='e');
+        if (eTag) {
             const pid = eTag[1];
             if (!likes.has(pid)) likes.set(pid, new Set());
             likes.get(pid).add(ev.pubkey);
             if (pubKey && ev.pubkey===pubKey) myLikes.add(pid);
-        }, 5000)
-    ));
+        }
+    }, 5000)));
 }
 
 async function loadReposts(postIds) {
     if (!postIds.length) return;
-    const filter = { kinds:[6], '#e': postIds, limit: 300 };
-    await Promise.all(RELAYS.map(url =>
-        queryRelay(url, [filter], ev => {
-            if (ev.kind!==6) return;
-            const eTag = ev.tags.find(t=>t[0]==='e');
-            if (!eTag) return;
+    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[6], '#e': postIds, limit: 300 }], ev => {
+        if (ev.kind!==6) return;
+        const eTag = ev.tags.find(t=>t[0]==='e');
+        if (eTag) {
             const pid = eTag[1];
             if (!reposts.has(pid)) reposts.set(pid, new Set());
             reposts.get(pid).add(ev.pubkey);
             if (pubKey && ev.pubkey===pubKey) myReposts.add(pid);
-        }, 5000)
-    ));
+        }
+    }, 5000)));
 }
 
 async function likePost(postId) {
@@ -1024,10 +1085,7 @@ async function repostPost(postId) {
     const post = feedPosts.get(postId);
     const tags = [['e', postId]];
     if (post) tags.push(['p', post.pubkey]);
-    const ev = nt.finishEvent({
-        kind:6, created_at: Math.floor(Date.now()/1000),
-        tags, content: post ? JSON.stringify(post) : ''
-    }, privKey);
+    const ev = nt.finishEvent({ kind:6, created_at: Math.floor(Date.now()/1000), tags, content: '' }, privKey);
     myReposts.add(postId);
     if (!reposts.has(postId)) reposts.set(postId, new Set());
     reposts.get(postId).add(pubKey);
@@ -1037,23 +1095,18 @@ async function repostPost(postId) {
 
 function updatePostActions(postId) {
     const el = document.querySelector(`[data-post-id="${postId}"] .post-actions`);
-    if (!el) return;
-    const post = feedPosts.get(postId);
-    if (!post) return;
-    el.innerHTML = buildActions(post);
+    if (el && feedPosts.has(postId)) el.innerHTML = buildActions(feedPosts.get(postId));
 }
 
 async function showLikes(postId) {
     const modal = $('likesModal');
-    const body = $('modalBody');
-    const title = $('modalTitle');
     const likers = [...(likes.get(postId) || [])];
-    title.textContent = `❤️ ${likers.length} Like${likers.length!==1?'s':''}`;
-    body.innerHTML = `<div style="padding:14px;"><span class="spinner"></span> Cargando perfiles…</div>`;
+    $('modalTitle').textContent = `❤️ ${likers.length} Like${likers.length!==1?'s':''}`;
+    $('modalBody').innerHTML = `<div class="empty-state"><span class="spinner"></span> Cargando...</div>`;
     modal.classList.add('open');
     await loadProfiles(likers);
-    if (!likers.length) { body.innerHTML = `<div class="empty-state">Sin likes aún</div>`; return; }
-    body.innerHTML = likers.map(pk => {
+    if (!likers.length) { $('modalBody').innerHTML = `<div class="empty-state">Sin likes aún</div>`; return; }
+    $('modalBody').innerHTML = likers.map(pk => {
         const p = profiles.get(pk);
         const nm = p?.name ? esc(p.name) : pk.slice(0,12)+'…';
         const avatarStyle = p?.picture ? `style="background: url(${p.picture}) center/cover no-repeat; background-size: cover;"` : `class="modal-avatar ${avClass(pk)}"`;
@@ -1065,75 +1118,36 @@ async function showLikes(postId) {
     }).join('');
 }
 
-function closeLikesModal(e) {
-    if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open');
-}
-
-function openLightbox(src) {
-    $('lightboxImg').src = src;
-    $('lightbox').classList.add('open');
-}
-function closeLightbox() {
-    $('lightbox').classList.remove('open');
-    $('lightboxImg').src = '';
-}
-document.addEventListener('keydown', e => {
-    if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); closeProfileModal(); if (isSearchMode) exitSearchMode(); }
-});
+function closeLikesModal(e) { if (!e || e.target === $('likesModal')) $('likesModal').classList.remove('open'); }
+function openLightbox(src) { $('lightboxImg').src = src; $('lightbox').classList.add('open'); }
+function closeLightbox() { $('lightbox').classList.remove('open'); $('lightboxImg').src = ''; }
 
 function extractMediaUrls(text) {
     const dataImages = [...text.matchAll(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g)].map(m => m[1]);
     const images = [...text.matchAll(IMAGE_RE)].map(m => m[1]);
     const videos = [...text.matchAll(VIDEO_RE)].map(m => m[1]);
     const youtubes = [...text.matchAll(YOUTUBE_RE)].map(m => m[1]);
-    const videoSet = new Set(videos);
-    return {
-        images: [...dataImages, ...images.filter(u => !videoSet.has(u))],
-        videos,
-        youtubes
-    };
+    return { images: [...dataImages, ...images], videos, youtubes };
 }
 
 function stripMediaUrls(text) {
-    return text
-        .replace(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g, '')
-        .replace(YOUTUBE_RE, '')
-        .replace(IMAGE_RE, '')
-        .replace(VIDEO_RE, '')
-        .trim();
+    return text.replace(/(data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+)/g, '').replace(YOUTUBE_RE, '').replace(IMAGE_RE, '').replace(VIDEO_RE, '').trim();
 }
 
 function buildMediaHtml(images, videos, youtubes = []) {
     if (!images.length && !videos.length && !youtubes.length) return '';
-
     let html = '<div class="post-media">';
-
-    youtubes.forEach(id => {
-        html += `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;border:1px solid var(--border);">
-            <iframe src="https://www.youtube.com/embed/${id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
-        </div>`;
-    });
-
-    videos.forEach(url => {
-        html += `<video src="${esc(url)}" controls preload="metadata" playsinline></video>`;
-    });
-
+    youtubes.forEach(id => { html += `<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;"><iframe src="https://www.youtube.com/embed/${id}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div>`; });
+    videos.forEach(url => { html += `<video src="${esc(url)}" controls preload="metadata" playsinline></video>`; });
     if (images.length === 1) {
-        html += `<img src="${esc(images[0])}" alt="" loading="lazy" onclick="openLightbox('${esc(images[0])}')">`;
+        html += `<img src="${esc(images[0])}" onclick="openLightbox('${esc(images[0])}')">`;
     } else if (images.length > 1) {
         const count = Math.min(images.length, 4);
         html += `<div class="media-grid count-${count}">`;
-        images.slice(0, 4).forEach(url => {
-            html += `<div class="media-grid-item">
-                <img src="${esc(url)}" alt="" loading="lazy" onclick="openLightbox('${esc(url)}')">
-            </div>`;
-        });
-        if (images.length > 4) {
-            html += `<div style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);padding:4px 0;text-align:center;">+${images.length-4} más</div>`;
-        }
+        images.slice(0,4).forEach(url => { html += `<div class="media-grid-item"><img src="${esc(url)}" onclick="openLightbox('${esc(url)}')"></div>`; });
+        if (images.length > 4) html += `<div>+${images.length-4} más</div>`;
         html += '</div>';
     }
-
     html += '</div>';
     return html;
 }
@@ -1146,30 +1160,18 @@ function buildActions(post) {
     const reposted = myReposts.has(id);
     const likeCount = likes.get(id)?.size || 0;
     const repostCount = reposts.get(id)?.size || 0;
-
-    const likeBtn = `
+    return `
         <button class="action-btn like-btn ${liked?'liked':''}" onclick="likePost('${id}')">
             <span class="action-icon">${liked?'❤️':'🤍'}</span>
-            <span class="action-count" style="color:${likeCount?'var(--like)':''}">${likeCount||''}</span>
-        </button>`;
-
-    const likersBtn = likeCount ? `
-        <button class="action-btn" onclick="showLikes('${id}')" style="color:var(--like);font-size:0.65rem;padding:5px 6px;">Ver likes</button>` : '';
-
-    const repostBtn = `
+            <span class="action-count">${likeCount || ''}</span>
+        </button>
+        ${likeCount ? `<button class="action-btn" onclick="showLikes('${id}')" style="color:var(--like)">Ver likes</button>` : ''}
         <button class="action-btn repost-btn ${reposted?'reposted':''}" onclick="repostPost('${id}')">
             <span class="action-icon">🔁</span>
-            <span class="action-count" style="color:${repostCount?'var(--repost)':''}">${repostCount||''}</span>
-        </button>`;
-
-    let followBtn = '';
-    if (privKey && !isMe) {
-        followBtn = isFollowing
-            ? `<button class="action-btn follow-btn following" onclick="unfollowUser('${post.pubkey}')">✓ Siguiendo</button>`
-            : `<button class="action-btn follow-btn" onclick="followUser('${post.pubkey}')">+ Seguir</button>`;
-    }
-
-    return likeBtn + likersBtn + repostBtn + followBtn;
+            <span class="action-count">${repostCount || ''}</span>
+        </button>
+        ${privKey && !isMe ? (isFollowing ? `<button class="action-btn follow-btn following" onclick="unfollowUser('${post.pubkey}')">✓ Siguiendo</button>` : `<button class="action-btn follow-btn" onclick="followUser('${post.pubkey}')">+ Seguir</button>`) : ''}
+    `;
 }
 
 function renderPost(post, isRepostOf) {
@@ -1181,14 +1183,10 @@ function renderPost(post, isRepostOf) {
     const ago = timeAgo(post.created_at);
     const avatarStyle = p.picture ? `style="background: url(${p.picture}) center/cover no-repeat; background-size: cover;"` : `class="post-avatar ${ac}"`;
     const avatarContent = p.picture ? '' : initials;
-
     const { images, videos, youtubes } = extractMediaUrls(post.content);
     const textContent = esc(stripMediaUrls(post.content));
     const mediaHtml = buildMediaHtml(images, videos, youtubes);
-
-    const repostLabel = isRepostOf
-        ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
-
+    const repostLabel = isRepostOf ? `<div class="repost-label">🔁 Reposteado por ${esc(displayName(isRepostOf))}</div>` : '';
     return `<div class="post ${isRepostOf?'is-repost':''}" data-post-id="${id}">
         <div ${avatarStyle}>${avatarContent}</div>
         <div class="post-body">
@@ -1211,18 +1209,13 @@ function renderFeed() {
         posts = posts.filter(p => follows.has(p.pubkey) || p.pubkey === pubKey);
     }
     posts.sort((a,b) => b.created_at - a.created_at);
-    
     if (isSearchMode) {
-        $('postCount').innerHTML = `<span class="search-badge">🔍 ${posts.length} resultados para "${esc(currentSearchQuery)}" <button onclick="exitSearchMode()">✕</button></span>`;
+        $('postCount').innerHTML = `<span class="search-badge">🔍 ${posts.length} resultados <button onclick="exitSearchMode()">✕</button></span>`;
     } else {
-        $('postCount').innerHTML = posts.length + ' posts';
+        $('postCount').innerHTML = `${posts.length} posts`;
     }
-    
     if (!posts.length) {
-        let msg = isSearchMode 
-            ? `No hay resultados para "${esc(currentSearchQuery)}"` 
-            : (currentTab==='siguiendo' ? 'Sin posts de tus seguidos aún.<br>Cambia al feed Global.' : 'Sin posts.');
-        $('feed').innerHTML = `<div class="empty-state">${msg}</div>`;
+        $('feed').innerHTML = `<div class="empty-state">${isSearchMode ? 'No hay resultados' : (currentTab==='siguiendo' ? 'Aún no sigues a nadie.' : 'Sin posts.')}</div>`;
         return;
     }
     $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
@@ -1230,34 +1223,13 @@ function renderFeed() {
 
 async function loadFeed() {
     if (isSearchMode) return;
-    setStatus('<span class="spinner"></span> Cargando feed…');
+    setStatus('<span class="spinner"></span> Cargando feed...');
     feedPosts.clear();
-
-    if (currentTab==='siguiendo' && !follows.size && !pubKey) {
-        setStatus('Sigue a alguien primero', '');
-        $('feed').innerHTML = `<div class="empty-state">Aún no sigues a nadie.<br>Cambia al feed Global para empezar.</div>`;
-        return;
-    }
-
-    const filter = currentTab==='global'
-        ? { kinds:[1], limit:40 }
-        : { kinds:[1], authors:[...(pubKey?[pubKey]:[]), ...follows], limit:60 };
-
-    await Promise.all(RELAYS.map(url =>
-        queryRelay(url, [filter], ev => {
-            if (ev.kind===1) feedPosts.set(ev.id, ev);
-        }, 7000)
-    ));
-
-    const postIds = [...feedPosts.keys()];
+    const filter = currentTab === 'global' ? { kinds:[1], limit: 40 } : { kinds:[1], authors: [...(pubKey?[pubKey]:[]), ...follows], limit: 60 };
+    await Promise.all(RELAYS.map(url => queryRelay(url, [filter], ev => { if (ev.kind===1) feedPosts.set(ev.id, ev); }, 7000)));
     const authors = [...new Set([...feedPosts.values()].map(p=>p.pubkey))];
-
-    await Promise.all([
-        loadProfiles(authors),
-        loadLikes(postIds),
-        loadReposts(postIds)
-    ]);
-
+    const postIds = [...feedPosts.keys()];
+    await Promise.all([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
 }
@@ -1267,8 +1239,8 @@ function switchTab(tab) {
     currentTab = tab;
     ['global','siguiendo'].forEach(t => {
         const cap = t[0].toUpperCase() + t.slice(1);
-        $('tab'+cap)?.classList.toggle('active', t===tab);
-        $('nav'+cap)?.classList.toggle('active', t===tab);
+        $(`tab${cap}`)?.classList.toggle('active', t===tab);
+        $(`nav${cap}`)?.classList.toggle('active', t===tab);
     });
     loadFeed();
 }
@@ -1276,85 +1248,51 @@ function switchTab(tab) {
 async function conectar(clave) {
     const nt = window.NostrTools;
     if (!nt) { setStatus('❌ nostr-tools no cargó','err'); return; }
-    setStatus('<span class="spinner"></span> Conectando…');
+    setStatus('<span class="spinner"></span> Conectando...');
     try {
-        if (clave) {
-            privKey = clave;
-            pubKey = nt.getPublicKey(privKey);
-            setStatus('✅ Conectado','ok');
-        } else {
+        if (clave) { privKey = clave; pubKey = nt.getPublicKey(privKey); }
+        else {
             privKey = nt.generatePrivateKey();
             pubKey = nt.getPublicKey(privKey);
             $('claveInput').value = privKey;
             $('claveInputMovil').value = privKey;
-            alert('✅ CUENTA CREADA\n\nGuarda esta clave privada:\n' + privKey + '\n\nSin ella perderás el acceso.');
-            setStatus('✅ Cuenta nueva','ok');
+            alert('✅ CUENTA CREADA\n\nGuarda esta clave:\n' + privKey);
         }
         const short = pubKey.slice(0,10)+'…';
         $('topPubkey').textContent = short;
         $('topPubkey').style.display = 'block';
-        $('topPubkey').onclick = () => {
-            navigator.clipboard.writeText(pubKey).then(() => {
-                $('topPubkey').textContent = '¡Copiado!';
-                setTimeout(() => $('topPubkey').textContent = short, 1500);
-            });
-        };
+        $('topPubkey').onclick = () => { navigator.clipboard.writeText(pubKey); $('topPubkey').textContent = '¡Copiado!'; setTimeout(()=>$('topPubkey').textContent=short,1500); };
         $('sideKey').textContent = pubKey;
         $('composer').style.display = 'flex';
-        
         await loadFollows();
         await loadFeed();
         await loadProfiles([pubKey]);
         updateMyAvatar();
-        
-        if (!profiles.get(pubKey)?.picture) {
-            $('myAvatar').className = 'composer-avatar ' + avClass(pubKey);
-            $('myAvatar').textContent = pubKey.slice(0,2).toUpperCase();
-        }
-    } catch(err) {
-        setStatus('❌ ' + err.message,'err');
-    }
+        setStatus('✅ Conectado','ok');
+    } catch(err) { setStatus('❌ ' + err.message,'err'); }
 }
 
-$('btnConectar').onclick = async () => {
-    $('btnConectar').disabled = true;
-    await conectar($('claveInput').value.trim());
-    $('btnConectar').disabled = false;
-};
-
-$('btnConectarMovil').onclick = async () => {
-    $('btnConectarMovil').disabled = true;
-    cerrarMenuMovil();
-    await conectar($('claveInputMovil').value.trim());
-    $('btnConectarMovil').disabled = false;
-};
+$('btnConectar').onclick = async () => { $('btnConectar').disabled = true; await conectar($('claveInput').value.trim()); $('btnConectar').disabled = false; };
+$('btnConectarMovil').onclick = async () => { $('btnConectarMovil').disabled = true; cerrarMenuMovil(); await conectar($('claveInputMovil').value.trim()); $('btnConectarMovil').disabled = false; };
+$('btnRefresh').onclick = () => isSearchMode ? exitSearchMode() : loadFeed();
 
 $('contenido').oninput = function() {
     const left = 280 - this.value.length;
-    const cc = $('charCount');
-    cc.textContent = left;
-    cc.className = left < 20 ? 'char-count over' : left < 50 ? 'char-count warn' : 'char-count';
+    $('charCount').textContent = left;
+    $('charCount').className = left < 20 ? 'char-count over' : left < 50 ? 'char-count warn' : 'char-count';
     updatePublishBtn();
 };
 
 $('btnPublicar').onclick = async () => {
     if (!privKey) return;
     let text = $('contenido').value.trim();
-
     const mediaUrls = pendingMedia.filter(m => m.remoteUrl).map(m => m.remoteUrl);
-    if (mediaUrls.length) {
-        text = (text ? text + '\n\n' : '') + mediaUrls.join('\n');
-    }
-
+    if (mediaUrls.length) text = (text ? text + '\n\n' : '') + mediaUrls.join('\n');
     if (!text) return;
-
     $('btnPublicar').disabled = true;
-    setStatus('<span class="spinner"></span> Publicando…');
+    setStatus('<span class="spinner"></span> Publicando...');
     try {
-        const ev = window.NostrTools.finishEvent({
-            kind:1, created_at: Math.floor(Date.now()/1000),
-            tags:[], content: text
-        }, privKey);
+        const ev = window.NostrTools.finishEvent({ kind:1, created_at: Math.floor(Date.now()/1000), tags: [], content: text }, privKey);
         const ok = await publishEvent(ev);
         $('contenido').value = '';
         $('charCount').textContent = '280';
@@ -1367,17 +1305,14 @@ $('btnPublicar').onclick = async () => {
             renderFeed();
         }
         setStatus(`✅ Publicado en ${ok}/${RELAYS.length} relays`, 'ok');
-    } catch(err) {
-        setStatus('❌ '+err.message,'err');
-    } finally {
-        $('btnPublicar').disabled = false;
-    }
+    } catch(err) { setStatus('❌ '+err.message,'err'); }
+    $('btnPublicar').disabled = false;
 };
-
-$('btnRefresh').onclick = () => isSearchMode ? exitSearchMode() : loadFeed();
 
 function abrirMenuMovil() { $('modalMovil').classList.add('open'); }
 function cerrarMenuMovil(e) { if (!e || e.target === $('modalMovil')) $('modalMovil').classList.remove('open'); }
+
+document.addEventListener('keydown', e => { if (e.key==='Escape') { closeLightbox(); closeLikesModal(); cerrarMenuMovil(); closeProfileModal(); if (isSearchMode) exitSearchMode(); } });
 
 let searchTimeout;
 $('searchInput').addEventListener('input', () => {
@@ -1391,12 +1326,7 @@ $('searchInput').addEventListener('input', () => {
         if (isSearchMode) exitSearchMode();
     }
 });
-
-$('searchClearBtn').addEventListener('click', () => {
-    $('searchInput').value = '';
-    $('searchClearBtn').style.display = 'none';
-    exitSearchMode();
-});
+$('searchClearBtn').addEventListener('click', () => { $('searchInput').value = ''; $('searchClearBtn').style.display = 'none'; exitSearchMode(); });
 
 loadFeed();
 </script>
