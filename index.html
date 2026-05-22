@@ -2185,10 +2185,12 @@ async function loadFeed() {
     await Promise.all([
         loadProfiles(authors),
         loadLikes(postIds),
-        loadReposts(postIds)
-        //,
-        //loadReplies(postIds)  // 🔥 Cargar respuestas
+        loadReposts(postIds),
+        loadReplies(postIds),  // 🔥 Cargar respuestas
+        loadFollowersBatch(authors)   // ← agregar esta línea
     ]);
+    
+    loadFollowersForPubkeys(authors);
     
     // Cargar likes de respuestas
     const allReplyIds = [...replies.values()].flat().map(r => r.id);
