@@ -657,6 +657,15 @@
         .view-replies-btn:hover {
             background: rgba(0,212,255,0.1);
         }        
+        .post-followers {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .post-followers:hover {
+            background: rgba(0,230,118,0.2);
+            transform: scale(1.02);
+        }        
     </style>
 </head>
 <body>
@@ -807,7 +816,21 @@
 <div class="modal-overlay" id="modalMovil" onclick="cerrarMenuMovil(event)">
     <div class="modal" style="width:90%;max-width:340px;"><div class="modal-header"><span>⚙️ Cuenta</span><button class="modal-close" onclick="cerrarMenuMovil()">✕</button></div><div class="modal-body" style="padding:14px"><input class="auth-input" id="claveInputMovil" placeholder="Clave privada hex"><button class="btn btn-primary" id="btnConectarMovil">Conectar</button></div></div>
 </div>
-
+<!-- Modal de seguidores -->
+<div class="modal-overlay" id="followersModal" onclick="closeFollowersModal(event)">
+    <div class="modal" style="width: 90%; max-width: 500px; max-height: 80vh;">
+        <div class="modal-header">
+            <span id="followersModalTitle">👥 Mis Seguidores</span>
+            <button class="modal-close" onclick="closeFollowersModal()">✕</button>
+        </div>
+        <div class="modal-body" id="followersModalBody">
+            <div style="text-align: center; padding: 20px;">
+                <div class="spinner"></div>
+                <p>Cargando seguidores...</p>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">✕</button><img id="lightboxImg" src=""></div>
 
 <script src="https://cdn.jsdelivr.net/npm/nostr-tools@1.17.0/lib/nostr.bundle.js"></script>
@@ -862,7 +885,140 @@ function initYoutube() {
 }
 
 // ✅ EJECUTAR LA FUNCIÓN
-initYoutube();    
+initYoutube(); 
+// ============================================================
+//  OBTENER LISTA DE SEGUIDORES
+// ============================================================
+
+async function getMyFollowers() {
+    if (!pubKey) {
+        alert('Conecta tu cuenta primero');
+        return [];
+    }
+    
+    setStatus('🔍 Buscando quién te sigue...');
+    
+    // Buscar eventos kind 3 que tengan a pubKey en sus tags 'p'
+    const filter = {
+        kinds: [3],
+        '#p': [pubKey],
+        limit: 500
+    };
+    
+    let followers = new Set(); // Usar Set para evitar duplicados
+    
+    await Promise.all(RELAYS.map(async url => {
+        try {
+            const ws = await openRelay(url, 5000);
+            const subId = 'myfollowers_' + Date.now();
+            ws.send(JSON.stringify(['REQ', subId, filter]));
+            
+            await new Promise((resolve) => {
+                const timeout = setTimeout(() => { ws.close(); resolve(); }, 8000);
+                
+                ws.onmessage = (e) => {
+                    try {
+                        const msg = JSON.parse(e.data);
+                        if (msg[0] === 'EVENT' && msg[2]) {
+                            // El pubkey del evento es alguien que te sigue
+                            const followerPk = msg[2].pubkey;
+                            followers.add(followerPk);
+                        }
+                        if (msg[0] === 'EOSE') {
+                            clearTimeout(timeout);
+                            ws.close();
+                            resolve();
+                        }
+                    } catch(err) {}
+                };
+                ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
+            });
+        } catch(e) {}
+    }));
+    
+    setStatus(`✅ ${followers.size} seguidores encontrados`, 'ok');
+    
+    // Cargar perfiles de los seguidores
+    if (followers.size > 0) {
+        await loadProfiles([...followers]);
+    }
+    
+    return [...followers];
+}
+
+// Mostrar modal de seguidores
+async function showMyFollowers() {
+    if (!pubKey) {
+        alert('Conecta tu cuenta para ver tus seguidores');
+        return;
+    }
+    
+    const modal = document.getElementById('followersModal');
+    const title = document.getElementById('followersModalTitle');
+    const body = document.getElementById('followersModalBody');
+    
+    title.textContent = '👥 Mis Seguidores';
+    body.innerHTML = `<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>Buscando quién te sigue...</p></div>`;
+    modal.classList.add('open');
+    
+    const followers = await getMyFollowers();
+    
+    if (followers.length === 0) {
+        body.innerHTML = `
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">👥</div>
+                <p>Aún no tienes seguidores</p>
+                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 8px;">Comparte tu perfil para que te sigan</p>
+                <button class="btn btn-outline btn-sm" onclick="copyMyPubkey()" style="margin-top: 16px;">📋 Copiar mi Pubkey</button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Mostrar lista de seguidores
+    let followersHtml = `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+    
+    for (const followerPk of followers) {
+        const profile = profiles.get(followerPk) || {};
+        const name = profile.name ? esc(profile.name) : followerPk.slice(0, 12) + '…';
+        const avatarStyle = profile.picture 
+            ? `style="background: url(${profile.picture}) center/cover no-repeat; background-size: cover;"`
+            : `class="${avClass(followerPk)}"`;
+        const avatarContent = profile.picture ? '' : avInitials(followerPk);
+        const isFollowingYou = follows.has(followerPk);
+        
+        followersHtml += `
+            <div class="follower-item" style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.03);">
+                <div ${avatarStyle} style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">${avatarContent}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600;">${name}</div>
+                    <div style="font-size: 0.65rem; color: var(--muted);">${followerPk.slice(0, 10)}…</div>
+                </div>
+                <div>
+                    ${isFollowingYou 
+                        ? `<button class="btn btn-outline btn-sm" onclick="unfollowUser('${followerPk}'); setTimeout(() => showMyFollowers(), 500)" style="padding: 4px 12px;">✓ Siguiendo</button>`
+                        : `<button class="btn btn-primary btn-sm" onclick="followUser('${followerPk}'); setTimeout(() => showMyFollowers(), 500)" style="padding: 4px 12px;">+ Seguir</button>`
+                    }
+                </div>
+            </div>
+        `;
+    }
+    
+    followersHtml += `</div>`;
+    body.innerHTML = followersHtml;
+}
+
+function closeFollowersModal(e) {
+    if (!e || e.target === document.getElementById('followersModal')) {
+        document.getElementById('followersModal').classList.remove('open');
+    }
+}
+
+function copyMyPubkey() {
+    if (!pubKey) return;
+    navigator.clipboard.writeText(pubKey);
+    setStatus('✅ Pubkey copiada', 'ok');
+}    
 // ============================================================
 //  SISTEMA DE RESPUESTAS (REPLIES)
 // ============================================================
@@ -2223,7 +2379,8 @@ function renderPost(post, isRepostOf) {
             <div class="post-meta">
                 <div class="post-name-info">
                     <span class="post-name">${name}</span>
-                    ${followerCount > 0 ? `<span class="post-followers" title="${followersTooltip}">👥 ${formatNumber(followerCount)}</span>` : ''}
+                    // AHORA - CON onclick
+                    ${followerCount > 0 ? `<span class="post-followers" title="${followersTooltip}" onclick="showUserFollowers('${post.pubkey}', '${name.replace(/'/g, "\\'")}')" style="cursor: pointer;">👥 ${formatNumber(followerCount)}</span>` : ''}
                 </div>
                 <span class="post-pubkey">${post.pubkey.slice(0,8)}…</span>
                 <span class="post-time">${ago}</span>
