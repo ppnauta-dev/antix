@@ -1704,6 +1704,34 @@ function saveYoutubeChannelData(channelId, handle) {
     localStorage.setItem('antix_youtube_channel_id', channelId);
     localStorage.setItem('antix_youtube_channel_handle', handle);
 }
+function saveYoutubeChannelFromProfile() {
+    console.log('🔍 Guardando canal de YouTube');
+    
+    const input = document.getElementById('youtubeHandleInput');
+    if (!input) {
+        console.log('❌ No se encontró el input youtubeHandleInput');
+        return;
+    }
+    
+    const value = input.value.trim();
+    console.log('💾 Valor:', value);
+    
+    if (value) {
+        youtubeChannelHandle = value;
+        localStorage.setItem('antix_youtube_channel', value);
+        console.log('✅ Canal guardado:', value);
+        if (typeof setStatus === 'function') {
+            setStatus(`✅ Canal guardado: ${value}`, 'ok');
+        }
+    } else {
+        localStorage.removeItem('antix_youtube_channel');
+        youtubeChannelHandle = '';
+        console.log('🗑️ Canal eliminado');
+        if (typeof setStatus === 'function') {
+            setStatus('✅ Canal eliminado', 'ok');
+        }
+    }
+}    
 // ============================================================
 //  PERFIL - PUBLICAR EVENTO KIND 0
 // ============================================================
