@@ -949,30 +949,23 @@ async function getMyFollowers() {
     return [...followers];
 }
 
-// Mostrar modal de seguidores
-async function showMyFollowers() {
-    if (!pubKey) {
-        alert('Conecta tu cuenta para ver tus seguidores');
-        return;
-    }
-    
+// Mostrar modal de seguidores de un usuario
+async function showUserFollowers(targetPubkey, targetName) {
     const modal = document.getElementById('followersModal');
     const title = document.getElementById('followersModalTitle');
     const body = document.getElementById('followersModalBody');
     
-    title.textContent = '👥 Mis Seguidores';
-    body.innerHTML = `<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>Buscando quién te sigue...</p></div>`;
+    title.textContent = `👥 Seguidores de ${targetName || targetPubkey.slice(0, 10)}`;
+    body.innerHTML = `<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>Cargando seguidores...</p></div>`;
     modal.classList.add('open');
     
-    const followers = await getMyFollowers();
+    const followers = await getFollowersOfUser(targetPubkey);
     
     if (followers.length === 0) {
         body.innerHTML = `
             <div style="text-align: center; padding: 30px;">
                 <div style="font-size: 3rem; margin-bottom: 16px;">👥</div>
-                <p>Aún no tienes seguidores</p>
-                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 8px;">Comparte tu perfil para que te sigan</p>
-                <button class="btn btn-outline btn-sm" onclick="copyMyPubkey()" style="margin-top: 16px;">📋 Copiar mi Pubkey</button>
+                <p>Este usuario aún no tiene seguidores</p>
             </div>
         `;
         return;
@@ -988,19 +981,20 @@ async function showMyFollowers() {
             ? `style="background: url(${profile.picture}) center/cover no-repeat; background-size: cover;"`
             : `class="${avClass(followerPk)}"`;
         const avatarContent = profile.picture ? '' : avInitials(followerPk);
-        const isFollowingYou = follows.has(followerPk);
         
         followersHtml += `
-            <div class="follower-item" style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.03);">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.03);">
                 <div ${avatarStyle} style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">${avatarContent}</div>
                 <div style="flex: 1;">
                     <div style="font-weight: 600;">${name}</div>
                     <div style="font-size: 0.65rem; color: var(--muted);">${followerPk.slice(0, 10)}…</div>
                 </div>
                 <div>
-                    ${isFollowingYou 
-                        ? `<button class="btn btn-outline btn-sm" onclick="unfollowUser('${followerPk}'); setTimeout(() => showMyFollowers(), 500)" style="padding: 4px 12px;">✓ Siguiendo</button>`
-                        : `<button class="btn btn-primary btn-sm" onclick="followUser('${followerPk}'); setTimeout(() => showMyFollowers(), 500)" style="padding: 4px 12px;">+ Seguir</button>`
+                    ${pubKey === followerPk 
+                        ? `<span style="font-size: 0.65rem; color: var(--accent);">✨ Tú</span>`
+                        : follows.has(followerPk)
+                            ? `<button class="btn btn-outline btn-sm" onclick="unfollowUser('${followerPk}'); setTimeout(() => showUserFollowers('${targetPubkey}', '${targetName}'), 500)" style="padding: 4px 12px;">✓ Siguiendo</button>`
+                            : `<button class="btn btn-primary btn-sm" onclick="followUser('${followerPk}'); setTimeout(() => showUserFollowers('${targetPubkey}', '${targetName}'), 500)" style="padding: 4px 12px;">+ Seguir</button>`
                     }
                 </div>
             </div>
