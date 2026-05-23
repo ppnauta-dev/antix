@@ -2930,6 +2930,10 @@ async function autoConnect() {
         $('claveInput').value = savedKey;
         $('claveInputMovil').value = savedKey;
         await conectar(savedKey);
+        // ✅ Asegurar que el perfil se carga
+        await loadProfiles([pubKey]);
+        updateMyAvatar();
+        renderFeed();
     } else {
         loadFeed();
     }
