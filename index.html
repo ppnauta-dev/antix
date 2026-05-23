@@ -892,53 +892,56 @@ function initYoutube() {
 //  OBTENER LISTA DE SEGUIDORES
 // ============================================================
 
-async function getMyFollowers() {
-    if (!pubKey) {
-        alert('Conecta tu cuenta primero');
-        return [];
-    }
+// ============================================================
+//  OBTENER SEGUIDORES DE UN USUARIO
+// ============================================================
+
+async function getFollowersOfUser(targetPubkey) {
+    console.log('🔍 Buscando seguidores de:', targetPubkey.slice(0, 8));
     
-    setStatus('🔍 Buscando quién te sigue...');
-    
-    // Buscar eventos kind 3 que tengan a pubKey en sus tags 'p'
     const filter = {
         kinds: [3],
-        '#p': [pubKey],
+        '#p': [targetPubkey],
         limit: 500
     };
     
-    let followers = new Set(); // Usar Set para evitar duplicados
+    let followers = new Set();
     
     await Promise.all(RELAYS.map(async url => {
         try {
             const ws = await openRelay(url, 5000);
-            const subId = 'myfollowers_' + Date.now();
+            const subId = 'followers_' + Date.now() + '_' + Math.random();
             ws.send(JSON.stringify(['REQ', subId, filter]));
             
             await new Promise((resolve) => {
-                const timeout = setTimeout(() => { ws.close(); resolve(); }, 8000);
+                const timeout = setTimeout(() => { 
+                    try { ws.close(); } catch(e) {}
+                    resolve(); 
+                }, 8000);
                 
                 ws.onmessage = (e) => {
                     try {
                         const msg = JSON.parse(e.data);
                         if (msg[0] === 'EVENT' && msg[2]) {
-                            // El pubkey del evento es alguien que te sigue
-                            const followerPk = msg[2].pubkey;
-                            followers.add(followerPk);
+                            followers.add(msg[2].pubkey);
                         }
                         if (msg[0] === 'EOSE') {
                             clearTimeout(timeout);
-                            ws.close();
+                            try { ws.close(); } catch(e) {}
                             resolve();
                         }
                     } catch(err) {}
                 };
-                ws.onerror = () => { clearTimeout(timeout); ws.close(); resolve(); };
+                ws.onerror = () => { 
+                    clearTimeout(timeout); 
+                    try { ws.close(); } catch(e) {}
+                    resolve(); 
+                };
             });
         } catch(e) {}
     }));
     
-    setStatus(`✅ ${followers.size} seguidores encontrados`, 'ok');
+    console.log(`✅ Encontrados ${followers.size} seguidores`);
     
     // Cargar perfiles de los seguidores
     if (followers.size > 0) {
