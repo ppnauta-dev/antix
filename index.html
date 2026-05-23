@@ -742,6 +742,7 @@
                 <button class="feed-tab active" id="tabGlobal" onclick="switchTab('global')">Global</button>
                 <button class="feed-tab" id="tabSiguiendo" onclick="switchTab('siguiendo')">Siguiendo</button>
                 <button class="feed-tab" id="tabMisPosts" onclick="switchTab('misposts')">Mis Posts</button>
+                <button class="feed-tab" id="tabActividad" onclick="switchTab('actividad')">Actividad</button>
             </div>
             <span id="postCount"></span>
         </div>
@@ -872,6 +873,12 @@ let postsPerPage = 10;
 let allPosts = [];
 let isLoadingMore = false;
 let hasMorePosts = true;
+let myInteractions = {
+    likes: [],      // Quién me dio like
+    reposts: [],    // Quién reposteó mis posts
+    replies: []     // Quién respondió mis posts
+};
+let lastCheckTime = 0;    
 const RELAYS = [
     'wss://relay.damus.io',
     'wss://nos.lol',
@@ -892,7 +899,202 @@ function initYoutube() {
     }
 }
 
+// ============================================================
+//  CARGAR MIS INTERACCIONES (LIKES, REPOSTS, RESPUESTAS)
+// ============================================================
 
+async function loadMyInteractions() {
+    if (!pubKey) return [];
+    
+    setStatus('🔍 Buscando interacciones...');
+    
+    // Obtener MIS posts (para saber qué IDs buscar)
+    const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 100 };
+    let myPostIds = [];
+    
+    await Promise.allSettled(RELAYS.map(url =>
+        queryRelay(url, [myPostsFilter], ev => {
+            if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
+                myPostIds.push(ev.id);
+            }
+        }, 5000)
+    ));
+    
+    console.log(`📊 Mis posts: ${myPostIds.length}`);
+    
+    if (myPostIds.length === 0) {
+        return { likes: [], reposts: [], replies: [] };
+    }
+    
+    // Buscar LIKES (kind 7) a mis posts
+    const likesFilter = { kinds: [7], '#e': myPostIds, limit: 500 };
+    let likes = [];
+    
+    await Promise.allSettled(RELAYS.map(url =>
+        queryRelay(url, [likesFilter], ev => {
+            if (ev.kind === 7) {
+                const eTag = ev.tags.find(t => t[0] === 'e');
+                if (eTag && myPostIds.includes(eTag[1])) {
+                    likes.push({
+                        id: ev.id,
+                        pubkey: ev.pubkey,
+                        postId: eTag[1],
+                        created_at: ev.created_at
+                    });
+                }
+            }
+        }, 5000)
+    ));
+    
+    // Buscar REPOSTS (kind 6) a mis posts
+    const repostsFilter = { kinds: [6], '#e': myPostIds, limit: 500 };
+    let reposts = [];
+    
+    await Promise.allSettled(RELAYS.map(url =>
+        queryRelay(url, [repostsFilter], ev => {
+            if (ev.kind === 6) {
+                const eTag = ev.tags.find(t => t[0] === 'e');
+                if (eTag && myPostIds.includes(eTag[1])) {
+                    reposts.push({
+                        id: ev.id,
+                        pubkey: ev.pubkey,
+                        postId: eTag[1],
+                        created_at: ev.created_at
+                    });
+                }
+            }
+        }, 5000)
+    ));
+    
+    // Buscar RESPUESTAS (kind 1 con tag e a mis posts)
+    const repliesFilter = { kinds: [1], '#e': myPostIds, limit: 500 };
+    let replies = [];
+    
+    await Promise.allSettled(RELAYS.map(url =>
+        queryRelay(url, [repliesFilter], ev => {
+            if (ev.kind === 1) {
+                const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
+                if (eTag && myPostIds.includes(eTag[1])) {
+                    replies.push({
+                        id: ev.id,
+                        pubkey: ev.pubkey,
+                        postId: eTag[1],
+                        content: ev.content,
+                        created_at: ev.created_at
+                    });
+                }
+            }
+        }, 5000)
+    ));
+    
+    // Cargar perfiles de los que interactuaron
+    const allInteractors = [...new Set([
+        ...likes.map(l => l.pubkey),
+        ...reposts.map(r => r.pubkey),
+        ...replies.map(r => r.pubkey)
+    ])];
+    
+    if (allInteractors.length) {
+        await loadProfiles(allInteractors);
+    }
+    
+    // Ordenar por tiempo (más reciente primero)
+    likes.sort((a, b) => b.created_at - a.created_at);
+    reposts.sort((a, b) => b.created_at - a.created_at);
+    replies.sort((a, b) => b.created_at - a.created_at);
+    
+    myInteractions = { likes, reposts, replies };
+    lastCheckTime = Date.now();
+    
+    console.log(`✅ Interacciones: ${likes.length} likes, ${reposts.length} reposts, ${replies.length} respuestas`);
+    
+    return myInteractions;
+}
+
+// Renderizar feed de actividad
+function renderActivityFeed() {
+    const allInteractions = [];
+    
+    // Agregar likes
+    myInteractions.likes.forEach(like => {
+        allInteractions.push({
+            type: 'like',
+            pubkey: like.pubkey,
+            postId: like.postId,
+            created_at: like.created_at,
+            icon: '❤️',
+            text: 'le dio like a tu post'
+        });
+    });
+    
+    // Agregar reposts
+    myInteractions.reposts.forEach(repost => {
+        allInteractions.push({
+            type: 'repost',
+            pubkey: repost.pubkey,
+            postId: repost.postId,
+            created_at: repost.created_at,
+            icon: '🔁',
+            text: 'reposteó tu post'
+        });
+    });
+    
+    // Agregar respuestas
+    myInteractions.replies.forEach(reply => {
+        allInteractions.push({
+            type: 'reply',
+            pubkey: reply.pubkey,
+            postId: reply.postId,
+            content: reply.content,
+            created_at: reply.created_at,
+            icon: '💬',
+            text: 'respondió a tu post'
+        });
+    });
+    
+    // Ordenar por tiempo
+    allInteractions.sort((a, b) => b.created_at - a.created_at);
+    
+    if (allInteractions.length === 0) {
+        $('feed').innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 3rem; margin-bottom: 16px;">🔔</div>
+                <p>Aún no tienes interacciones</p>
+                <p style="font-size: 0.75rem; color: var(--muted);">Cuando alguien likee, repostee o responda tus posts, aparecerá aquí</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+    
+    for (const interaction of allInteractions.slice(0, 50)) {
+        const profile = profiles.get(interaction.pubkey) || {};
+        const name = profile.name ? esc(profile.name) : interaction.pubkey.slice(0, 10) + '…';
+        const avatarStyle = profile.picture 
+            ? `style="background: url(${profile.picture}) center/cover no-repeat; background-size: cover;"`
+            : `class="${avClass(interaction.pubkey)}"`;
+        const avatarContent = profile.picture ? '' : avInitials(interaction.pubkey);
+        const timeAgoStr = timeAgo(interaction.created_at);
+        
+        html += `
+            <div class="interaction-item" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px;">
+                <div ${avatarStyle} style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">${avatarContent}</div>
+                <div style="flex: 1;">
+                    <div><strong>${name}</strong> ${interaction.text}</div>
+                    ${interaction.content ? `<div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">"${esc(interaction.content.substring(0, 100))}${interaction.content.length > 100 ? '…' : ''}"</div>` : ''}
+                    <div style="font-size: 0.65rem; color: var(--muted); margin-top: 4px;">${timeAgoStr}</div>
+                </div>
+                <div>
+                    <span style="font-size: 1.2rem;">${interaction.icon}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `</div>`;
+    $('feed').innerHTML = html;
+}
 // ============================================================
 //  OBTENER LISTA DE SEGUIDORES
 // ============================================================
@@ -2800,9 +3002,11 @@ function setupInfiniteScroll() {
 function switchTab(tab) {
     if (isSearchMode) exitSearchMode();
     currentTab = tab;
+    currentSkip = 0;
+    feedPosts.clear();
     
     // Actualizar tabs
-    const tabs = ['global', 'siguiendo', 'misposts'];
+    const tabs = ['global', 'siguiendo', 'misposts', 'actividad'];
     tabs.forEach(t => {
         const cap = t.charAt(0).toUpperCase() + t.slice(1);
         const tabBtn = $(`tab${cap}`);
@@ -2811,7 +3015,11 @@ function switchTab(tab) {
         if (navBtn) navBtn.classList.toggle('active', t === tab);
     });
     
-    loadFeed();
+    if (tab === 'actividad') {
+        loadMyInteractions().then(() => renderActivityFeed());
+    } else {
+        loadFeed(true);
+    }
 }
 
 async function conectar(clave) {
