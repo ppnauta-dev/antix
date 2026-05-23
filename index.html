@@ -1131,7 +1131,7 @@ async function loadReplyLikes(replyIds) {
     
     const filter = { kinds: [7], '#e': replyIds, limit: 500 };
     
-    await Promise.all(RELAYS.map(url =>
+    await Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
             if (ev.kind !== 7) return;
             const eTag = ev.tags.find(t => t[0] === 'e');
@@ -1540,7 +1540,7 @@ async function loadFollowersBatch(pubkeys) {
 
     renderFeed();  // muestra spinner/guión mientras carga
 
-    await Promise.all(RELAYS.map(url => queryFollowersFromRelay(url, toLoad)));
+    await Promise.allSettled(RELAYS.map(url => queryFollowersFromRelay(url, toLoad)));
 
     toLoad.forEach(pk => followersPending.delete(pk));
     renderFeed();
@@ -1637,7 +1637,7 @@ async function tryNip45Count(ws, subId, pubkeys, countsMap) {
         } catch(_) { clearTimeout(t); resolve(false); }
     }));
 
-    const results = await Promise.all(promises);
+    const results = await Promise.allSettled(promises);
     return results.some(r => r); // true si al menos uno funcionó
 }
 // ─── En el render, mostrar el número ────────────────────────────────────
@@ -1908,7 +1908,7 @@ async function searchGlobalNostr(query) {
     setStatus(`✅ ${feedPosts.size} resultados`, 'ok');
     const authors = [...new Set([...feedPosts.values()].map(p => p.pubkey))];
     const postIds = [...feedPosts.keys()];
-    await Promise.all([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
+    await Promise.allSettled([loadProfiles(authors), loadLikes(postIds), loadReposts(postIds)]);
     loadFollowersForPubkeys(authors);
     renderFeed();
 }
@@ -1958,7 +1958,7 @@ async function queryRelay(url, filters, onEvent, timeout=7000) {
 
 async function publishEvent(event) {
     let ok = 0;
-    await Promise.all(RELAYS.map(async url => {
+    await Promise.allSettled(RELAYS.map(async url => {
         try {
             const ws = await openRelay(url, 5000);
             ws.send(JSON.stringify(['EVENT', event]));
@@ -2171,7 +2171,7 @@ document.addEventListener('paste', e => {
 async function loadProfiles(pubkeys) {
     const missing = [...new Set(pubkeys)].filter(pk => !profiles.has(pk));
     if (!missing.length) return;
-    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[0], authors: missing }], ev => {
+    await Promise.allSettled(RELAYS.map(url => queryRelay(url, [{ kinds:[0], authors: missing }], ev => {
         if (ev.kind===0 && !profiles.has(ev.pubkey)) {
             try { profiles.set(ev.pubkey, JSON.parse(ev.content)); } catch(_) {}
         }
@@ -2181,7 +2181,7 @@ async function loadProfiles(pubkeys) {
 async function loadFollows() {
     if (!pubKey) return;
     follows.clear();
-    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[3], authors:[pubKey] }], ev => {
+    await Promise.allSettled(RELAYS.map(url => queryRelay(url, [{ kinds:[3], authors:[pubKey] }], ev => {
         if (ev.kind===3 && ev.pubkey===pubKey) ev.tags.filter(t=>t[0]==='p').forEach(t=>follows.add(t[1]));
     }, 4000)));
     renderFollowsList();
@@ -2230,7 +2230,7 @@ function renderFollowsList() {
 
 async function loadLikes(postIds) {
     if (!postIds.length) return;
-    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[7], '#e': postIds, limit: 500 }], ev => {
+    await Promise.allSettled(RELAYS.map(url => queryRelay(url, [{ kinds:[7], '#e': postIds, limit: 500 }], ev => {
         if (ev.kind!==7) return;
         const eTag = ev.tags.find(t=>t[0]==='e');
         if (eTag) {
@@ -2244,7 +2244,7 @@ async function loadLikes(postIds) {
 
 async function loadReposts(postIds) {
     if (!postIds.length) return;
-    await Promise.all(RELAYS.map(url => queryRelay(url, [{ kinds:[6], '#e': postIds, limit: 300 }], ev => {
+    await Promise.allSettled(RELAYS.map(url => queryRelay(url, [{ kinds:[6], '#e': postIds, limit: 300 }], ev => {
         if (ev.kind!==6) return;
         const eTag = ev.tags.find(t=>t[0]==='e');
         if (eTag) {
@@ -2385,7 +2385,7 @@ async function getFollowersOfUser(targetPubkey) {
     
     let followers = new Set();
     
-    await Promise.all(RELAYS.map(async url => {
+    await Promise.allSettled(RELAYS.map(async url => {
         try {
             const ws = await openRelay(url, 5000);
             const subId = 'followers_' + Date.now() + '_' + Math.random();
@@ -2635,7 +2635,7 @@ async function loadFeed(reset = true) {
         : { kinds:[1], authors: [...(pubKey?[pubKey]:[]), ...follows], limit: postsPerPage, offset: currentPage * postsPerPage };
 
     let newPosts = [];
-    await Promise.all(RELAYS.map(url =>
+    await Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
             if (ev.kind===1 && !feedPosts.has(ev.id)) {
                 feedPosts.set(ev.id, ev);
@@ -2660,7 +2660,7 @@ async function loadFeed(reset = true) {
     const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
     const newPostIds = newPosts.map(p => p.id);
     
-    await Promise.all([
+    await Promise.allSettled([
         loadProfiles(newAuthors),
         loadLikes(newPostIds),
         loadReposts(newPostIds),
