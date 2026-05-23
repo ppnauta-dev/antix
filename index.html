@@ -862,7 +862,10 @@ let expandedReplies = new Set(); // posts con respuestas expandidas
 // Configuración de firma
 let firmaAutomatica = true;
 let textoFirma = '\n\n---\n📱 Publicado desde Anti X - El cliente Nostr que sube imágenes directas\n🔗 https://ppnauta-dev.github.io/antix/';    
-
+// Configuración
+let youtubeChannelId = '';
+let youtubeChannelHandle = '';
+let youtubeApiKey = ''; // Necesitas una API key de Google (gratis)
 
 const RELAYS = [
     'wss://relay.damus.io',
@@ -2702,10 +2705,7 @@ function extractBloggerDescription(html) {
 //  LISTA DE VIDEOS DE YOUTUBE
 // ============================================================
 
-// Configuración
-let youtubeChannelId = '';
-let youtubeChannelHandle = '';
-let youtubeApiKey = ''; // Necesitas una API key de Google (gratis)
+
 
 // Guardar canal
 function saveYoutubeChannelData(channelId, handle) {
