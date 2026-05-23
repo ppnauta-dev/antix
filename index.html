@@ -912,7 +912,7 @@ async function getFollowersOfUser(targetPubkey) {
     
     let followers = new Set();
     
-    await Promise.all(RELAYS.map(async url => {
+    await Promise.allSettled(RELAYS.map(async url => {
         try {
             const ws = await openRelay(url, 5000);
             const subId = 'followers_' + Date.now() + '_' + Math.random();
