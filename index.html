@@ -866,12 +866,7 @@ let textoFirma = '\n\n---\n📱 Publicado desde Anti X - El cliente Nostr que su
 let youtubeChannelId = '';
 let youtubeChannelHandle = '';
 let youtubeApiKey = ''; // Necesitas una API key de Google (gratis)
-// Estado de paginación
-let currentPage = 0;
-let postsPerPage = 10;
-let allPosts = [];
-let isLoadingMore = false;
-let hasMorePosts = true;
+
 const RELAYS = [
     'wss://relay.damus.io',
     'wss://nos.lol',
@@ -2616,85 +2611,53 @@ function renderFeed() {
     $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
 }
 
-async function loadFeed(reset = true) {
+async function loadFeed() {
     if (isSearchMode) return;
-    
-    if (reset) {
-        setStatus('<span class="spinner"></span> Cargando feed...');
-        currentPage = 0;
-        allPosts = [];
-        feedPosts.clear();
-        hasMorePosts = true;
-    }
-    
-    if (isLoadingMore) return;
-    isLoadingMore = true;
-    
-    const filter = currentTab === 'global' 
-        ? { kinds:[1], limit: postsPerPage, offset: currentPage * postsPerPage }
-        : { kinds:[1], authors: [...(pubKey?[pubKey]:[]), ...follows], limit: postsPerPage, offset: currentPage * postsPerPage };
+    setStatus('<span class="spinner"></span> Cargando feed...');
+    feedPosts.clear();
 
-    let newPosts = [];
+    let filter;
+    
+    if (currentTab === 'global') {
+        filter = { kinds:[1], limit: 40 };
+    } else if (currentTab === 'siguiendo') {
+        filter = { kinds:[1], authors: [...(pubKey?[pubKey]:[]), ...follows], limit: 60 };
+    } else if (currentTab === 'misposts') {
+        // 🔥 MIS POSTS - solo los que publiqué yo
+        if (!pubKey) {
+            setStatus('🔓 Conecta tu cuenta para ver tus posts', '');
+            $('feed').innerHTML = `<div class="empty-state">Conecta tu cuenta para ver tus propios posts.</div>`;
+            return;
+        }
+        filter = { kinds:[1], authors: [pubKey], limit: 100 };
+    }
+
     await Promise.all(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
-            if (ev.kind===1 && !feedPosts.has(ev.id)) {
-                feedPosts.set(ev.id, ev);
-                newPosts.push(ev);
-            }
+            if (ev.kind===1) feedPosts.set(ev.id, ev);
         }, 7000)
     ));
-    
-    if (newPosts.length === 0) {
-        hasMorePosts = false;
-        isLoadingMore = false;
-        if (currentPage === 0 && feedPosts.size === 0) {
-            $('feed').innerHTML = `<div class="empty-state">Sin posts.</div>`;
-        }
-        return;
-    }
-    
-    allPosts = [...allPosts, ...newPosts];
-    currentPage++;
-    
-    // Procesar los nuevos posts
-    const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
-    const newPostIds = newPosts.map(p => p.id);
-    
+
+    const postIds = [...feedPosts.keys()];
+    const authors = [...new Set([...feedPosts.values()].map(p=>p.pubkey))];
+
     await Promise.all([
-        loadProfiles(newAuthors),
-        loadLikes(newPostIds),
-        loadReposts(newPostIds),
-        loadReplies(newPostIds)
+        loadProfiles(authors),
+        loadLikes(postIds),
+        loadReposts(postIds),
+        loadReplies(postIds)
     ]);
     
-    // Cargar seguidores solo de los autores nuevos
-    loadFollowersForPubkeys(newAuthors);
+    const allReplyIds = [...replies.values()].flat().map(r => r.id);
+    if (allReplyIds.length) {
+        await loadReplyLikes(allReplyIds);
+    }
+    
+    setStatus('<span class="spinner"></span> Cargando seguidores...');
+    await loadFollowersForPubkeys(authors);
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
-    isLoadingMore = false;
-    
-    // Agregar detector de scroll para cargar más
-    setupInfiniteScroll();
-}
-
-function setupInfiniteScroll() {
-    const feedContainer = document.getElementById('feed');
-    if (!feedContainer) return;
-    
-    const observer = new IntersectionObserver((entries) => {
-        const lastEntry = entries[0];
-        if (lastEntry.isIntersecting && !isLoadingMore && hasMorePosts && !isSearchMode) {
-            // El usuario llegó al final, cargar más
-            loadFeed(false);
-        }
-    }, { threshold: 0.1 });
-    
-    // Observar el último post
-    const lastPost = feedContainer.lastElementChild;
-    if (lastPost) {
-        observer.observe(lastPost);
-    }
 }
 
 function switchTab(tab) {
