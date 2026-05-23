@@ -2559,7 +2559,6 @@ function renderPost(post, isRepostOf) {
             <div class="post-meta">
                 <div class="post-name-info">
                     <span class="post-name">${name}</span>
-                    // AHORA - CON onclick
                     ${followerCount > 0 ? `<span class="post-followers" title="${followersTooltip}" onclick="showUserFollowers('${post.pubkey}', '${name.replace(/'/g, "\\'")}')" style="cursor: pointer;">👥 ${formatNumber(followerCount)}</span>` : ''}
                 </div>
                 <span class="post-pubkey">${post.pubkey.slice(0,8)}…</span>
