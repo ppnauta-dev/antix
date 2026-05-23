@@ -1034,7 +1034,7 @@ async function loadReplies(postIds) {
     
     const filter = { kinds: [1], '#e': postIds, limit: 500 };
     
-    await Promise.all(RELAYS.map(url =>
+    await Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
             if (ev.kind !== 1) return;
             const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
