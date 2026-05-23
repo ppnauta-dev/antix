@@ -2616,28 +2616,61 @@ function renderFeed() {
     $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
 }
 
+// Variables para paginación por tiempo
+let lastTimestamp = null;  // Guarda el timestamp del último post cargado
+let isLoadingMore = false;
+let hasMorePosts = true;
+const POSTS_PER_PAGE = 10;
+
 async function loadFeed(reset = true) {
     if (isSearchMode) return;
     
     if (reset) {
         setStatus('<span class="spinner"></span> Cargando feed...');
-        currentPage = 0;
-        allPosts = [];
+        lastTimestamp = null;  // Resetear timestamp
         feedPosts.clear();
         hasMorePosts = true;
+        currentPage = 0;
     }
     
     if (isLoadingMore) return;
     isLoadingMore = true;
     
-    const filter = currentTab === 'global' 
-        ? { kinds:[1], limit: postsPerPage, offset: currentPage * postsPerPage }
-        : { kinds:[1], authors: [...(pubKey?[pubKey]:[]), ...follows], limit: postsPerPage, offset: currentPage * postsPerPage };
-
+    // Construir filtro con since (timestamp del último post)
+    let filter;
+    if (currentTab === 'global') {
+        filter = { kinds: [1], limit: POSTS_PER_PAGE };
+        if (lastTimestamp) {
+            filter.until = lastTimestamp;  // Posts más antiguos que el último
+        }
+    } else if (currentTab === 'siguiendo') {
+        filter = { 
+            kinds: [1], 
+            authors: [...(pubKey ? [pubKey] : []), ...follows], 
+            limit: POSTS_PER_PAGE 
+        };
+        if (lastTimestamp) {
+            filter.until = lastTimestamp;
+        }
+    } else if (currentTab === 'misposts') {
+        if (!pubKey) {
+            setStatus('🔓 Conecta tu cuenta para ver tus posts', '');
+            $('feed').innerHTML = `<div class="empty-state">Conecta tu cuenta para ver tus propios posts.</div>`;
+            isLoadingMore = false;
+            return;
+        }
+        filter = { kinds: [1], authors: [pubKey], limit: POSTS_PER_PAGE };
+        if (lastTimestamp) {
+            filter.until = lastTimestamp;
+        }
+    }
+    
+    console.log(`📡 Consultando posts con until=${lastTimestamp || 'ninguno'}`);
+    
     let newPosts = [];
     await Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [filter], ev => {
-            if (ev.kind===1 && !feedPosts.has(ev.id)) {
+            if (ev.kind === 1 && !feedPosts.has(ev.id)) {
                 feedPosts.set(ev.id, ev);
                 newPosts.push(ev);
             }
@@ -2647,16 +2680,24 @@ async function loadFeed(reset = true) {
     if (newPosts.length === 0) {
         hasMorePosts = false;
         isLoadingMore = false;
-        if (currentPage === 0 && feedPosts.size === 0) {
+        if (reset && feedPosts.size === 0) {
             $('feed').innerHTML = `<div class="empty-state">Sin posts.</div>`;
         }
+        setStatus(`✓ ${feedPosts.size} posts`, 'ok');
+        renderFeed();
         return;
     }
     
-    allPosts = [...allPosts, ...newPosts];
-    currentPage++;
+    // Ordenar posts por tiempo (más reciente primero)
+    newPosts.sort((a, b) => b.created_at - a.created_at);
     
-    // Procesar los nuevos posts
+    // Actualizar lastTimestamp con el post MÁS ANTIGUO de esta carga
+    const oldestPost = [...newPosts].sort((a, b) => a.created_at - b.created_at)[0];
+    if (oldestPost) {
+        lastTimestamp = oldestPost.created_at;
+    }
+    
+    // Cargar metadatos de los nuevos posts
     const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
     const newPostIds = newPosts.map(p => p.id);
     
@@ -2667,15 +2708,73 @@ async function loadFeed(reset = true) {
         loadReplies(newPostIds)
     ]);
     
-    // Cargar seguidores solo de los autores nuevos
+    // Cargar seguidores (en segundo plano)
     loadFollowersForPubkeys(newAuthors);
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
     isLoadingMore = false;
     
-    // Agregar detector de scroll para cargar más
+    // Configurar scroll infinito
     setupInfiniteScroll();
+}
+
+// Función para cargar más posts (scroll infinito)
+function setupInfiniteScroll() {
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMorePosts && !isLoadingMore && !isSearchMode) {
+            console.log('📜 Cargando más posts...');
+            loadFeed(false);  // reset=false para cargar más
+        }
+    }, { threshold: 0.1 });
+    
+    const loadMoreTrigger = document.getElementById('loadMoreTrigger');
+    if (loadMoreTrigger) {
+        observer.observe(loadMoreTrigger);
+    } else {
+        // Crear trigger si no existe
+        const trigger = document.createElement('div');
+        trigger.id = 'loadMoreTrigger';
+        trigger.style.height = '10px';
+        const feed = document.getElementById('feed');
+        if (feed && !document.getElementById('loadMoreTrigger')) {
+            feed.appendChild(trigger);
+            observer.observe(trigger);
+        }
+    }
+}
+
+// Modifica renderFeed para incluir el trigger de scroll
+function renderFeed() {
+    let posts = [...feedPosts.values()];
+    
+    if (!isSearchMode && currentTab === 'siguiendo') {
+        posts = posts.filter(p => follows.has(p.pubkey) || p.pubkey === pubKey);
+    }
+    
+    posts.sort((a, b) => b.created_at - a.created_at);
+    
+    if (isSearchMode) {
+        $('postCount').innerHTML = `<span class="search-badge">🔍 ${posts.length} resultados <button onclick="exitSearchMode()">✕</button></span>`;
+    } else {
+        $('postCount').innerHTML = `${posts.length} posts`;
+    }
+    
+    if (!posts.length && !isLoadingMore) {
+        $('feed').innerHTML = `<div class="empty-state">${isSearchMode ? 'No hay resultados' : (currentTab === 'siguiendo' ? 'Aún no sigues a nadie.' : 'Sin posts.')}</div>`;
+        return;
+    }
+    
+    let feedHtml = posts.map(p => renderPost(p)).join('');
+    
+    // Agregar trigger para scroll infinito
+    if (hasMorePosts && !isSearchMode && posts.length > 0) {
+        feedHtml += `<div id="loadMoreTrigger" style="height: 20px; text-align: center; padding: 10px;">
+            ${isLoadingMore ? '<span class="spinner"></span> Cargando más...' : '⬇️'}
+        </div>`;
+    }
+    
+    $('feed').innerHTML = feedHtml;
 }
 
 function setupInfiniteScroll() {
