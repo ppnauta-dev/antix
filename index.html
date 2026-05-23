@@ -1697,7 +1697,13 @@ function compressProfileImage(file, maxWidth, maxHeight) {
         img.src = objUrl;
     });
 }
-
+// Guardar canal
+function saveYoutubeChannelData(channelId, handle) {
+    youtubeChannelId = channelId;
+    youtubeChannelHandle = handle;
+    localStorage.setItem('antix_youtube_channel_id', channelId);
+    localStorage.setItem('antix_youtube_channel_handle', handle);
+}
 // ============================================================
 //  PERFIL - PUBLICAR EVENTO KIND 0
 // ============================================================
@@ -2700,13 +2706,7 @@ function extractBloggerDescription(html) {
 
 
 
-// Guardar canal
-function saveYoutubeChannelData(channelId, handle) {
-    youtubeChannelId = channelId;
-    youtubeChannelHandle = handle;
-    localStorage.setItem('antix_youtube_channel_id', channelId);
-    localStorage.setItem('antix_youtube_channel_handle', handle);
-}
+
 
 function loadYoutubeChannelData() {
     youtubeChannelId = localStorage.getItem('antix_youtube_channel_id') || '';
