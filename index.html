@@ -3105,7 +3105,7 @@ async function loadFeed(reset = true) {
     // ✅ CORRECCIÓN: AÑADIR AWAIT
     if (newAuthors.length > 0) {
         setStatus('<span class="spinner"></span> Cargando seguidores...');
-        await loadFollowersForPubkeys(newAuthors);
+        loadFollowersForPubkeys(newAuthors);
     }
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
