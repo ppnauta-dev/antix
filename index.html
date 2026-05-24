@@ -910,34 +910,32 @@ function initYoutube() {
 // ============================================================
 const INTERACTIONS_CACHE_KEY = 'antix_interactions';
 
+
+
+
+// Variable en memoria — se resetea al recargar
+let interactionsCache = null;
+
 function saveInteractionsCache(data) {
-    try {
-        sessionStorage.setItem(INTERACTIONS_CACHE_KEY, JSON.stringify({
-            pubKey,                           // invalidar si cambia el usuario
-            ts: Date.now(),
-            likes:   data.likes   || [],
-            reposts: data.reposts || [],
-            replies: data.replies || []
-        }));
-    } catch(_) {}
+    interactionsCache = {
+        pubKey,
+        ts: Date.now(),
+        likes:   data.likes   || [],
+        reposts: data.reposts || [],
+        replies: data.replies || []
+    };
 }
 
 function loadInteractionsCache() {
-    try {
-        const raw = sessionStorage.getItem(INTERACTIONS_CACHE_KEY);
-        if (!raw) return null;
-        const cached = JSON.parse(raw);
-        // Invalidar si el usuario cambió o tiene más de 5 minutos
-        if (cached.pubKey !== pubKey) return null;
-        if (Date.now() - cached.ts > 5 * 60 * 1000) return null;
-        return cached;
-    } catch(_) { return null; }
+    if (!interactionsCache) return null;
+    if (interactionsCache.pubKey !== pubKey) return null;
+    if (Date.now() - interactionsCache.ts > 5 * 60 * 1000) return null;
+    return interactionsCache;
 }
 
 function clearInteractionsCache() {
-    sessionStorage.removeItem(INTERACTIONS_CACHE_KEY);
+    interactionsCache = null;
 }
-
 // ============================================================
 //  CARGA DE INTERACCIONES CON CACHÉ
 // ============================================================
