@@ -1164,7 +1164,7 @@ async function loadMyInteractions() {
     const repliesFilter = { kinds: [1], '#e': myPostIds, limit: 500 };
     let replies = [];
     
-    await Promise.allSettled(RELAYS.map(url =>
+    Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [repliesFilter], ev => {
             if (ev.kind === 1) {
                 const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
