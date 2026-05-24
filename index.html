@@ -3003,23 +3003,7 @@ function buildUrlPreviewHtml(metadata) {
         </div>
     `;
 }
-function renderFeed() {
-    let posts = [...feedPosts.values()];
-    if (!isSearchMode && currentTab === 'siguiendo') {
-        posts = posts.filter(p => follows.has(p.pubkey) || p.pubkey === pubKey);
-    }
-    posts.sort((a,b) => b.created_at - a.created_at);
-    if (isSearchMode) {
-        $('postCount').innerHTML = `<span class="search-badge">🔍 ${posts.length} resultados <button onclick="exitSearchMode()">✕</button></span>`;
-    } else {
-        $('postCount').innerHTML = `${posts.length} posts`;
-    }
-    if (!posts.length) {
-        $('feed').innerHTML = `<div class="empty-state">${isSearchMode ? 'No hay resultados' : (currentTab==='siguiendo' ? 'Aún no sigues a nadie.' : 'Sin posts.')}</div>`;
-        return;
-    }
-    $('feed').innerHTML = posts.map(p => renderPost(p)).join('');
-}
+
 
 // Variables para paginación por tiempo
 let lastTimestamp = null;  // Guarda el timestamp del último post cargado
