@@ -1102,14 +1102,7 @@ async function loadMyInteractions() {
     
     setStatus('🔍 Buscando interacciones...');
     
-    // ✅ TIMEOUT GLOBAL - 5 segundos máximo
-    const timeoutPromise = new Promise((resolve) => {
-        setTimeout(() => {
-            console.log('⏰ Timeout en loadMyInteractions');
-            setStatus('⚠️ Actividad: timeout (cargando en segundo plano)', '');
-            resolve({ likes: [], reposts: [], replies: [] });
-        }, 5000);
-    });
+
     
     const interactionsPromise = (async () => {
         // Obtener MIS posts
@@ -3129,27 +3122,29 @@ async function loadFeed(reset = true) {
 
 // Función para cargar más posts (scroll infinito)
 function setupInfiniteScroll() {
-    const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMorePosts && !isLoadingMore && !isSearchMode) {
-            console.log('📜 Cargando más posts...');
-            loadFeed(false);  // reset=false para cargar más
-        }
-    }, { threshold: 0.1 });
+    const feed = document.getElementById('feed');
+    if (!feed) return;
     
-    const loadMoreTrigger = document.getElementById('loadMoreTrigger');
-    if (loadMoreTrigger) {
-        observer.observe(loadMoreTrigger);
-    } else {
-        // Crear trigger si no existe
-        const trigger = document.createElement('div');
-        trigger.id = 'loadMoreTrigger';
-        trigger.style.height = '10px';
-        const feed = document.getElementById('feed');
-        if (feed && !document.getElementById('loadMoreTrigger')) {
-            feed.appendChild(trigger);
-            observer.observe(trigger);
-        }
+    if (window.scrollObserver) {
+        window.scrollObserver.disconnect();
     }
+    
+    window.scrollObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMorePosts && !isLoadingMore && !isSearchMode) {
+            console.log('📜 Scroll detectado, currentPage:', currentPage, 'hasMore:', hasMorePosts);
+            
+            // ✅ Si currentPage es 0 pero ya hay posts, algo está mal - forzar reset
+            if (currentPage === 0 && feedPosts.size > 0) {
+                console.log('⚠️ Detectado estado corrupto, forzando reset...');
+                currentPage = 1;  // Forzar para que no se quede en 0
+            }
+            
+            loadFeed(false);
+        }
+    }, { threshold: 0.1, rootMargin: '100px' });
+    
+    const sentinel = document.getElementById('loadMoreTrigger') || feed.lastElementChild;
+    if (sentinel) window.scrollObserver.observe(sentinel);
 }
 
 // Modifica renderFeed para incluir el trigger de scroll
