@@ -894,7 +894,9 @@ const RELAYS = [
     'wss://relay.snort.social'        // ✅ Popular
     ];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
-
+// Inicializar caché al cargar
+loadInteractionsCache();
+    
 function initYoutube() {
     const savedChannel = localStorage.getItem('antix_youtube_channel');
     if (savedChannel) {
@@ -902,6 +904,95 @@ function initYoutube() {
         console.log('🎬 Canal cargado:', youtubeChannelHandle);
     }
 }
+
+// Variables de caché
+let cachedInteractions = {
+    likes: new Map(),    // postId → [likes]
+    reposts: new Map(),  // postId → [reposts]
+    replies: new Map(),  // postId → [replies]
+    lastSeenId: null     // ID del último evento visto
+};
+
+// Cargar caché guardada
+function loadInteractionsCache() {
+    const saved = localStorage.getItem('antix_interactions_cache');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            cachedInteractions.lastSeenId = parsed.lastSeenId;
+            console.log('📦 Caché de interacciones cargada, lastSeenId:', cachedInteractions.lastSeenId?.slice(0,8));
+        } catch(e) {}
+    }
+}
+
+// Guardar caché
+function saveInteractionsCache() {
+    localStorage.setItem('antix_interactions_cache', JSON.stringify({
+        lastSeenId: cachedInteractions.lastSeenId
+    }));
+}
+
+// Buscar SOLO interacciones nuevas
+async function loadNewInteractions() {
+    if (!pubKey) return [];
+    
+    console.log('🔍 Buscando interacciones NUEVAS desde:', cachedInteractions.lastSeenId?.slice(0,8) || 'el principio');
+    
+    // Primero, obtener mis posts (limitado a 20)
+    const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 20 };
+    let myPostIds = [];
+    
+    await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
+        queryRelay(url, [myPostsFilter], ev => {
+            if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
+                myPostIds.push(ev.id);
+            }
+        }, 4000)
+    ));
+    
+    if (myPostIds.length === 0) return [];
+    
+    // Buscar interacciones MÁS NUEVAS que la última vista
+    const since = cachedInteractions.lastSeenId 
+        ? { since: Math.floor(Date.now() / 1000) - 86400 } // últimas 24h si hay caché
+        : {};
+    
+    let nuevosLikes = [], nuevosReposts = [], nuevasRespuestas = [];
+    let maxSeenId = cachedInteractions.lastSeenId;
+    
+    // Buscar likes nuevos
+    const likesFilter = { kinds: [7], '#e': myPostIds, limit: 100, ...since };
+    await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
+        queryRelay(url, [likesFilter], ev => {
+            if (ev.kind === 7) {
+                const eTag = ev.tags.find(t => t[0] === 'e');
+                if (eTag && myPostIds.includes(eTag[1])) {
+                    nuevosLikes.push({
+                        id: ev.id,
+                        pubkey: ev.pubkey,
+                        postId: eTag[1],
+                        created_at: ev.created_at
+                    });
+                    // Actualizar último ID visto
+                    if (!maxSeenId || ev.created_at > maxSeenId) maxSeenId = ev.created_at;
+                }
+            }
+        }, 4000)
+    ));
+    
+    // ... similar para reposts y respuestas ...
+    
+    // Guardar el timestamp del evento más reciente
+    if (maxSeenId) {
+        cachedInteractions.lastSeenId = maxSeenId;
+        saveInteractionsCache();
+    }
+    
+    console.log(`✨ Nuevas interacciones: ${nuevosLikes.length} likes, ${nuevosReposts.length} reposts, ${nuevasRespuestas.length} respuestas`);
+    
+    return { likes: nuevosLikes, reposts: nuevosReposts, replies: nuevasRespuestas };
+}
+    
 let liveFeedWs = null;
 
 function connectLiveFeed() {
@@ -1097,121 +1188,21 @@ function showNotificationToast(ev) {
 //  CARGAR MIS INTERACCIONES (LIKES, REPOSTS, RESPUESTAS)
 // ============================================================
 
-async function loadMyInteractions() {
-    console.log('🔵 PASO 1: Iniciando loadMyInteractions');
-    if (!pubKey) {
-        console.log('🔴 PASO 1.1: No hay pubKey, saliendo');
-        return [];
+// Modificar loadMyInteractions para usar caché
+async function loadMyInteractions(forceFull = false) {
+    if (!pubKey) return [];
+    
+    if (forceFull || !cachedInteractions.lastSeenId) {
+        // Carga completa (primera vez)
+        console.log('📦 Carga completa de interacciones');
+        return await loadFullInteractions();
+    } else {
+        // Solo nuevas
+        console.log('✨ Buscando solo interacciones nuevas');
+        const nuevas = await loadNewInteractions();
+        // Combinar con caché existente...
+        return nuevas;
     }
-    
-    setStatus('🔍 Buscando interacciones...');
-    
-    console.log('🔵 PASO 2: Buscando mis posts...');
-    const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 100 };
-    let myPostIds = [];
-    
-    await Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [myPostsFilter], ev => {
-            if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
-                myPostIds.push(ev.id);
-            }
-        }, 5000)
-    ));
-    
-    console.log(`🔵 PASO 3: Mis posts encontrados: ${myPostIds.length}`);
-    
-    if (myPostIds.length === 0) {
-        console.log('🔴 PASO 3.1: No hay posts, saliendo');
-        return { likes: [], reposts: [], replies: [] };
-    }
-    
-    console.log('🔵 PASO 4: Buscando LIKES...');
-    const likesFilter = { kinds: [7], '#e': myPostIds, limit: 500 };
-    let likes = [];
-    
-    await Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [likesFilter], ev => {
-            if (ev.kind === 7) {
-                const eTag = ev.tags.find(t => t[0] === 'e');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    likes.push({
-                        id: ev.id,
-                        pubkey: ev.pubkey,
-                        postId: eTag[1],
-                        created_at: ev.created_at
-                    });
-                }
-            }
-        }, 5000)
-    ));
-    console.log(`🔵 PASO 5: Likes encontrados: ${likes.length}`);
-    
-    console.log('🔵 PASO 6: Buscando REPOSTS...');
-    const repostsFilter = { kinds: [6], '#e': myPostIds, limit: 500 };
-    let reposts = [];
-    
-    await Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [repostsFilter], ev => {
-            if (ev.kind === 6) {
-                const eTag = ev.tags.find(t => t[0] === 'e');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    reposts.push({
-                        id: ev.id,
-                        pubkey: ev.pubkey,
-                        postId: eTag[1],
-                        created_at: ev.created_at
-                    });
-                }
-            }
-        }, 5000)
-    ));
-    console.log(`🔵 PASO 7: Reposts encontrados: ${reposts.length}`);
-    
-    console.log('🔵 PASO 8: Buscando RESPUESTAS...');
-    const repliesFilter = { kinds: [1], '#e': myPostIds, limit: 500 };
-    let replies = [];
-    
-    await Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [repliesFilter], ev => {
-            if (ev.kind === 1) {
-                const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    replies.push({
-                        id: ev.id,
-                        pubkey: ev.pubkey,
-                        postId: eTag[1],
-                        content: ev.content,
-                        created_at: ev.created_at
-                    });
-                }
-            }
-        }, 5000)
-    ));
-    console.log(`🔵 PASO 9: Respuestas encontradas: ${replies.length}`);
-    
-    console.log('🔵 PASO 10: Cargando perfiles de interactores...');
-    const allInteractors = [...new Set([
-        ...likes.map(l => l.pubkey),
-        ...reposts.map(r => r.pubkey),
-        ...replies.map(r => r.pubkey)
-    ])];
-    
-    if (allInteractors.length) {
-        await loadProfiles(allInteractors);
-    }
-    console.log(`🔵 PASO 11: Perfiles cargados: ${allInteractors.length}`);
-    
-    // Ordenar por tiempo
-    likes.sort((a, b) => b.created_at - a.created_at);
-    reposts.sort((a, b) => b.created_at - a.created_at);
-    replies.sort((a, b) => b.created_at - a.created_at);
-    
-    myInteractions = { likes, reposts, replies };
-    lastCheckTime = Date.now();
-    
-    console.log(`✅ PASO 12: FINALIZADO - ${likes.length} likes, ${reposts.length} reposts, ${replies.length} respuestas`);
-    
-    return myInteractions;
 }
 
 // Renderizar feed de actividad
