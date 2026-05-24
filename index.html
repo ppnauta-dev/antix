@@ -3014,82 +3014,64 @@ setupInfiniteScroll();
 let lastTimestamp = null;  // Guarda el timestamp del último post cargado
 const POSTS_PER_PAGE = 10;
 
+let feedWs = null;
+
 async function loadFeed(reset = true) {
     if (isSearchMode) return;
-
+    
     if (reset) {
-        setStatus('<span class="spinner"></span> Cargando feed...');
-        lastTimestamp = null;
+        // Cerrar conexión anterior si existe
+        if (feedWs) {
+            try { feedWs.close(); } catch(e) {}
+            feedWs = null;
+        }
+        
+        setStatus('📡 Conectando a feed en vivo...');
         feedPosts.clear();
-        hasMorePosts = true;
         currentPage = 0;
-        isLoadingMore = false;  // ← forzar liberación al resetear
-        $('feed').innerHTML = '';
-    }
-
-    if (isLoadingMore) return;
-    isLoadingMore = true;
-
-    try {
-        let filter;
-        if (currentTab === 'global') {
-            filter = { kinds: [1], limit: POSTS_PER_PAGE };
-            if (lastTimestamp) filter.until = lastTimestamp;
-        } else if (currentTab === 'siguiendo') {
-            filter = { kinds: [1], authors: [...(pubKey ? [pubKey] : []), ...follows], limit: POSTS_PER_PAGE };
-            if (lastTimestamp) filter.until = lastTimestamp;
-        } else if (currentTab === 'misposts') {
-            if (!pubKey) {
-                setStatus('🔓 Conecta tu cuenta', '');
-                $('feed').innerHTML = `<div class="empty-state">Conecta tu cuenta.</div>`;
-                return;  // el finally libera isLoadingMore
-            }
-            filter = { kinds: [1], authors: [pubKey], limit: POSTS_PER_PAGE };
-            if (lastTimestamp) filter.until = lastTimestamp;
-        }
-
-        let newPosts = [];
-        await Promise.allSettled(RELAYS.map(url =>
-            queryRelay(url, [filter], ev => {
-                if (ev.kind === 1 && !feedPosts.has(ev.id)) {
-                    feedPosts.set(ev.id, ev);
-                    newPosts.push(ev);
+        hasMorePosts = true;
+        
+        // Abrir nueva conexión en modo streaming (DE A UNO)
+        feedWs = new WebSocket('wss://relay.damus.io');
+        
+        feedWs.onopen = () => {
+            console.log('✅ Feed en vivo conectado');
+            setStatus('📡 Escuchando posts...');
+            feedWs.send(JSON.stringify(['REQ', 'feed_live_' + Date.now(), { kinds: [1], limit: 50 }]));
+        };
+        
+        feedWs.onmessage = (e) => {
+            try {
+                const msg = JSON.parse(e.data);
+                if (msg[0] === 'EVENT' && msg[2]?.kind === 1) {
+                    const post = msg[2];
+                    if (!feedPosts.has(post.id)) {
+                        feedPosts.set(post.id, post);
+                        
+                        // Cargar perfil del autor si es necesario
+                        if (!profiles.has(post.pubkey)) {
+                            loadProfiles([post.pubkey]);
+                        }
+                        
+                        renderFeed(); // ← Se actualiza DE A UNO
+                        setStatus(`📥 ${feedPosts.size} posts`);
+                    }
                 }
-            }, 7000)
-        ));
-
-        if (newPosts.length === 0) {
-            hasMorePosts = false;
-            if (reset && feedPosts.size === 0) {
-                $('feed').innerHTML = `<div class="empty-state">Sin posts.</div>`;
-            }
-            setStatus(`✓ ${feedPosts.size} posts`, 'ok');
-            renderFeed();
-            return;  // el finally libera isLoadingMore
-        }
-
-        newPosts.sort((a, b) => b.created_at - a.created_at);
-        const oldestPost = [...newPosts].sort((a, b) => a.created_at - b.created_at)[0];
-        if (oldestPost) lastTimestamp = oldestPost.created_at;
-        currentPage++;
-
-        const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
-        const newPostIds = newPosts.map(p => p.id);
-
-        await Promise.allSettled([
-            loadProfiles(newAuthors),
-            loadLikes(newPostIds),
-            loadReposts(newPostIds),
-            loadReplies(newPostIds)
-        ]);
-
-        loadFollowersForPubkeys(newAuthors);
-
-        setStatus(`✓ ${feedPosts.size} posts`, 'ok');
-        renderFeed();
-
-    } finally {
-        isLoadingMore = false;  // ← siempre se libera, pase lo que pase
+            } catch(err) {}
+        };
+        
+        feedWs.onerror = () => {
+            console.log('❌ Error en feed en vivo');
+            setStatus('❌ Error de conexión', 'err');
+        };
+        
+        feedWs.onclose = () => {
+            console.log('🔌 Feed desconectado');
+            // Reconectar después de 5 segundos
+            setTimeout(() => {
+                if (feedWs === null) loadFeed(true);
+            }, 5000);
+        };
     }
 }
 
