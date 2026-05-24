@@ -1106,7 +1106,7 @@ async function loadMyInteractions() {
     const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 100 };
     let myPostIds = [];
     
-    await Promise.allSettled(RELAYS.map(url =>
+    Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [myPostsFilter], ev => {
             if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
                 myPostIds.push(ev.id);
@@ -1124,7 +1124,7 @@ async function loadMyInteractions() {
     const likesFilter = { kinds: [7], '#e': myPostIds, limit: 500 };
     let likes = [];
     
-    await Promise.allSettled(RELAYS.map(url =>
+    Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [likesFilter], ev => {
             if (ev.kind === 7) {
                 const eTag = ev.tags.find(t => t[0] === 'e');
@@ -1144,7 +1144,7 @@ async function loadMyInteractions() {
     const repostsFilter = { kinds: [6], '#e': myPostIds, limit: 500 };
     let reposts = [];
     
-    await Promise.allSettled(RELAYS.map(url =>
+    Promise.allSettled(RELAYS.map(url =>
         queryRelay(url, [repostsFilter], ev => {
             if (ev.kind === 6) {
                 const eTag = ev.tags.find(t => t[0] === 'e');
