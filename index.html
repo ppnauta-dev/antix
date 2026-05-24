@@ -3104,11 +3104,19 @@ async function loadFeed(reset = true) {
         loadReplies(newPostIds)
     ]);
     
-    // ✅ CORRECCIÓN: AÑADIR AWAIT
-    if (newAuthors.length > 0) {
+    // ✅ RESTAURAR AWAIT - pero con una condición
+    // En móvil, solo esperar si son pocos autores
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const shouldWait = !isMobile || newAuthors.length <= 10;
+    
+    if (shouldWait) {
         setStatus('<span class="spinner"></span> Cargando seguidores...');
+        await loadFollowersForPubkeys(newAuthors);
+    } else {
+        // En móvil con muchos autores, no bloquear
         loadFollowersForPubkeys(newAuthors);
     }
+    
     
     setStatus(`✓ ${feedPosts.size} posts`, 'ok');
     renderFeed();
