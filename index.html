@@ -878,7 +878,10 @@ let myInteractions = {
     reposts: [],    // Quién reposteó mis posts
     replies: []     // Quién respondió mis posts
 };
-let lastCheckTime = 0;    
+let lastCheckTime = 0;
+let liveSubscription = null;
+let liveWs = null;
+let lastSeenInteraction = 0;
 const RELAYS = [
     'wss://relay.damus.io',
     'wss://nos.lol',
@@ -898,7 +901,140 @@ function initYoutube() {
         console.log('🎬 Canal cargado:', youtubeChannelHandle);
     }
 }
+async function connectLiveNotifications() {
+    if (!pubKey) return;
+    
+    // Cerrar conexión anterior si existe
+    if (liveWs) {
+        try { liveWs.close(); } catch(e) {}
+    }
+    
+    const url = 'wss://relay.damus.io'; // Usar relay confiable
+    liveWs = new WebSocket(url);
+    
+    liveWs.onopen = () => {
+        console.log('🔔 Conectado a notificaciones en vivo');
+        
+        // Suscribirse a eventos que me afectan
+        const filter = {
+            kinds: [1, 6, 7],  // posts, reposts, likes
+            '#p': [pubKey],     // que me mencionen o interactúen conmigo
+            limit: 50
+        };
+        
+        const subId = 'live_' + Date.now();
+        liveWs.send(JSON.stringify(['REQ', subId, filter]));
+        liveSubscription = subId;
+    };
+    
+    liveWs.onmessage = (e) => {
+        try {
+            const msg = JSON.parse(e.data);
+            if (msg[0] === 'EVENT' && msg[2]) {
+                const ev = msg[2];
+                console.log('🔔 Nuevo evento en vivo:', ev.kind, ev.pubkey?.slice(0,8));
+                
+                // Verificar si es una interacción conmigo
+                const isMention = ev.tags?.some(t => t[0] === 'p' && t[1] === pubKey);
+                const isReply = ev.kind === 1 && ev.tags?.some(t => t[0] === 'e');
+                
+                if (isMention || isReply || ev.kind === 6 || ev.kind === 7) {
+                    // Recargar interacciones silenciosamente
+                    loadMyInteractions().then(() => {
+                        if (currentTab === 'actividad') {
+                            renderActivityFeed();
+                        }
+                        showNotificationToast(ev);
+                    });
+                }
+            }
+        } catch(err) {}
+    };
+    
+    liveWs.onerror = () => console.log('⚠️ Error en notificaciones en vivo');
+    liveWs.onclose = () => {
+        console.log('🔌 Conexión de notificaciones cerrada. Reconectando en 5s...');
+        setTimeout(connectLiveNotifications, 5000);
+    };
+}
 
+// Mostrar toast de notificación
+function showNotificationToast(ev) {
+    // Crear toast si no existe
+    let toast = document.getElementById('liveToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'liveToast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 12px 16px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+            cursor: pointer;
+        `;
+        document.body.appendChild(toast);
+        
+        // Estilo de animación
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Determinar tipo de interacción
+    let icon = '';
+    let text = '';
+    let interactor = ev.pubkey?.slice(0, 10) + '…';
+    
+    if (ev.kind === 7) {
+        icon = '❤️';
+        text = `le dio like a tu post`;
+    } else if (ev.kind === 6) {
+        icon = '🔁';
+        text = `reposteó tu post`;
+    } else if (ev.kind === 1) {
+        icon = '💬';
+        text = `respondió a tu post`;
+    }
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.2rem;">${icon}</span>
+            <div>
+                <strong>${interactor}</strong> ${text}
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--muted); cursor: pointer;">✕</button>
+        </div>
+    `;
+    
+    toast.style.display = 'block';
+    toast.onclick = () => {
+        switchTab('actividad');
+        toast.remove();
+    };
+    
+    // Auto desaparecer después de 5 segundos
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+}
 // ============================================================
 //  CARGAR MIS INTERACCIONES (LIKES, REPOSTS, RESPUESTAS)
 // ============================================================
@@ -3142,6 +3278,7 @@ async function autoConnect() {
         await loadProfiles([pubKey]);
         updateMyAvatar();
         renderFeed();
+        connectLiveNotifications();  // ← Agregar aquí
     } else {
         loadFeed();
     }
