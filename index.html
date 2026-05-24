@@ -1102,107 +1102,108 @@ async function loadMyInteractions() {
     
     setStatus('🔍 Buscando interacciones...');
     
-    // Obtener MIS posts (para saber qué IDs buscar)
-    const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 100 };
-    let myPostIds = [];
+    // ✅ TIMEOUT GLOBAL - 5 segundos máximo
+    const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => {
+            console.log('⏰ Timeout en loadMyInteractions');
+            setStatus('⚠️ Actividad: timeout (cargando en segundo plano)', '');
+            resolve({ likes: [], reposts: [], replies: [] });
+        }, 5000);
+    });
     
-    Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [myPostsFilter], ev => {
-            if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
-                myPostIds.push(ev.id);
-            }
-        }, 5000)
-    ));
-    
-    console.log(`📊 Mis posts: ${myPostIds.length}`);
-    
-    if (myPostIds.length === 0) {
-        return { likes: [], reposts: [], replies: [] };
-    }
-    
-    // Buscar LIKES (kind 7) a mis posts
-    const likesFilter = { kinds: [7], '#e': myPostIds, limit: 500 };
-    let likes = [];
-    
-    Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [likesFilter], ev => {
-            if (ev.kind === 7) {
-                const eTag = ev.tags.find(t => t[0] === 'e');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    likes.push({
-                        id: ev.id,
-                        pubkey: ev.pubkey,
-                        postId: eTag[1],
-                        created_at: ev.created_at
-                    });
+    const interactionsPromise = (async () => {
+        // Obtener MIS posts
+        const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 50 };
+        let myPostIds = [];
+        
+        await Promise.allSettled(RELAYS.slice(0, 2).map(url =>  // ✅ Solo 2 relays
+            queryRelay(url, [myPostsFilter], ev => {
+                if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
+                    myPostIds.push(ev.id);
                 }
-            }
-        }, 5000)
-    ));
+            }, 3000)  // ✅ Timeout más corto
+        ));
+        
+        if (myPostIds.length === 0) {
+            return { likes: [], reposts: [], replies: [] };
+        }
+        
+        // ✅ Limitar a los 10 posts más recientes
+        myPostIds = myPostIds.slice(0, 10);
+        
+        let likes = [], reposts = [], replies = [];
+        
+        // ✅ SIN AWAIT - que corran en paralelo sin bloquear
+        const searchTasks = [
+            (async () => {
+                const filter = { kinds: [7], '#e': myPostIds, limit: 50 };
+                await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
+                    queryRelay(url, [filter], ev => {
+                        if (ev.kind === 7) {
+                            const eTag = ev.tags.find(t => t[0] === 'e');
+                            if (eTag && myPostIds.includes(eTag[1])) {
+                                likes.push({ id: ev.id, pubkey: ev.pubkey, postId: eTag[1], created_at: ev.created_at });
+                            }
+                        }
+                    }, 3000)
+                ));
+            })(),
+            (async () => {
+                const filter = { kinds: [6], '#e': myPostIds, limit: 50 };
+                await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
+                    queryRelay(url, [filter], ev => {
+                        if (ev.kind === 6) {
+                            const eTag = ev.tags.find(t => t[0] === 'e');
+                            if (eTag && myPostIds.includes(eTag[1])) {
+                                reposts.push({ id: ev.id, pubkey: ev.pubkey, postId: eTag[1], created_at: ev.created_at });
+                            }
+                        }
+                    }, 3000)
+                ));
+            })(),
+            (async () => {
+                const filter = { kinds: [1], '#e': myPostIds, limit: 50 };
+                await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
+                    queryRelay(url, [filter], ev => {
+                        if (ev.kind === 1) {
+                            const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
+                            if (eTag && myPostIds.includes(eTag[1])) {
+                                replies.push({ id: ev.id, pubkey: ev.pubkey, postId: eTag[1], content: ev.content, created_at: ev.created_at });
+                            }
+                        }
+                    }, 3000)
+                ));
+            })()
+        ];
+        
+        await Promise.allSettled(searchTasks);
+        
+        // Cargar perfiles
+        const allInteractors = [...new Set([
+            ...likes.map(l => l.pubkey),
+            ...reposts.map(r => r.pubkey),
+            ...replies.map(r => r.pubkey)
+        ])];
+        
+        if (allInteractors.length) {
+            await loadProfiles(allInteractors);
+        }
+        
+        likes.sort((a, b) => b.created_at - a.created_at);
+        reposts.sort((a, b) => b.created_at - a.created_at);
+        replies.sort((a, b) => b.created_at - a.created_at);
+        
+        return { likes, reposts, replies };
+    })();
     
-    // Buscar REPOSTS (kind 6) a mis posts
-    const repostsFilter = { kinds: [6], '#e': myPostIds, limit: 500 };
-    let reposts = [];
-    
-    Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [repostsFilter], ev => {
-            if (ev.kind === 6) {
-                const eTag = ev.tags.find(t => t[0] === 'e');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    reposts.push({
-                        id: ev.id,
-                        pubkey: ev.pubkey,
-                        postId: eTag[1],
-                        created_at: ev.created_at
-                    });
-                }
-            }
-        }, 5000)
-    ));
-    
-    // Buscar RESPUESTAS (kind 1 con tag e a mis posts)
-    const repliesFilter = { kinds: [1], '#e': myPostIds, limit: 500 };
-    let replies = [];
-    
-    Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [repliesFilter], ev => {
-            if (ev.kind === 1) {
-                const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    replies.push({
-                        id: ev.id,
-                        pubkey: ev.pubkey,
-                        postId: eTag[1],
-                        content: ev.content,
-                        created_at: ev.created_at
-                    });
-                }
-            }
-        }, 5000)
-    ));
-    
-    // Cargar perfiles de los que interactuaron
-    const allInteractors = [...new Set([
-        ...likes.map(l => l.pubkey),
-        ...reposts.map(r => r.pubkey),
-        ...replies.map(r => r.pubkey)
-    ])];
-    
-    if (allInteractors.length) {
-        loadProfiles(allInteractors);
-    }
-    
-    // Ordenar por tiempo (más reciente primero)
-    likes.sort((a, b) => b.created_at - a.created_at);
-    reposts.sort((a, b) => b.created_at - a.created_at);
-    replies.sort((a, b) => b.created_at - a.created_at);
-    
-    myInteractions = { likes, reposts, replies };
+    const result = await Promise.race([interactionsPromise, timeoutPromise]);
+    myInteractions = result;
     lastCheckTime = Date.now();
     
-    console.log(`✅ Interacciones: ${likes.length} likes, ${reposts.length} reposts, ${replies.length} respuestas`);
+    console.log(`✅ Interacciones: ${result.likes?.length || 0} likes, ${result.reposts?.length || 0} reposts, ${result.replies?.length || 0} respuestas`);
+    setStatus(`✅ ${result.likes?.length || 0} interacciones`, 'ok');
     
-    return myInteractions;
+    return result;
 }
 
 // Renderizar feed de actividad
