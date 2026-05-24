@@ -894,6 +894,8 @@ const RELAYS = [
     'wss://relay.snort.social'        // ✅ Popular
     ];
 const SEARCH_RELAYS = ['wss://relay.noswhere.com', 'wss://search.nos.today', 'wss://relay.nostr.band'];
+// Variable en memoria — se resetea al recargar
+let interactionsCache = null;
 // Inicializar caché al cargar
 loadInteractionsCache();
     
@@ -913,8 +915,7 @@ const INTERACTIONS_CACHE_KEY = 'antix_interactions';
 
 
 
-// Variable en memoria — se resetea al recargar
-let interactionsCache = null;
+
 
 function saveInteractionsCache(data) {
     interactionsCache = {
