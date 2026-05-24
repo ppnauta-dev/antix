@@ -2984,7 +2984,31 @@ function buildUrlPreviewHtml(metadata) {
     `;
 }
 
+// ─── SCROLL INFINITO — registrar UNA sola vez fuera de loadFeed ───
+let scrollListenerActive = false;
 
+function setupInfiniteScroll() {
+    if (scrollListenerActive) return;  // ← ya registrado, no duplicar
+    scrollListenerActive = true;
+
+    const feedCol = document.querySelector('.feed-col');
+    if (!feedCol) return;
+
+    feedCol.addEventListener('scroll', () => {
+        if (isSearchMode || isLoadingMore || !hasMorePosts) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = feedCol;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+        if (distanceFromBottom < 300) {
+            console.log('📜 Scroll infinito: cargando más posts...');
+            loadFeed(false);  // false = no resetear, cargar más
+        }
+    });
+}
+
+// Llamar UNA vez al arrancar, no dentro de loadFeed
+setupInfiniteScroll();
 // Variables para paginación por tiempo
 let lastTimestamp = null;  // Guarda el timestamp del último post cargado
 const POSTS_PER_PAGE = 10;
@@ -3095,36 +3119,9 @@ async function loadFeed(reset = true) {
     renderFeed();
     isLoadingMore = false;
     
-    // Configurar scroll infinito
-    setupInfiniteScroll();
 }
 
-// Función para cargar más posts (scroll infinito)
-function setupInfiniteScroll() {
-    const feed = document.getElementById('feed');
-    if (!feed) return;
-    
-    if (window.scrollObserver) {
-        window.scrollObserver.disconnect();
-    }
-    
-    window.scrollObserver = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMorePosts && !isLoadingMore && !isSearchMode) {
-            console.log('📜 Scroll detectado, currentPage:', currentPage, 'hasMore:', hasMorePosts);
-            
-            // ✅ Si currentPage es 0 pero ya hay posts, algo está mal - forzar reset
-            if (currentPage === 0 && feedPosts.size > 0) {
-                console.log('⚠️ Detectado estado corrupto, forzando reset...');
-                currentPage = 1;  // Forzar para que no se quede en 0
-            }
-            
-            loadFeed(false);
-        }
-    }, { threshold: 0.1, rootMargin: '100px' });
-    
-    const sentinel = document.getElementById('loadMoreTrigger') || feed.lastElementChild;
-    if (sentinel) window.scrollObserver.observe(sentinel);
-}
+
 
 // Modifica renderFeed para incluir el trigger de scroll
 function renderFeed() {
