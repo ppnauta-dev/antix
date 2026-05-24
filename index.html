@@ -1342,7 +1342,19 @@ async function loadFullInteractions() {
 }
 
 // Modificar loadMyInteractions para usar caché
-async function loadMyInteractions(forceFull = false) {
+let interaccionesCargadas = false;
+
+async function loadMyInteractions() {
+    if (!pubKey) return { likes: [], reposts: [], replies: [] };
+    
+    // ✅ SI YA SE CARGARON UNA VEZ, NO VOLVER A CARGAR
+    if (interaccionesCargadas) {
+        console.log('⏭️ Interacciones ya cargadas, omitiendo...');
+        return { likes: [], reposts: [], replies: [] };
+    }
+    
+    console.log('📦 Cargando interacciones (solo una vez)...');
+    interaccionesCargadas = true;
     if (!pubKey) return [];
     
     if (forceFull || !cachedInteractions.lastSeenId) {
