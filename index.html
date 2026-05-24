@@ -882,6 +882,7 @@ let lastCheckTime = 0;
 let liveSubscription = null;
 let liveWs = null;
 let lastSeenInteraction = 0;
+
 const RELAYS = [
     'wss://relay.damus.io',
     'wss://nos.lol',
@@ -901,6 +902,63 @@ function initYoutube() {
         console.log('🎬 Canal cargado:', youtubeChannelHandle);
     }
 }
+let liveFeedWs = null;
+
+function connectLiveFeed() {
+    if (!pubKey && currentTab !== 'global') return;
+    
+    if (liveFeedWs) {
+        try { liveFeedWs.close(); } catch(e) {}
+    }
+    
+    const url = 'wss://relay.damus.io';
+    liveFeedWs = new WebSocket(url);
+    
+    liveFeedWs.onopen = () => {
+        console.log('📡 Feed en vivo conectado');
+        
+        let filter;
+        if (currentTab === 'global') {
+            filter = { kinds: [1], limit: 5 };
+        } else if (currentTab === 'siguiendo' && pubKey) {
+            filter = { kinds: [1], authors: [...follows, pubKey], limit: 5 };
+        } else {
+            return;
+        }
+        
+        liveFeedWs.send(JSON.stringify(['REQ', 'live_feed_' + Date.now(), filter]));
+    };
+    
+    liveFeedWs.onmessage = (e) => {
+        try {
+            const msg = JSON.parse(e.data);
+            if (msg[0] === 'EVENT' && msg[2] && msg[2].kind === 1) {
+                const newPost = msg[2];
+                
+                // Evitar duplicados
+                if (!feedPosts.has(newPost.id)) {
+                    console.log('📝 Nuevo post en vivo:', newPost.id.slice(0,8));
+                    feedPosts.set(newPost.id, newPost);
+                    
+                    // Recargar perfil del autor si es necesario
+                    if (!profiles.has(newPost.pubkey)) {
+                        loadProfiles([newPost.pubkey]);
+                    }
+                    
+                    // Re-renderizar feed
+                    renderFeed();
+                    setStatus(`✨ ${feedPosts.size} posts (actualizado)`, 'ok');
+                }
+            }
+        } catch(err) {}
+    };
+    
+    liveFeedWs.onerror = () => console.log('⚠️ Error en feed en vivo');
+    liveFeedWs.onclose = () => {
+        console.log('📡 Feed desconectado, reconectando...');
+        setTimeout(connectLiveFeed, 5000);
+    };
+}    
 async function connectLiveNotifications() {
     if (!pubKey) return;
     
@@ -3155,6 +3213,7 @@ function switchTab(tab) {
         loadMyInteractions().then(() => renderActivityFeed());
     } else {
         loadFeed(true);
+        connectLiveFeed();
     }
 }
 
