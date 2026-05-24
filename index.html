@@ -905,149 +905,100 @@ function initYoutube() {
     }
 }
 
-// Variables de caché
-let cachedInteractions = {
-    likes: new Map(),    // postId → [likes]
-    reposts: new Map(),  // postId → [reposts]
-    replies: new Map(),  // postId → [replies]
-    lastSeenId: null     // ID del último evento visto
-};
+// ============================================================
+//  CACHÉ DE INTERACCIONES
+// ============================================================
+const INTERACTIONS_CACHE_KEY = 'antix_interactions';
 
-// Cargar caché guardada
+function saveInteractionsCache(data) {
+    try {
+        sessionStorage.setItem(INTERACTIONS_CACHE_KEY, JSON.stringify({
+            pubKey,                           // invalidar si cambia el usuario
+            ts: Date.now(),
+            likes:   data.likes   || [],
+            reposts: data.reposts || [],
+            replies: data.replies || []
+        }));
+    } catch(_) {}
+}
+
 function loadInteractionsCache() {
-    const saved = localStorage.getItem('antix_interactions_cache');
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            cachedInteractions.lastSeenTimestamp = parsed.lastSeenTimestamp || 0;
-            console.log('📦 Caché cargada, timestamp:', cachedInteractions.lastSeenTimestamp);
-        } catch(e) {}
-    }
+    try {
+        const raw = sessionStorage.getItem(INTERACTIONS_CACHE_KEY);
+        if (!raw) return null;
+        const cached = JSON.parse(raw);
+        // Invalidar si el usuario cambió o tiene más de 5 minutos
+        if (cached.pubKey !== pubKey) return null;
+        if (Date.now() - cached.ts > 5 * 60 * 1000) return null;
+        return cached;
+    } catch(_) { return null; }
 }
 
-function saveInteractionsCache() {
-    localStorage.setItem('antix_interactions_cache', JSON.stringify({
-        lastSeenTimestamp: cachedInteractions.lastSeenTimestamp
-    }));
+function clearInteractionsCache() {
+    sessionStorage.removeItem(INTERACTIONS_CACHE_KEY);
 }
 
-// Buscar SOLO interacciones nuevas
-// Buscar SOLO interacciones nuevas
-async function loadNewInteractions() {
+// ============================================================
+//  CARGA DE INTERACCIONES CON CACHÉ
+// ============================================================
+async function loadMyInteractions(forceRefresh = false) {
     if (!pubKey) return { likes: [], reposts: [], replies: [] };
-    
-    console.log('✨ Buscando interacciones NUEVAS desde timestamp:', cachedInteractions.lastSeenTimestamp);
-    
-    // Obtener mis posts (últimos 20)
-    const myPostsFilter = { kinds: [1], authors: [pubKey], limit: 20 };
-    let myPostIds = [];
-    
-    await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
-        queryRelay(url, [myPostsFilter], ev => {
-            if (ev.kind === 1 && !myPostIds.includes(ev.id)) {
-                myPostIds.push(ev.id);
-            }
-        }, 4000)
-    ));
-    
-    if (myPostIds.length === 0) {
+
+    // Devolver caché si existe y no se fuerza recarga
+    if (!forceRefresh) {
+        const cached = loadInteractionsCache();
+        if (cached) {
+            console.log('⏭️ Interacciones desde caché', cached.ts);
+            applyInteractions(cached);
+            return cached;
+        }
+    }
+
+    console.log('📦 Cargando interacciones desde relays...');
+    setStatus('<span class="spinner"></span> Cargando tus interacciones…');
+
+    try {
+        const result = await loadFullInteractions();
+        saveInteractionsCache(result);
+        applyInteractions(result);
+        return result;
+    } catch(err) {
+        console.error('Error cargando interacciones:', err);
         return { likes: [], reposts: [], replies: [] };
     }
-    
-    let nuevosLikes = [];
-    let nuevosReposts = [];
-    let nuevasRespuestas = [];
-    let nuevoMaxTimestamp = cachedInteractions.lastSeenTimestamp;
-    
-    // Buscar likes NUEVOS
-    const likesFilter = { kinds: [7], '#e': myPostIds, limit: 100 };
-    await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
-        queryRelay(url, [likesFilter], ev => {
+}
+
+// Aplica las interacciones al estado global
+function applyInteractions(data) {
+    for (const id of (data.likes   || [])) myLikes.add(id);
+    for (const id of (data.reposts || [])) myReposts.add(id);
+    // añade replies si los usas
+}
+
+// Carga real desde relays (tu función original)
+async function loadFullInteractions() {
+    const filter = {
+        kinds: [7, 6],    // likes y reposts
+        authors: [pubKey],
+        limit: 500
+    };
+
+    const result = { likes: [], reposts: [], replies: [] };
+
+    await Promise.all(RELAYS.map(url =>
+        queryRelay(url, [filter], ev => {
             if (ev.kind === 7) {
                 const eTag = ev.tags.find(t => t[0] === 'e');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    if (ev.created_at > cachedInteractions.lastSeenTimestamp) {
-                        nuevosLikes.push({
-                            id: ev.id,
-                            pubkey: ev.pubkey,
-                            postId: eTag[1],
-                            created_at: ev.created_at
-                        });
-                        if (ev.created_at > nuevoMaxTimestamp) nuevoMaxTimestamp = ev.created_at;
-                    }
-                }
+                if (eTag && !result.likes.includes(eTag[1])) result.likes.push(eTag[1]);
             }
-        }, 4000)
-    ));
-    
-    // Buscar reposts NUEVOS
-    const repostsFilter = { kinds: [6], '#e': myPostIds, limit: 100 };
-    await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
-        queryRelay(url, [repostsFilter], ev => {
             if (ev.kind === 6) {
                 const eTag = ev.tags.find(t => t[0] === 'e');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    if (ev.created_at > cachedInteractions.lastSeenTimestamp) {
-                        nuevosReposts.push({
-                            id: ev.id,
-                            pubkey: ev.pubkey,
-                            postId: eTag[1],
-                            created_at: ev.created_at
-                        });
-                        if (ev.created_at > nuevoMaxTimestamp) nuevoMaxTimestamp = ev.created_at;
-                    }
-                }
+                if (eTag && !result.reposts.includes(eTag[1])) result.reposts.push(eTag[1]);
             }
-        }, 4000)
+        }, 6000)
     ));
-    
-    // Buscar respuestas NUEVAS
-    const repliesFilter = { kinds: [1], '#e': myPostIds, limit: 100 };
-    await Promise.allSettled(RELAYS.slice(0, 2).map(url =>
-        queryRelay(url, [repliesFilter], ev => {
-            if (ev.kind === 1) {
-                const eTag = ev.tags.find(t => t[0] === 'e' && t[3] !== 'mention');
-                if (eTag && myPostIds.includes(eTag[1])) {
-                    if (ev.created_at > cachedInteractions.lastSeenTimestamp) {
-                        nuevasRespuestas.push({
-                            id: ev.id,
-                            pubkey: ev.pubkey,
-                            postId: eTag[1],
-                            content: ev.content,
-                            created_at: ev.created_at
-                        });
-                        if (ev.created_at > nuevoMaxTimestamp) nuevoMaxTimestamp = ev.created_at;
-                    }
-                }
-            }
-        }, 4000)
-    ));
-    
-    // Actualizar timestamp en caché
-    if (nuevoMaxTimestamp > cachedInteractions.lastSeenTimestamp) {
-        cachedInteractions.lastSeenTimestamp = nuevoMaxTimestamp;
-        saveInteractionsCache();
-        console.log('📦 Timestamp actualizado a:', nuevoMaxTimestamp);
-    }
-    
-    // Cargar perfiles de los que interactuaron
-    const allInteractors = [...new Set([
-        ...nuevosLikes.map(l => l.pubkey),
-        ...nuevosReposts.map(r => r.pubkey),
-        ...nuevasRespuestas.map(r => r.pubkey)
-    ])];
-    
-    if (allInteractors.length) {
-        await loadProfiles(allInteractors);
-    }
-    
-    console.log(`✨ Nuevas: ${nuevosLikes.length} likes, ${nuevosReposts.length} reposts, ${nuevasRespuestas.length} respuestas`);
-    
-    return { 
-        likes: nuevosLikes, 
-        reposts: nuevosReposts, 
-        replies: nuevasRespuestas 
-    };
+
+    return result;
 }
     
 let liveFeedWs = null;
@@ -1341,34 +1292,7 @@ async function loadFullInteractions() {
     return { likes, reposts, replies };
 }
 
-// Modificar loadMyInteractions para usar caché
-let interaccionesCargadas = false;
 
-async function loadMyInteractions() {
-    if (!pubKey) return { likes: [], reposts: [], replies: [] };
-    
-    // ✅ SI YA SE CARGARON UNA VEZ, NO VOLVER A CARGAR
-    if (interaccionesCargadas) {
-        console.log('⏭️ Interacciones ya cargadas, omitiendo...');
-        return { likes: [], reposts: [], replies: [] };
-    }
-    
-    console.log('📦 Cargando interacciones (solo una vez)...');
-    interaccionesCargadas = true;
-    if (!pubKey) return [];
-    
-    if (forceFull || !cachedInteractions.lastSeenId) {
-        // Carga completa (primera vez)
-        console.log('📦 Carga completa de interacciones');
-        return await loadFullInteractions();
-    } else {
-        // Solo nuevas
-        console.log('✨ Buscando solo interacciones nuevas');
-        const nuevas = await loadNewInteractions();
-        // Combinar con caché existente...
-        return nuevas;
-    }
-}
 
 // Renderizar feed de actividad
 function renderActivityFeed() {
