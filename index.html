@@ -3090,7 +3090,9 @@ async function loadFeed(reset = true) {
     if (oldestPost) {
         lastTimestamp = oldestPost.created_at;
     }
-    
+    // ✅ AQUÍ DEBE ESTAR currentPage++
+    currentPage++;
+    console.log(`📄 Página actualizada a: ${currentPage}`);
     // Cargar metadatos de los nuevos posts
     const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
     const newPostIds = newPosts.map(p => p.id);
