@@ -3215,12 +3215,16 @@ function setupInfiniteScroll() {
 }
 
 function switchTab(tab) {
+    console.log(`🟢 SWITCH TAB: cambiando a "${tab}" desde "${currentTab}"`);
+    
     if (isSearchMode) exitSearchMode();
+    
+    console.log(`🟢 SWITCH TAB: resetando estado...`);
     currentTab = tab;
     currentSkip = 0;
     feedPosts.clear();
     
-    // Actualizar tabs
+    // Actualizar tabs visualmente
     const tabs = ['global', 'siguiendo', 'misposts', 'actividad'];
     tabs.forEach(t => {
         const cap = t.charAt(0).toUpperCase() + t.slice(1);
@@ -3231,10 +3235,15 @@ function switchTab(tab) {
     });
     
     if (tab === 'actividad') {
-        loadMyInteractions().then(() => renderActivityFeed());
+        console.log(`🟢 SWITCH TAB: cargando actividad...`);
+        $('feed').innerHTML = '<div class="empty-state"><span class="spinner"></span> Cargando actividad...</div>';
+        loadMyInteractions().then(() => {
+            console.log(`🟢 SWITCH TAB: actividad cargada, renderizando...`);
+            renderActivityFeed();
+        });
     } else {
+        console.log(`🟢 SWITCH TAB: cargando feed...`);
         loadFeed(true);
-        connectLiveFeed();
     }
 }
 
