@@ -3016,110 +3016,81 @@ const POSTS_PER_PAGE = 10;
 
 async function loadFeed(reset = true) {
     if (isSearchMode) return;
-    
+
     if (reset) {
         setStatus('<span class="spinner"></span> Cargando feed...');
-        lastTimestamp = null;  // Resetear timestamp
+        lastTimestamp = null;
         feedPosts.clear();
         hasMorePosts = true;
         currentPage = 0;
+        isLoadingMore = false;  // ← forzar liberación al resetear
+        $('feed').innerHTML = '';
     }
-    
+
     if (isLoadingMore) return;
     isLoadingMore = true;
-    
-    // Construir filtro con since (timestamp del último post)
-    let filter;
-    if (currentTab === 'global') {
-        filter = { kinds: [1], limit: POSTS_PER_PAGE };
-        if (lastTimestamp) {
-            filter.until = lastTimestamp;  // Posts más antiguos que el último
-        }
-    } else if (currentTab === 'siguiendo') {
-        filter = { 
-            kinds: [1], 
-            authors: [...(pubKey ? [pubKey] : []), ...follows], 
-            limit: POSTS_PER_PAGE 
-        };
-        if (lastTimestamp) {
-            filter.until = lastTimestamp;
-        }
-    } else if (currentTab === 'misposts') {
-        if (!pubKey) {
-            setStatus('🔓 Conecta tu cuenta para ver tus posts', '');
-            $('feed').innerHTML = `<div class="empty-state">Conecta tu cuenta para ver tus propios posts.</div>`;
-            isLoadingMore = false;
-            return;
-        }
-        filter = { kinds: [1], authors: [pubKey], limit: POSTS_PER_PAGE };
-        if (lastTimestamp) {
-            filter.until = lastTimestamp;
-        }
-    }
-    
-    console.log(`📡 Consultando posts con until=${lastTimestamp || 'ninguno'}`);
-    
-    let newPosts = [];
-    await Promise.allSettled(RELAYS.map(url =>
-        queryRelay(url, [filter], ev => {
-            if (ev.kind === 1 && !feedPosts.has(ev.id)) {
-                feedPosts.set(ev.id, ev);
-                newPosts.push(ev);
+
+    try {
+        let filter;
+        if (currentTab === 'global') {
+            filter = { kinds: [1], limit: POSTS_PER_PAGE };
+            if (lastTimestamp) filter.until = lastTimestamp;
+        } else if (currentTab === 'siguiendo') {
+            filter = { kinds: [1], authors: [...(pubKey ? [pubKey] : []), ...follows], limit: POSTS_PER_PAGE };
+            if (lastTimestamp) filter.until = lastTimestamp;
+        } else if (currentTab === 'misposts') {
+            if (!pubKey) {
+                setStatus('🔓 Conecta tu cuenta', '');
+                $('feed').innerHTML = `<div class="empty-state">Conecta tu cuenta.</div>`;
+                return;  // el finally libera isLoadingMore
             }
-        }, 7000)
-    ));
-    
-    if (newPosts.length === 0) {
-        hasMorePosts = false;
-        isLoadingMore = false;
-        if (reset && feedPosts.size === 0) {
-            $('feed').innerHTML = `<div class="empty-state">Sin posts.</div>`;
+            filter = { kinds: [1], authors: [pubKey], limit: POSTS_PER_PAGE };
+            if (lastTimestamp) filter.until = lastTimestamp;
         }
+
+        let newPosts = [];
+        await Promise.allSettled(RELAYS.map(url =>
+            queryRelay(url, [filter], ev => {
+                if (ev.kind === 1 && !feedPosts.has(ev.id)) {
+                    feedPosts.set(ev.id, ev);
+                    newPosts.push(ev);
+                }
+            }, 7000)
+        ));
+
+        if (newPosts.length === 0) {
+            hasMorePosts = false;
+            if (reset && feedPosts.size === 0) {
+                $('feed').innerHTML = `<div class="empty-state">Sin posts.</div>`;
+            }
+            setStatus(`✓ ${feedPosts.size} posts`, 'ok');
+            renderFeed();
+            return;  // el finally libera isLoadingMore
+        }
+
+        newPosts.sort((a, b) => b.created_at - a.created_at);
+        const oldestPost = [...newPosts].sort((a, b) => a.created_at - b.created_at)[0];
+        if (oldestPost) lastTimestamp = oldestPost.created_at;
+        currentPage++;
+
+        const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
+        const newPostIds = newPosts.map(p => p.id);
+
+        await Promise.allSettled([
+            loadProfiles(newAuthors),
+            loadLikes(newPostIds),
+            loadReposts(newPostIds),
+            loadReplies(newPostIds)
+        ]);
+
+        loadFollowersForPubkeys(newAuthors);
+
         setStatus(`✓ ${feedPosts.size} posts`, 'ok');
         renderFeed();
-        return;
+
+    } finally {
+        isLoadingMore = false;  // ← siempre se libera, pase lo que pase
     }
-    
-    // Ordenar posts por tiempo (más reciente primero)
-    newPosts.sort((a, b) => b.created_at - a.created_at);
-    
-    // Actualizar lastTimestamp con el post MÁS ANTIGUO de esta carga
-    const oldestPost = [...newPosts].sort((a, b) => a.created_at - b.created_at)[0];
-    if (oldestPost) {
-        lastTimestamp = oldestPost.created_at;
-    }
-    // ✅ AQUÍ DEBE ESTAR currentPage++
-    currentPage++;
-    console.log(`📄 Página actualizada a: ${currentPage}`);
-    // Cargar metadatos de los nuevos posts
-    const newAuthors = [...new Set(newPosts.map(p => p.pubkey))];
-    const newPostIds = newPosts.map(p => p.id);
-    
-    await Promise.allSettled([
-        loadProfiles(newAuthors),
-        loadLikes(newPostIds),
-        loadReposts(newPostIds),
-        loadReplies(newPostIds)
-    ]);
-    
-    // ✅ RESTAURAR AWAIT - pero con una condición
-    // En móvil, solo esperar si son pocos autores
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const shouldWait = !isMobile || newAuthors.length <= 10;
-    
-    if (shouldWait) {
-        setStatus('<span class="spinner"></span> Cargando seguidores...');
-        loadFollowersForPubkeys(newAuthors);
-    } else {
-        // En móvil con muchos autores, no bloquear
-        loadFollowersForPubkeys(newAuthors);
-    }
-    
-    
-    setStatus(`✓ ${feedPosts.size} posts`, 'ok');
-    renderFeed();
-    isLoadingMore = false;
-    
 }
 
 
