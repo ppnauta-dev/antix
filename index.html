@@ -3111,7 +3111,7 @@ async function loadFeed(reset = true) {
     
     if (shouldWait) {
         setStatus('<span class="spinner"></span> Cargando seguidores...');
-        await loadFollowersForPubkeys(newAuthors);
+        loadFollowersForPubkeys(newAuthors);
     } else {
         // En móvil con muchos autores, no bloquear
         loadFollowersForPubkeys(newAuthors);
